@@ -1,0 +1,48 @@
+{
+  "name": "setups-viewer",
+  "productName": "Сетапы",
+  "version": "1.0.0",
+  "description": "Просмотр и анализ планов лечения на элайнерах из Maestro 3D",
+  "author": "Екатерина Скоробогатько (@katya_skorobogatko)",
+  "homepage": "https://orthoskorobogatko.ru",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:mac": "electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "ru.orthoskorobogatko.setups",
+    "productName": "Сетапы",
+    "copyright": "© Екатерина Скоробогатько",
+    "artifactName": "Setups-${version}-${os}-${arch}.${ext}",
+    "files": ["main.js", "app/**/*", "build/icon.png"],
+    "directories": { "buildResources": "build", "output": "dist" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Сетапы"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "icon": "build/icon.png",
+      "category": "public.app-category.medical",
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "dmg": { "title": "Сетапы ${version}" }
+  }
+}
