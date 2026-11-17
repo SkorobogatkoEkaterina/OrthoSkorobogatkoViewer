@@ -854,18 +854,43 @@ async function loadJaw(zip, progress) {
     progress(++done / total); if (done % 4 === 0) await sleep();
   }
   const mats = stages.map(s => { const m = new Map(); for (const i of teeth.keys()) { const t = s.case.teeth[i]; if (!t || !t.file || t.extracted) continue; m.set(i, t.matrix ? new Float32Array(t.matrix) : M4.ident()); } return m; });
-  const attach = new Map(), stageAttach = stages.map(() => []);
+  // a tooth mesh can change during treatment (Maestro carves negative attachments into it) — keep each version
+  const tvar = new Map(), stageVar = stages.map(() => new Map());
+  for (const [i] of teeth) {
+    const st0 = stages.find(s => s.case.teeth[i] && s.case.teeth[i].file); const len0 = (await zip.get(st0.dir + st0.case.teeth[i].file)).length;
+    const vars = [{ len: len0 }];
+    for (let k = 0; k < stages.length; k++) {
+      const t = stages[k].case.teeth[i]; if (!t || !t.file || t.extracted) continue;
+      const u8 = await zip.get(stages[k].dir + t.file); if (!u8 || u8.length === len0) continue;
+      let v = vars.findIndex(x => x.len === u8.length);
+      if (v < 0) {
+        const raw = parseMesh(t.file, u8), pos = M4.applyToArray(M4.invRigid(matOf(stages[k], i)), raw.pos);
+        const g = { pos, idx: raw.idx, nrm: computeNormals(pos, raw.idx) }; orientOutward(g);
+        v = vars.push({ len: u8.length, geom: g }) - 1;
+      }
+      stageVar[k].set(i, v);
+    }
+    if (vars.length > 1) tvar.set(i, vars.map(x => x.geom || null));
+  }
+  // attachments: the same file name on the same tooth may hold a different attachment in later steps (Maestro renumbers them)
+  const attach = new Map(), stageAttach = stages.map(() => []), seen = new Map();
   const all = [...stages, ...templates].sort((a, b) => a.n - b.n || (a.kind === 'template' ? -1 : 1));
-  for (const s of all) for (const t of Object.values(s.case.teeth)) for (const a of t.attachments) {
-    const key = t.i + ':' + a.file;
-    if (!attach.has(key)) {
+  const cen = p => { let x = 0, y = 0, z = 0; const n = p.length / 3; for (let k = 0; k < p.length; k += 3) { x += p[k]; y += p[k + 1]; z += p[k + 2]; } return [x / n, y / n, z / n]; };
+  for (const s of all) {
+    const si = s.kind === 'template' ? -1 : stages.indexOf(s);
+    for (const t of Object.values(s.case.teeth)) for (const a of t.attachments) {
       const u8 = await zip.get(s.dir + a.file); if (!u8) continue;
-      const raw = parseMesh(a.file, u8); const pos = M4.applyToArray(M4.invRigid(t.matrix || ident), raw.pos);
-      const ag = { pos, idx: raw.idx, nrm: computeNormals(pos, raw.idx) }; orientOutward(ag);
-      attach.set(key, { tooth: t.i, negative: a.negative, geom: ag });
+      const raw = parseMesh(a.file, u8); const pos = M4.applyToArray(M4.invRigid(t.matrix || ident), raw.pos), c = cen(pos);
+      const base = t.i + ':' + a.file, list = seen.get(base) || [];
+      let hit = list.find(x => x.n === pos.length && Math.hypot(x.c[0] - c[0], x.c[1] - c[1], x.c[2] - c[2]) < 0.3);
+      if (!hit) {
+        hit = { key: list.length ? base + '#' + list.length : base, n: pos.length, c }; list.push(hit); seen.set(base, list);
+        const ag = { pos, idx: raw.idx, nrm: computeNormals(pos, raw.idx) }; orientOutward(ag);
+        attach.set(hit.key, { tooth: t.i, negative: a.negative, geom: ag });
+      }
+      if (si >= 0 && !stageAttach[si].includes(hit.key)) stageAttach[si].push(hit.key);
     }
   }
-  stages.forEach((s, k) => { for (const t of Object.values(s.case.teeth)) for (const a of t.attachments) { const key = t.i + ':' + a.file; if (attach.has(key)) stageAttach[k].push(key); } });
   progress((done += 3) / total);
   // gums: first stage now, others in background
   const gumFiles = stages.map(s => s.case.gum && zip.names.includes(s.dir + s.case.gum) ? s.dir + s.case.gum : null);
@@ -886,7 +911,7 @@ async function loadJaw(zip, progress) {
     x.pa = near(A, B.centroid); x.pb = near(B, A.centroid);
   }
   let ys = 0; for (const t of teeth.values()) ys += t.U[1];
-  return { file: zip.name, zip, stages: stages.map(s => s.n), templates: templates.map(s => s.n), teeth, mats, attach, stageAttach, gums, gumFiles, ipr, guessKind: ys > 0 ? 'upper' : 'lower' };
+  return { file: zip.name, zip, stages: stages.map(s => s.n), templates: templates.map(s => s.n), teeth, mats, attach, stageAttach, tvar, stageVar, gums, gumFiles, ipr, guessKind: ys > 0 ? 'upper' : 'lower' };
 }
 // background gum loading
 async function loadGumsInBackground() {
@@ -1158,6 +1183,7 @@ function toothMatrix(jaw, i, t) {
 function buildBuffers(jaw) {
   const d = jaw.data, buf = { teeth: new Map(), att: new Map(), gumDyn: null, gumT: -1, roots: new Map(), loose: [], bone: null };
   for (const [i, t] of d.teeth) buf.teeth.set(i, upload(t.geom));
+  buf.tvar = new Map(); if (d.tvar) for (const [i, vs] of d.tvar) buf.tvar.set(i, vs.map(g => g ? upload(g) : null));
   for (const [k, a] of d.attach) buf.att.set(k, upload(a.geom));
   const g0 = d.gums.find(Boolean);
   if (g0) { buf.gumDyn = upload({ pos: new Float32Array(g0.pos), nrm: new Float32Array(g0.nrm), idx: g0.idx }, true); buf.gumScratch = { pos: new Float32Array(g0.pos.length), nrm: new Float32Array(g0.nrm.length) }; buf.gumRef = g0; }
@@ -1214,8 +1240,10 @@ function draw() {
   const occOn = (S.show.occ || S.show.prox) && S.occ && S.occ.t === Math.round(t) && !S.playing;
   for (const jaw of S.jaws) {
     if (!S.show[jaw.kind]) continue; const d = jaw.data;
-    for (const [i, b] of jaw.buf.teeth) {
+    const [sk0, sf0] = stageFloat(jaw, t), skk = sf0 > 0.5 ? sk0 + 1 : sk0;
+    for (const [i, b0] of jaw.buf.teeth) {
       const m = toothMatrix(jaw, i, t); if (!m) continue;
+      const vi = d.stageVar && d.stageVar[skk] ? d.stageVar[skk].get(i) : 0, b = vi && jaw.buf.tvar.get(i) && jaw.buf.tvar.get(i)[vi] || b0;
       const sel = S.sel && S.sel.kind === jaw.kind && S.sel.i === i;
       const devOn = S.show.dev && S.check && S.check.step === Math.round(t) && !S.playing;
       const col = occOn ? S.occ.col.get(jaw.kind + i) : devOn && S.check.jaws[jaw.kind] ? S.check.jaws[jaw.kind].col.get(i) : null;
@@ -2281,7 +2309,7 @@ function obstaclesAt(step, lo, hi, withGum) {
     for (const [i, t] of d.teeth) {
       const m = toothMatrix(jaw, i, step); if (!m) continue;
       const c = M4.pt(m, t.centroid); if (c[0] < lo[0] - 8 || c[1] < lo[1] - 8 || c[2] < lo[2] - 8 || c[0] > hi[0] + 8 || c[1] > hi[1] + 8 || c[2] > hi[2] + 8) continue;
-      addGeom(t.geom, m);
+      const vi = d.stageVar && d.stageVar[k] ? d.stageVar[k].get(i) : 0; addGeom(vi && d.tvar && d.tvar.get(i) && d.tvar.get(i)[vi] || t.geom, m);
     }
     for (const key of d.stageAttach[k] || []) { const a = d.attach.get(key), m = toothMatrix(jaw, a.tooth, step); if (m) addGeom(a.geom, m); }
     if (withGum) { const gm = (jaw.buf && jaw.buf.gumRef && (d.gumMismatch ? jaw.buf.gumRef : nearestGum(d, k))) || null; if (gm && gm.nrm) addGeom(gm, IDM); }
@@ -2796,6 +2824,8 @@ async function buildExport(mode, withBone, progress, lite) {
     d.mats.forEach((mm, k) => ids.forEach((i, q) => { const o = (k * ids.length + q) * 17; const m = mm.get(i); M[o] = m ? 1 : 0; if (m) M.set(m, o + 1); }));
     J.mats = { ids, m: pk.add(M) };
     for (const [key, a] of d.attach) J.attach.push({ key, tooth: a.tooth, negative: a.negative, g: pk.geom(lg(a.geom, 0.15)) });
+    J.tvar = []; if (d.tvar) for (const [i, vs] of d.tvar) J.tvar.push({ i, g: vs.map(g => g ? pk.geom(lg(g, 0.22)) : null) });
+    J.stageVar = (d.stageVar || []).map(m => [...m]);
     let g0 = d.gums.find(Boolean), gumsX = d.gums;
     if (g0 && lite && d.gums.every(g => !g || g.pos.length === g0.pos.length)) {
       const cl = clusterGeom(g0, 0.6);
@@ -2851,6 +2881,8 @@ async function loadEmbeddedText(b64) {
     const M = new Float32Array(buf, J.mats.m[0], J.mats.m[1] / 4), ids = J.mats.ids;
     const mats = J.stages.map((_, k) => { const mm = new Map(); ids.forEach((i, q) => { const o = (k * ids.length + q) * 17; if (M[o]) mm.set(i, M.slice(o + 1, o + 17)); }); return mm; });
     const attach = new Map(); for (const a of J.attach) { const g = unpackGeom(buf, a.g); orientOutward(g); attach.set(a.key, { tooth: a.tooth, negative: a.negative, geom: g }); }
+    const tvar = new Map(); for (const v of J.tvar || []) tvar.set(v.i, v.g.map(x => { if (!x) return null; const g = unpackGeom(buf, x); orientOutward(g); return g; }));
+    const stageVar = J.stages.map((_, k) => new Map((J.stageVar || [])[k] || []));
     let gums = J.stages.map(() => null);
     if (J.gums) {
       const base = unpackGeom(buf, J.gums.base); const { mn, st } = J.gums.base;
@@ -2861,7 +2893,7 @@ async function loadEmbeddedText(b64) {
         return { pos, idx: base.idx, nrm: computeNormals(pos, base.idx) };
       });
     }
-    const data = { file: J.file, zip: null, stages: J.stages, templates: J.templates, teeth, mats, attach, stageAttach: J.stageAttach, gums, gumFiles: J.stages.map(() => null), ipr: J.ipr, guessKind: J.guessKind };
+    const data = { file: J.file, zip: null, stages: J.stages, templates: J.templates, teeth, mats, attach, stageAttach: J.stageAttach, tvar, stageVar, gums, gumFiles: J.stages.map(() => null), ipr: J.ipr, guessKind: J.guessKind };
     let ct = null;
     if (J.ct) { ct = { median: J.ct.median, note: J.ct.note, roots: new Map(), loose: [], bone: null }; for (const r of J.ct.roots) ct.roots.set(r.i, unpackGeom(buf, r.g)); for (const g of J.ct.loose) ct.loose.push(unpackGeom(buf, g)); if (J.ct.bone) ct.bone = unpackGeom(buf, J.ct.bone); }
     jaws.push({ kind: J.kind, data, ct });
