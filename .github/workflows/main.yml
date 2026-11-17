@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-15-intel]
+        os: [windows-latest, macos-15-intel, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -32,7 +32,7 @@ jobs:
         run: npm run dist:mac
       - uses: actions/upload-artifact@v4
         with:
-          name: setups-${{ runner.os }}
+          name: setups-${{ matrix.os }}
           path: |
             dist/*.exe
             dist/*.dmg
