@@ -1,0 +1,52 @@
+# Досборка версии для Mac, если GitHub не дал Mac-сервер вовремя.
+# Каждые 2 часа проверяет последний релиз: если в нём нет Setups-Mac.dmg —
+# собирает его и добавляет. Можно запустить вручную: Actions → «Досборка Mac» → Run workflow.
+name: Досборка Mac
+on:
+  schedule:
+    - cron: '23 */2 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      need: ${{ steps.c.outputs.need }}
+      v: ${{ steps.c.outputs.v }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: c
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          if gh api "repos/${{ github.repository }}/releases/tags/v$v" -q '.assets[].name' | grep -qx 'Setups-Mac.dmg'; then
+            echo "need=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "need=yes" >> "$GITHUB_OUTPUT"
+          fi
+  mac:
+    needs: check
+    if: needs.check.outputs.need == 'yes'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15-intel, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npm run dist:mac
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check.outputs.v }}
+          files: dist/Setups-Mac.dmg
+          overwrite_files: true
