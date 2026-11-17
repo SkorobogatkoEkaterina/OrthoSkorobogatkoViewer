@@ -111,7 +111,7 @@ npm run dist:win     # собрать установщик Windows (на Windows
 npm run dist:mac     # собрать установщик macOS (на Mac)
 ```
 
-При каждой загрузке изменений в репозиторий GitHub Actions автоматически собирает установщики для обеих систем и выкладывает их в [Releases](https://github.com/SkorobogatkoEkaterina/OrthoSkorobogatkoViewer/releases) (`.github/workflows/build.yml`). Ссылки «Скачать» всегда ведут на последнюю версию.
+При каждой загрузке изменений в репозиторий GitHub Actions автоматически собирает установщики для обеих систем и выкладывает их в [Releases](https://github.com/SkorobogatkoEkaterina/OrthoSkorobogatkoViewer/releases) (`.github/workflows/main.yml`). Ссылки «Скачать» всегда ведут на последнюю версию.
 
 ### Обновление версии
 
