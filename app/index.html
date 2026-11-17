@@ -312,16 +312,7 @@ input[type=range].rng{accent-color:var(--purple);width:160px}
     <label class="opt"><input type="checkbox" id="exLite"><span><b>Облегчённый — для телефона</b><br><span class="sub">упрощённые десна и коронки, файл в 3–5 раз меньше, открывается быстрее</span></span></label>
     <label class="opt" id="exBoneRow"><input type="checkbox" id="exBone" checked><span><b>Включить кость КЛКТ</b><br><span class="sub">файл станет больше; корни сохраняются всегда</span></span></label>
     <div class="err" id="exErr"></div>
-    <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap"><button class="btn" id="exGo">💾 Скачать файл</button><button class="btn primary" id="exPub">🔗 Опубликовать ссылкой</button><span class="sub" id="exInfo"></span></div>
-    <div id="pubBox" class="hidden" style="margin-top:14px;border-top:1px solid var(--soft);padding-top:12px">
-      <div class="form" style="grid-template-columns:1fr 1fr">
-        <label>Адрес сайта<input id="pubSite" placeholder="https://orthoskorobogatko.online/"></label>
-        <label>Пароль публикации<input id="pubKey" type="password" autocomplete="current-password"></label>
-      </div>
-      <label class="opt" style="margin-top:8px"><input type="checkbox" id="pubRemember"><span>Запомнить на этом компьютере</span></label>
-      <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="pubGo">Загрузить на сайт</button><button class="mini" id="pubList">Мои ссылки</button></div>
-      <div id="pubOut" style="margin-top:10px"></div>
-    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="exGo">💾 Скачать файл</button><span class="sub" id="exInfo"></span></div>
   </div></div>
   <div id="hint" class="card hidden"></div>
   <div id="toast" class="card hidden"></div>
@@ -2220,8 +2211,8 @@ function showCase(swapped = [], keepView) {
 // rated force is reached at 3× stretch of the inner (lumen) diameter
 const ELASTIC_SIZES = [['1/8″', 3.18], ['3/16″', 4.76], ['1/4″', 6.35], ['5/16″', 7.94], ['3/8″', 9.53], ['1/2″', 12.7], ['5/8″', 15.9], ['3/4″', 19.1]];
 const ELASTIC_FORCES = [
-  { oz: 2, g: 60, sizes: [0, 1, 2, 3, 4, 5, 6, 7] }, { oz: 3, g: 85, sizes: [1, 2, 3, 4] }, { oz: 3.5, g: 100, sizes: [0, 1, 2, 3, 4, 5, 6, 7] },
-  { oz: 4.5, g: 130, sizes: [1, 2, 3, 4] }, { oz: 6, g: 170, sizes: [1, 2, 3, 4] }
+  { oz: 2, g: 60, sizes: [0, 1, 2, 3, 4, 5, 6, 7] }, { oz: 3, g: 85, sizes: [0, 1, 2, 3, 4] }, { oz: 3.5, g: 100, sizes: [0, 1, 2, 3, 4, 5, 6, 7] },
+  { oz: 4.5, g: 130, sizes: [0, 1, 2, 3, 4] }, { oz: 6, g: 170, sizes: [0, 1, 2, 3, 4] }
 ];
 const WIRE_D = [1, 1.2, 1.5, 2, 2.5, 3];
 const LINK_COLORS_W = { 'Сталь (серо-синий)': '#7D8FB3', 'Серебро': '#B9BCC7', 'Золото': '#D2A64B', 'Фиолетовый': '#5B3FD6' };
@@ -2908,52 +2899,8 @@ $('#exGo').onclick = async () => {
     window.__lastExport = html;
   } catch (err) { console.error(err); setBusy(false); toast('Не получилось экспортировать: ' + (err.message || err)); }
 };
-// ---- publish to the doctor's own hosting (upload.php next to the viewer) ----
-const LS = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } } };
-function pubSite() { let s = $('#pubSite').value.trim(); if (!s) return ''; if (!/^https?:\/\//.test(s)) s = 'https://' + s; if (!s.endsWith('/')) s += '/'; return s; }
-$('#exPub').onclick = () => {
-  const box = $('#pubBox'); box.classList.toggle('hidden');
-  if (!$('#pubSite').value) $('#pubSite').value = LS.get('av_site') || (/^https?:/.test(location.protocol) && !/claude/.test(location.host) ? location.origin + location.pathname.replace(/[^/]*$/, '') : 'https://orthoskorobogatko.online/');
-  if (!$('#pubKey').value && LS.get('av_key')) { $('#pubKey').value = LS.get('av_key'); $('#pubRemember').checked = true; }
-};
-async function pubApi(action, opts = {}) {
-  const site = pubSite(), key = $('#pubKey').value;
-  if (!site) throw new Error('Укажите адрес сайта.'); if (!key) throw new Error('Введите пароль публикации.');
-  let r;
-  try { r = await fetch(site + 'upload.php?action=' + action + (opts.q || ''), { method: opts.body ? 'POST' : (opts.method || 'GET'), headers: { 'X-Key': encodeURIComponent(key), ...(opts.headers || {}) }, body: opts.body }); }
-  catch (e) { throw new Error('Сайт не отвечает. Проверьте адрес и что на хостинг загружен upload.php. (Из окна claude.ai публиковать нельзя — откройте просмотрщик с вашего сайта или как файл.)'); }
-  let j = null; try { j = await r.json(); } catch (e) { }
-  if (!r.ok || !j || j.error) throw new Error((j && j.error) || ('Ошибка сервера ' + r.status + (r.status === 413 ? ': файл больше разрешённого на хостинге — включите «Облегчённый» или увеличьте лимит' : '')));
-  if ($('#pubRemember').checked) { LS.set('av_site', site); LS.set('av_key', key); } else { LS.set('av_key', null); LS.set('av_site', site); }
-  return j;
-}
-function showLink(url, title) {
-  $('#pubOut').innerHTML = `<div class="grp" style="border-color:#3DBB6C"><b>Готово — ссылка для ${esc(title)}</b>
-    <div style="display:flex;gap:8px;margin-top:8px;align-items:center"><input class="num" style="flex:1;width:auto" readonly value="${esc(url)}" id="pubUrl"><button class="mini" id="pubCopy">Копировать</button><a class="mini" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none">Открыть</a></div>
-    <div class="sub" style="margin-top:6px">Ссылку можно отправить пациенту в мессенджер — план откроется в браузере на любом телефоне. Адрес случайный, поисковики страницу не индексируют.</div></div>`;
-  $('#pubCopy').onclick = async () => { const i = $('#pubUrl'); try { await navigator.clipboard.writeText(i.value); toast('Ссылка скопирована.'); } catch (e) { i.select(); toast('Выделено — скопируйте Ctrl+C.'); } };
-}
-$('#pubGo').onclick = async () => {
-  const o = exportOpts(); $('#exErr').textContent = '';
-  try {
-    const html = await makeExport(o);
-    setBusy(true, 'Загружаю на сайт', 0.95, (new Blob([html]).size / 1048576).toFixed(1) + ' МБ');
-    const title = S.info.patient || $('#caseTitle').value || 'пациента';
-    const j = await pubApi('upload', { body: new Blob([html], { type: 'text/html' }), headers: { 'X-Name': encodeURIComponent(title + (o.mode === 'patient' ? '' : ' (врач)') + (o.lite ? ' · телефон' : '')) } });
-    setBusy(false); showLink(j.url, title);
-  } catch (err) { console.error(err); setBusy(false); $('#exErr').textContent = err.message || String(err); }
-};
-$('#pubList').onclick = async () => {
-  $('#exErr').textContent = '';
-  try {
-    const j = await pubApi('list');
-    const items = j.items || [];
-    $('#pubOut').innerHTML = items.length ? `<div class="grp">${items.map(it => `<div class="row"><span><b>${esc(it.name || it.id)}</b><br><span class="sub">${esc(it.date || '')} · ${(it.size / 1048576).toFixed(1)} МБ</span></span>
-      <span style="margin-left:auto;display:flex;gap:6px"><a class="mini" href="${esc(it.url)}" target="_blank" rel="noopener" style="text-decoration:none">Открыть</a><button class="mini" data-copy="${esc(it.url)}">Копировать</button><button class="x" data-pdel="${esc(it.id)}" title="Удалить с сайта">×</button></span></div>`).join('')}</div>` : '<div class="empty">На сайте пока нет опубликованных планов.</div>';
-    $('#pubOut').querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); toast('Ссылка скопирована.'); } catch (e) { toast(b.dataset.copy); } });
-    $('#pubOut').querySelectorAll('[data-pdel]').forEach(b => b.onclick = async () => { if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Точно?'; b.style.width = 'auto'; return; } try { await pubApi('delete', { method: 'POST', q: '&id=' + encodeURIComponent(b.dataset.pdel) }); $('#pubList').click(); } catch (e) { $('#exErr').textContent = e.message; } });
-  } catch (err) { $('#exErr').textContent = err.message || String(err); }
-};
+// публикация ссылкой удалена: планы не выкладываются в интернет; стираем сохранённый ранее пароль публикации
+try { localStorage.removeItem('av_key'); localStorage.removeItem('av_site'); } catch (e) { }
 
 window.addEventListener('resize', () => requestDraw());
 new ResizeObserver(() => requestDraw()).observe(canvas);
