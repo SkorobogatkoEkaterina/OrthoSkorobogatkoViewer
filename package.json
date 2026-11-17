@@ -1,7 +1,7 @@
 {
   "name": "setups-viewer",
   "productName": "Сетапы",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Просмотр и анализ планов лечения на элайнерах из Maestro 3D",
   "author": "Екатерина Скоробогатько (@katya_skorobogatko)",
   "homepage": "https://orthoskorobogatko.ru",
@@ -21,12 +21,26 @@
     "appId": "ru.orthoskorobogatko.setups",
     "productName": "Сетапы",
     "copyright": "© Екатерина Скоробогатько",
-    "artifactName": "Setups-${version}-${os}-${arch}.${ext}",
-    "files": ["main.js", "app/**/*", "build/icon.png"],
-    "directories": { "buildResources": "build", "output": "dist" },
+    "files": [
+      "main.js",
+      "app/**/*",
+      "build/icon.png"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "build/icon.png"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "Setups-Windows.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -37,12 +51,22 @@
       "shortcutName": "Сетапы"
     },
     "mac": {
-      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
       "icon": "build/icon.png",
       "category": "public.app-category.medical",
       "identity": "-",
-      "hardenedRuntime": false
+      "hardenedRuntime": false,
+      "artifactName": "Setups-Mac.${ext}"
     },
-    "dmg": { "title": "Сетапы ${version}" }
+    "dmg": {
+      "title": "Сетапы ${version}"
+    }
   }
 }

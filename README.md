@@ -61,14 +61,15 @@
 
 ## Установка
 
-### Готовые установщики
+### Скачать
 
-Скачайте последнюю сборку во вкладке **Actions** → последняя успешная «Сборка приложения» → раздел **Artifacts**:
+<div align="center">
 
-| Система | Файл |
-|---|---|
-| Windows 10/11 | `Setups-x.y.z-win-x64.exe` |
-| macOS (Intel и Apple Silicon) | `Setups-x.y.z-mac-universal.dmg` |
+[**⬇ Скачать для Windows**](https://github.com/SkorobogatkoEkaterina/OrthoSkorobogatkoViewer/releases/latest/download/Setups-Windows.exe) &nbsp;&nbsp;·&nbsp;&nbsp; [**⬇ Скачать для macOS**](https://github.com/SkorobogatkoEkaterina/OrthoSkorobogatkoViewer/releases/latest/download/Setups-Mac.dmg)
+
+<sub>Windows 10/11 · macOS (Intel и Apple Silicon) · [все версии](https://github.com/SkorobogatkoEkaterina/OrthoSkorobogatkoViewer/releases)</sub>
+
+</div>
 
 > **Первый запуск.** Приложение не подписано платным сертификатом разработчика, поэтому система предупредит:
 > - **Windows:** «Windows защитила компьютер» → «Подробнее» → «Выполнить в любом случае».
@@ -110,13 +111,13 @@ npm run dist:win     # собрать установщик Windows (на Windows
 npm run dist:mac     # собрать установщик macOS (на Mac)
 ```
 
-При каждой загрузке изменений в репозиторий GitHub Actions собирает установщики для обеих систем автоматически (`.github/workflows/build.yml`).
+При каждой загрузке изменений в репозиторий GitHub Actions автоматически собирает установщики для обеих систем и выкладывает их в [Releases](https://github.com/SkorobogatkoEkaterina/OrthoSkorobogatkoViewer/releases) (`.github/workflows/build.yml`). Ссылки «Скачать» всегда ведут на последнюю версию.
 
 ### Обновление версии
 
 1. Замените `app/index.html` на новую версию просмотрщика.
 2. Увеличьте `"version"` в `package.json`, например `1.0.0` → `1.0.1`.
-3. Загрузите изменения: новые установщики появятся во вкладке **Actions**.
+3. Загрузите изменения: через ~10 минут новая версия появится в **Releases**, ссылки «Скачать» обновятся сами.
 
 ## Структура проекта
 

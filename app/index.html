@@ -297,6 +297,7 @@ input[type=range].rng{accent-color:var(--purple);width:160px}
     <div class="sep"></div>
     <button data-m="elastic" title="Эластик: кликайте по точкам крепления"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="18" r="2.2"/><path d="M6.6 7.6l10.8 8.8M3.6 7.7l12.2 11.1"/></svg>Эластик</button>
     <button data-m="chain" title="Эластическая цепочка: кликайте по зубам по ходу цепочки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4.5" cy="12" r="2.6"/><circle cx="12" cy="12" r="2.6"/><circle cx="19.5" cy="12" r="2.6"/></svg>Цепочка</button>
+    <button data-m="wire" title="Балка / проволока от минивинтов: кликайте по минивинтам, нёбу и зубам"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="6" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><path d="M9 6.5c0 4 -5 4 -5 9s3 5.5 5 5.5M15 6.5c0 4 5 4 5 9 0 2-1 3-2.5 3"/></svg>Балка</button>
     <div class="sep"></div>
     <button data-m="list" title="Список элементов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>Список</button>
   </div>
@@ -769,13 +770,30 @@ async function registerICP(src, dst, dstCentroid, progress, opt = {}) {
     res.push({ ...o, s: score(S1, o.R, o.t) });
     progress(0.1 + 0.4 * (k + 1) / starts.length); await sleep();
   }
+  // anatomical starts: the crowns sit at the occlusal end of the CT teeth (roots go apically).
+  // Try every CT axis as the apical direction, rotate the arch around it every 30°, and start with the crowns at the occlusal end.
+  if (opt.Ua) {
+    const Dp = dstGridCoarse.p, nD = Dp.length / 3; const S0 = S1.subarray(0, 400 * 3);
+    const rotTo = (a, b) => { const v = cross(a, b), sn = Math.hypot(...v), c = dot(a, b); if (sn < 1e-8) return c > 0 ? [1, 0, 0, 0, 1, 0, 0, 0, 1] : axisAngle(Math.abs(a[0]) < 0.9 ? cross(a, [1, 0, 0]) : cross(a, [0, 1, 0]), Math.PI); return axisAngle(v, Math.atan2(sn, c)); };
+    const Ua = norm(opt.Ua); const cand = [];
+    for (const a of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) {
+      const pr = []; for (let i = 0; i < nD; i++) pr.push(Dp[i * 3] * a[0] + Dp[i * 3 + 1] * a[1] + Dp[i * 3 + 2] * a[2]);
+      const lim = pr.slice().sort((x, y) => x - y)[Math.floor(nD * 0.22)]; const oc = [0, 0, 0]; let n0 = 0;
+      for (let i = 0; i < nD; i++) if (pr[i] <= lim) { oc[0] += Dp[i * 3]; oc[1] += Dp[i * 3 + 1]; oc[2] += Dp[i * 3 + 2]; n0++; }
+      oc.forEach((v, k) => oc[k] = v / n0); const R0 = rotTo(Ua, a);
+      for (let yaw = 0; yaw < 360; yaw += 30) { const R = r9mul(axisAngle(a, yaw * Math.PI / 180), R0);
+        for (const dz of [-2]) { const t = sub(oc.map((v, k) => v + a[k] * dz), r9v(R, cs)); let o = run(S0, R, t, 18, dstGridCoarse, 2, 0.8); o = run(S0, o.R, o.t, 14, dstGridFine, 3, 0.8); cand.push({ ...o, s: score(S0, o.R, o.t) }); } }
+      progress(0.5 + 0.1 * cand.length / 72); await sleep();
+    }
+    cand.sort((x, y) => x.s - y.s); for (const c of cand.slice(0, 8)) { const o = run(S1, c.R, c.t, 30, dstGridFine, 2, 0.8); res.push({ ...o, s: score(S1, o.R, o.t) }); }
+  }
   for (const sd of opt.seeds || []) {
     let o = run(S1, sd.R, sd.t, 25, dstGridFine, 3, 0.7); o = run(S1, o.R, o.t, 10, dstGridFine, 2, 0.8);
     res.push({ ...o, s: score(S1, o.R, o.t) });
   }
   res.sort((a, b) => a.s - b.s);
   let best = res[0];
-  const tries = 36;
+  const tries = best.s < 0.3 ? 8 : 36; // a clean anatomical fit needs only a few perturbations
   for (let k = 0; k < tries; k++) {
     const base = k < 6 ? res[k % 3] : best;
     const dR = axisAngle([rnd() - .5, rnd() - .5, rnd() - .5], (rnd() - .5) * 0.45);
@@ -790,12 +808,12 @@ async function registerICP(src, dst, dstCentroid, progress, opt = {}) {
   res.sort((a, b) => a.s - b.s);
   const fins = [];
   for (const r of res.slice(0, 6)) {
-    let f = run(S2, r.R, r.t, 10, dstGridFine, 2, 0.85); f = run(S2, f.R, f.t, 10, dstGridFull, 2, 0.85);
+    let f = run(S2, r.R, r.t, 25, dstGridFine, 2, 0.85); f = run(S2, f.R, f.t, 15, dstGridFull, 2, 0.85);
     fins.push({ ...f, s: score(S2, f.R, f.t), ok: rootness(f.R, f.t) >= 2 });
   }
   fins.sort((a, b) => (b.ok - a.ok) || (a.s - b.s));
   let fin = fins[0];
-  if (fin.ok) fin = run(S2, fin.R, fin.t, 8, dstGridFull, 2, 0.85);
+  if (fin.ok) fin = run(S2, fin.R, fin.t, 20, dstGridFull, 2, 0.85);
   // quality: median distance
   const n = S2.length / 3, ds = [];
   for (let i = 0; i < n; i++) { const p = r9v(fin.R, [S2[i * 3], S2[i * 3 + 1], S2[i * 3 + 2]]); ds.push(Math.sqrt(Math.min(4, dstGridFull.nearest(p[0] + fin.t[0], p[1] + fin.t[1], p[2] + fin.t[2], 3)))); }
@@ -1073,6 +1091,35 @@ function screwGeom(L, d) {
   prof.push([0, z0 - L - 0.1]);
   return lathe(prof);
 }
+// buttons: flat, with a ball hook, with a hook and two tubes (local z = out of the tooth, y = towards the occlusal plane; hooks point gingivally)
+const BTN_TYPES = { flat: 'Кнопка', ball: 'Кнопка с шариком', tubes: 'Крючок с трубками' };
+const BTN_LEN = { ball: [2, 3, 4], tubes: [6, 8, 10] };
+const LEN_NAME = ['короткий', 'средний', 'длинный'];
+function mergeG(parts) { // [{g, M}] → one mesh
+  let nv = 0, ni = 0; for (const { g } of parts) { nv += g.pos.length; ni += g.idx.length; }
+  const pos = new Float32Array(nv), nrm = new Float32Array(nv), idx = new Uint32Array(ni); let ov = 0, oi = 0;
+  for (const { g, M } of parts) { pos.set(M ? M4.applyToArray(M, g.pos) : g.pos, ov); nrm.set(M ? M4.dirArray(M, g.nrm) : g.nrm, ov); for (let k = 0; k < g.idx.length; k++) idx[oi + k] = g.idx[k] + ov / 3; ov += g.pos.length; oi += g.idx.length; }
+  return { pos, nrm, idx };
+}
+function cylBetween(a, b, r, seg = 18) { const L = segLen(a, b), z = sub(b, a).map(v => v / L); const pr = [[0, 0], [r, 0], [r, L], [0, L]]; const g2 = lathe(pr, seg); return { g: g2, M: M4.basis(a, z, Math.abs(z[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]) }; }
+function sphereAt(c, r) { const pr = []; for (let i = 0; i <= 12; i++) { const a = Math.PI * i / 12; pr.push([Math.sin(a) * r, Math.cos(a) * r]); } return { g: lathe(pr, 18), M: M4.basis(c, [0, 0, 1], [0, 1, 0]) }; }
+function buttonGeom(type, len) {
+  if (type === 'ball') { const L = BTN_LEN.ball[len ?? 1], h = 1.3;
+    return mergeG([{ g: lathe([[0, 0.35], [1.75, 0.35], [1.85, 0.2], [1.75, 0], [0, 0]], 28) }, cylBetween([0, 0, 0.3], [0, 0, h], 0.45), sphereAt([0, 0, h], 0.45), cylBetween([0, 0, h], [0, -L, h], 0.45), sphereAt([0, -L, h], 0.8)]); }
+  if (type === 'tubes') { const L = BTN_LEN.tubes[len ?? 1], h = 1.2;
+    const parts = [{ g: box(3.2, 3.4, 0.35) }, cylBetween([0, 0, 0.3], [0, 0, h], 0.55), sphereAt([0, 0, h], 0.55), cylBetween([0, 0, h], [0, -L, h], 0.55)];
+    for (const f of [0.55, 1]) { const y = -L * f; parts.push(cylBetween([-1.6, y, h], [1.6, y, h], 0.6), cylBetween([-1.62, y, h], [-1.6, y, h], 0.6)); }
+    return mergeG(parts); }
+  return MARKER_GEOM.button();
+}
+// where an elastic / wire attaches on a marker (local coordinates)
+function markAnchorLocal(mk) {
+  if (mk.type === 'screw') return [0, 0, 1.0];
+  if (mk.type === 'button') { const bt = mk.btype || 'flat'; if (bt === 'ball') return [0, -BTN_LEN.ball[mk.blen ?? 1], 1.3]; if (bt === 'tubes') return [0, -BTN_LEN.tubes[mk.blen ?? 1], 1.2]; return [0, 0, 0.8]; }
+  return [0, 0, 0.3];
+}
+function markGeomKey(mk) { return mk.type === 'screw' ? 'screw' + mk.size.join('x') : mk.type === 'button' ? 'button' + (mk.btype || 'flat') + (mk.blen ?? 1) : mk.type; }
+function markGeom(mk) { const k = markGeomKey(mk); const c = MARKER_GEOM['_' + k]; if (c) return c; return (MARKER_GEOM['_' + k] = mk.type === 'screw' ? screwGeom(mk.size[0], mk.size[1]) : mk.type === 'button' ? buttonGeom(mk.btype || 'flat', mk.blen ?? 1) : MARKER_GEOM[mk.type]()); }
 const MARKER_GEOM = {
   button: () => lathe([[0, 1.3], [1.45, 1.3], [1.6, 1.0], [1.6, 0.75], [0.9, 0.6], [0.9, 0.25], [1.7, 0.2], [1.7, 0], [0, 0]]),
   cut: () => box(1.3, 4.2, 0.35)
@@ -1081,8 +1128,8 @@ const MARKER_COLOR = { screw: [0.62, 0.64, 0.70], button: [0.80, 0.82, 0.86], cu
 const MARKER_NAME = { screw: 'Минивинт', button: 'Кнопка', cut: 'Вырезка' };
 const sizeTxt = sz => `${sz[0]} × ${String(sz[1]).replace('.', ',')}`;
 function markerBuf(mk) {
-  const key = mk.type === 'screw' ? 'screw' + mk.size.join('x') : mk.type;
-  if (!markerBufs[key]) markerBufs[key] = upload(mk.type === 'screw' ? screwGeom(mk.size[0], mk.size[1]) : MARKER_GEOM[mk.type]());
+  const key = markGeomKey(mk);
+  if (!markerBufs[key]) markerBufs[key] = upload(markGeom(mk));
   return markerBufs[key];
 }
 
@@ -1212,9 +1259,10 @@ function draw() {
     for (const jaw of S.jaws) { if (!S.show[jaw.kind]) continue; for (const [i, b] of jaw.buf.teeth) { const m = jaw.data.mats[0].get(i); if (m) drawBuf(b, m, COLORS.ghost, .28, 0); } }
     gl.depthMask(true); gl.disable(gl.BLEND);
   }
-  if (S.check && S.show.scan) {
+  if (S.check && S.show.scan && S.scanAlpha >= 0.99) for (const k of ['upper', 'lower']) { const c = S.check.jaws[k]; if (c && S.show[k]) drawBuf(c.buf, IDM, hex3(S.scanCol), 1, 0.25); }
+  if (S.check && S.show.scan && S.scanAlpha < 0.99) {
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
-    for (const k of ['upper', 'lower']) { const c = S.check.jaws[k]; if (c && S.show[k]) drawBuf(c.buf, IDM, [0.05, 0.71, 0.91], 0.38, 0.2); }
+    for (const k of ['upper', 'lower']) { const c = S.check.jaws[k]; if (c && S.show[k]) drawBuf(c.buf, IDM, hex3(S.scanCol), S.scanAlpha, 0.2); }
     gl.depthMask(true); gl.disable(gl.BLEND);
   }
   if (gumA < 1 || (ct && S.show.bone)) {
@@ -1599,10 +1647,11 @@ function placeMarker(cx, cy) {
   const type = S.placing; const sf = surfaceAt(cx, cy, type); if (!sf) return;
   const m = { id: Date.now() + Math.random(), type, from: Math.round(S.t), spin: 0, tilt: 0, tdir: 0, depth: 0 };
   if (type === 'screw') m.size = S.screwSize.slice();
+  if (type === 'button') { m.btype = S.btnType; m.blen = S.btnLen; }
   setSurface(m, sf); S.marks.push(m); S.cx = null;
   setPlacing(null); S.show.marks = true; renderChips();
   selectMark(m.id);
-  toast(MARKER_NAME[type] + ' добавлен' + (type === 'cut' ? 'а' : '') + '. Перетащите мышкой, чтобы сдвинуть; поворот и наклон — в карточке слева.');
+  toast((type === 'button' ? BTN_TYPES[m.btype] : MARKER_NAME[type]) + (type === 'cut' || (type === 'button' && m.btype !== 'tubes') ? ' добавлена' : ' добавлен') + '. Перетащите мышкой, чтобы сдвинуть; поворот и наклон — в карточке слева.');
   requestDraw();
 }
 // ray vs marker meshes
@@ -1613,7 +1662,7 @@ function pickMarker(cx, cy) {
     if (!S.show[mk.jaw] || Math.round(S.t) < mk.from) continue;
     const M = markerModel(mk, S.t); if (!M) continue;
     const inv = M4.invRigid(M), lo = M4.pt(inv, o), ld = M4.dir(inv, d);
-    const g = mk.type === 'screw' ? (mk._g && mk._gk === mk.size.join('x') ? mk._g : (mk._gk = mk.size.join('x'), mk._g = screwGeom(mk.size[0], mk.size[1]))) : (MARKER_GEOM['_' + mk.type] || (MARKER_GEOM['_' + mk.type] = MARKER_GEOM[mk.type]()));
+    const g = markGeom(mk);
     // a little extra grab radius for thin elements
     const h = rayMesh(lo, ld, g.pos, g.idx) || rayMesh(lo.map((v, q) => v), ld, (mk.type === 'cut' ? box(2.6, 5, 1.2) : g).pos, (mk.type === 'cut' ? box(2.6, 5, 1.2) : g).idx);
     if (h && (!best || h.t < best.t)) best = { t: h.t, mk };
@@ -1633,9 +1682,11 @@ function renderEdit() {
   // screw depth is shown with a minus sign: −5 мм = screw sunk 5 mm deeper
   const sgn = key => 1;
   const sl = (key, label, min, max, step, unit) => `<label class="erow"><span>${label}</span><input type="range" min="${min}" max="${max}" step="${step}" value="${sgn(key) * (m[key] || 0)}" data-k="${key}"><b data-v="${key}">${fmt(sgn(key) * (m[key] || 0), step < 1 ? 1 : 0)}${unit}</b></label>`;
-  el.innerHTML = `<div class="ehead"><b>${MARKER_NAME[m.type]}</b><span class="sub">${where}</span><button class="x" id="eClose" title="Готово">×</button></div>
+  el.innerHTML = `<div class="ehead"><b>${m.type === 'button' ? BTN_TYPES[m.btype || 'flat'] : MARKER_NAME[m.type]}</b><span class="sub">${where}</span><button class="x" id="eClose" title="Готово">×</button></div>
     ${m.type === 'screw' ? `<label class="erow"><span>Размер</span><select class="num" id="eSize">${SCREW_SIZES.map(z => `<option value="${z.join('x')}" ${z.join('x') === m.size.join('x') ? 'selected' : ''}>${sizeTxt(z)} мм</option>`).join('')}</select></label>` : ''}
-    ${m.type === 'cut' ? sl('spin', 'Поворот', -180, 180, 5, '°') : ''}
+    ${m.type === 'button' ? `<label class="erow"><span>Вид</span><select class="num" id="eBtype">${Object.entries(BTN_TYPES).map(([k, v]) => `<option value="${k}" ${k === (m.btype || 'flat') ? 'selected' : ''}>${v}</option>`).join('')}</select></label>` : ''}
+    ${m.type === 'button' && (m.btype || 'flat') !== 'flat' ? `<label class="erow"><span>Длина крючка</span><select class="num" id="eBlen">${BTN_LEN[m.btype].map((L, i) => `<option value="${i}" ${i === (m.blen ?? 1) ? 'selected' : ''}>${LEN_NAME[i]} · ${L} мм</option>`).join('')}</select></label>` : ''}
+    ${m.type === 'cut' || m.type === 'button' ? sl('spin', 'Поворот', -180, 180, 5, '°') : ''}
     ${m.type !== 'cut' ? sl('tilt', 'Наклон', 0, 60, 1, '°') + sl('tdir', 'Направление наклона', -180, 180, 5, '°') : ''}
     ${m.type === 'screw' ? sl('depth', 'Погружение', -15, 3, 0.5, ' мм') : sl('depth', 'Сдвиг от поверхности', -1, 3, 0.1, ' мм')}
     <div class="sub" style="margin:4px 0 8px">Чтобы переместить — потяните элемент мышкой по модели.${m.type === 'screw' ? ' Погружение «−» выдвигает винт из кости наружу.' : ''}${m.type !== 'cut' ? ' Направление наклона 0° — к окклюзионной плоскости.' : ''}</div>
@@ -1645,6 +1696,8 @@ function renderEdit() {
     const k = inp.dataset.k; m[k] = sgn(k) * +inp.value; el.querySelector(`[data-v="${k}"]`).textContent = fmt(+inp.value, +inp.step < 1 ? 1 : 0) + (k === 'depth' ? ' мм' : '°');
     m.place = computePlace(m); S.cx = null; requestDraw();
   });
+  const bt = el.querySelector('#eBtype'); if (bt) bt.onchange = () => { m.btype = bt.value; S.btnType = m.btype; for (const L of S.links) L._sig = null; renderEdit(); requestDraw(); };
+  const bl = el.querySelector('#eBlen'); if (bl) bl.onchange = () => { m.blen = +bl.value; S.btnLen = m.blen; for (const L of S.links) L._sig = null; requestDraw(); };
   const sz = el.querySelector('#eSize'); if (sz) sz.onchange = () => { m.size = sz.value.split('x').map(Number); S.cx = null; requestDraw(); if (S.panelOpen) renderPanel(); };
   el.querySelector('#eClose').onclick = () => selectMark(null);
   el.querySelector('#eReset').onclick = () => { Object.assign(m, { spin: 0, tilt: 0, tdir: 0, depth: 0 }); m.place = computePlace(m); S.cx = null; renderEdit(); requestDraw(); };
@@ -1656,9 +1709,9 @@ function setPlacing(type) {
   document.querySelectorAll('#tools button[data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === type));
   canvas.classList.toggle('placing', !!type);
   const hint = $('#hint');
-  if (type) { hint.innerHTML = `<b>${MARKER_NAME[type]}${type === 'screw' ? ' ' + sizeTxt(S.screwSize) + ' мм' : ''}:</b> ${type === 'screw' ? 'кликните по десне или кости' : 'кликните по коронке зуба'} · Esc — отмена`; hint.classList.remove('hidden'); }
+  if (type) { hint.innerHTML = `<b>${type === 'button' ? BTN_TYPES[S.btnType] + (S.btnType !== 'flat' ? ' ' + BTN_LEN[S.btnType][S.btnLen] + ' мм' : '') : MARKER_NAME[type]}${type === 'screw' ? ' ' + sizeTxt(S.screwSize) + ' мм' : ''}:</b> ${type === 'screw' ? 'кликните по десне или кости' : 'кликните по коронке зуба'} · Esc — отмена`; hint.classList.remove('hidden'); }
   else hint.classList.add('hidden');
-  renderSizes(); $('#sizePick').classList.toggle('hidden', type !== 'screw');
+  renderSizes(); $('#sizePick').classList.toggle('hidden', type !== 'screw' && type !== 'button');
   if (type && S.selMark) { S.selMark = null; $('#editCard').classList.add('hidden'); requestDraw(); }
   if (type && S.drawing) cancelDraw();
 }
@@ -1667,13 +1720,24 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.re
 $('#tools').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.m === 'list') { S.tab = 'mk'; syncTabs(); openPanel(true); return; }
-  if (b.dataset.m === 'elastic' || b.dataset.m === 'chain') { if (S.drawing && S.drawing.kind === b.dataset.m) cancelDraw(); else startDraw(b.dataset.m); return; }
+  if (b.dataset.m === 'elastic' || b.dataset.m === 'chain' || b.dataset.m === 'wire') { if (S.drawing && S.drawing.kind === b.dataset.m) cancelDraw(); else startDraw(b.dataset.m); return; }
   if (S.drawing) cancelDraw();
   setPlacing(S.placing === b.dataset.m ? null : b.dataset.m);
 });
 S.screwSize = [8, 1.5];
-function renderSizes() { $('#sizeGrid').innerHTML = SCREW_SIZES.map(z => `<button data-sz="${z.join('x')}" class="${z.join('x') === S.screwSize.join('x') ? 'on' : ''}">${sizeTxt(z)}</button>`).join(''); }
-$('#sizeGrid').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; S.screwSize = b.dataset.sz.split('x').map(Number); renderSizes(); setPlacing('screw'); });
+S.btnType = 'flat'; S.btnLen = 1;
+function renderSizes() {
+  if (S.placing === 'button') {
+    $('#sizePick h4').textContent = 'Вид кнопки';
+    $('#sizeGrid').innerHTML = Object.entries(BTN_TYPES).map(([k, v]) => `<button data-bt="${k}" class="${k === S.btnType ? 'on' : ''}" style="grid-column:1/-1">${v}</button>`).join('') +
+      (S.btnType !== 'flat' ? BTN_LEN[S.btnType].map((L, i) => `<button data-bl="${i}" class="${i === S.btnLen ? 'on' : ''}">${L} мм</button>`).join('') : '');
+    $('#sizePick .sub').textContent = S.btnType === 'flat' ? 'Затем кликните по коронке зуба.' : 'Длина крючка: короткий, средний, длинный. Затем кликните по коронке; поворот — в карточке.';
+    $('#sizePick .grid').style.gridTemplateColumns = '1fr 1fr 1fr'; return;
+  }
+  $('#sizePick h4').textContent = 'Размер минивинта'; $('#sizePick .sub').textContent = 'длина × диаметр, мм. Затем кликните по десне или кости.'; $('#sizePick .grid').style.gridTemplateColumns = '';
+  $('#sizeGrid').innerHTML = SCREW_SIZES.map(z => `<button data-sz="${z.join('x')}" class="${z.join('x') === S.screwSize.join('x') ? 'on' : ''}">${sizeTxt(z)}</button>`).join(''); }
+$('#sizeGrid').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.bt) { S.btnType = b.dataset.bt; renderSizes(); setPlacing('button'); return; } if (b.dataset.bl) { S.btnLen = +b.dataset.bl; renderSizes(); setPlacing('button'); return; } S.screwSize = b.dataset.sz.split('x').map(Number); renderSizes(); setPlacing('screw'); });
 
 /* ---------------- pointer controls ---------------- */
 const ptrs = new Map(); let lastPinch = null;
@@ -1934,7 +1998,7 @@ function renderPanel() {
       for (const m of S.marks) {
         const where = m.anchor === 'tooth' ? 'зуб ' + fdi(m.jaw, m.tooth) : (m.anchor === 'bone' ? 'кость' : 'десна') + ' ' + (m.jaw === 'upper' ? 'ВЧ' : 'НЧ');
         h += `<div class="row" data-sel="${m.id}" style="cursor:pointer;${m.id === S.selMark ? 'background:rgba(229,21,90,.06);border-radius:10px;padding-left:6px' : ''}"><span class="mk" style="color:${m.type === 'cut' ? 'var(--pink)' : 'var(--purple)'}">${document.querySelector(`#tools button[data-m="${m.type}"] svg`).outerHTML}</span>
-          <span><b>${MARKER_NAME[m.type]}</b>${m.type === 'screw' ? ` <select class="num" data-size="${m.id}">${SCREW_SIZES.map(z => `<option value="${z.join('x')}" ${z.join('x') === m.size.join('x') ? 'selected' : ''}>${sizeTxt(z)} мм</option>`).join('')}</select>` : ''}<br><span class="sub">${where}${m.type === 'screw' ? screwClearTxt(m) : ''}</span></span>
+          <span><b>${m.type === 'button' ? BTN_TYPES[m.btype || 'flat'] + ((m.btype || 'flat') !== 'flat' ? ' ' + BTN_LEN[m.btype][m.blen ?? 1] + ' мм' : '') : MARKER_NAME[m.type]}</b>${m.type === 'screw' ? ` <select class="num" data-size="${m.id}">${SCREW_SIZES.map(z => `<option value="${z.join('x')}" ${z.join('x') === m.size.join('x') ? 'selected' : ''}>${sizeTxt(z)} мм</option>`).join('')}</select>` : ''}<br><span class="sub">${where}${m.type === 'screw' ? screwClearTxt(m) : ''}</span></span>
           <span class="sub" style="margin-left:auto">с шага</span><input class="num" type="number" min="0" max="${S.maxT}" value="${m.from}" data-from="${m.id}">
           <button class="x" data-del="${m.id}" title="Удалить">×</button></div>`;
       }
@@ -2159,6 +2223,8 @@ const ELASTIC_FORCES = [
   { oz: 2, g: 60, sizes: [0, 1, 2, 3, 4, 5, 6, 7] }, { oz: 3, g: 85, sizes: [1, 2, 3, 4] }, { oz: 3.5, g: 100, sizes: [0, 1, 2, 3, 4, 5, 6, 7] },
   { oz: 4.5, g: 130, sizes: [1, 2, 3, 4] }, { oz: 6, g: 170, sizes: [1, 2, 3, 4] }
 ];
+const WIRE_D = [1, 1.2, 1.5, 2, 2.5, 3];
+const LINK_COLORS_W = { 'Сталь (серо-синий)': '#7D8FB3', 'Серебро': '#B9BCC7', 'Золото': '#D2A64B', 'Фиолетовый': '#5B3FD6' };
 const LINK_COLORS = { elastic: { 'Фиолетовый': '#7B5CFF', 'Прозрачный': '#C9C3DA', 'Розовый': '#E5155A', 'Голубой': '#13B5E7' }, chain: { 'Оранжевый': '#FF7A1A', 'Фиолетовый': '#5B3FD6', 'Розовый': '#E5155A', 'Серый': '#A9A6B8' } };
 const CHAIN_TYPES = { closed: ['Закрытая', 3.0], short: ['Короткая', 3.5], long: ['Длинная', 4.2] };
 const hex3 = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16) / 255);
@@ -2168,7 +2234,7 @@ function startDraw(kind) {
   document.querySelectorAll('#tools button[data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === kind));
   canvas.classList.add('placing');
   const hint = $('#hint');
-  hint.innerHTML = `<b>${kind === 'elastic' ? 'Эластик' : 'Цепочка'}:</b> ${kind === 'elastic' ? 'кликайте по кнопкам, вырезкам, минивинтам или зубам — петля замкнётся сама (2 точки — прямой, 3 — треугольник, 4 — коробочка, до 6 точек)' : 'кликайте по зубам по ходу цепочки'} · <span id="drawN">0 точек</span> &nbsp;<button class="mini" id="drawDone">Готово</button> <button class="mini" id="drawUndo">↶</button> <button class="mini" id="drawCancel">Отмена</button>`;
+  hint.innerHTML = kind === 'wire' ? `<b>Балка:</b> кликайте по минивинтам (два винта подряд — пластина), затем по нёбу, десне или зубам по ходу проволоки; двойной клик — готово · <span id="drawN">0 точек</span> &nbsp;<button class="mini" id="drawDone">Готово</button> <button class="mini" id="drawUndo">↶</button> <button class="mini" id="drawCancel">Отмена</button>` : `<b>${kind === 'elastic' ? 'Эластик' : 'Цепочка'}:</b> ${kind === 'elastic' ? 'кликайте по кнопкам, вырезкам, минивинтам или зубам — петля замкнётся сама (2 точки — прямой, 3 — треугольник, 4 — коробочка, до 6 точек)' : 'кликайте по зубам по ходу цепочки'} · <span id="drawN">0 точек</span> &nbsp;<button class="mini" id="drawDone">Готово</button> <button class="mini" id="drawUndo">↶</button> <button class="mini" id="drawCancel">Отмена</button>`;
   hint.classList.remove('hidden'); hint.style.pointerEvents = 'auto';
   $('#drawDone').onclick = finishDraw; $('#drawCancel').onclick = cancelDraw; $('#drawUndo').onclick = () => { S.drawing.pts.pop(); drawPreview(); requestDraw(); };
   drawPreview();
@@ -2186,20 +2252,21 @@ function drawClick(cx, cy) {
   const last = d.pts[d.pts.length - 1];
   if (last && JSON.stringify(last) === JSON.stringify(a)) return;
   d.pts.push(a); drawPreview(); requestDraw();
+  if (d.kind === 'wire' && d.pts.length >= 40) { finishDraw(); return; }
   if (d.kind === 'elastic' && d.pts.length >= 6) { toast('Эластик: достигнут максимум — 6 точек.'); finishDraw(); }
 }
 function finishDraw() {
   const d = S.drawing; if (!d) return;
   if (d.pts.length < 2) { toast('Нужно хотя бы две точки.'); return; }
   const L = { id: Date.now() + Math.random(), kind: d.kind, pts: d.pts, from: Math.round(S.t), to: S.maxT };
-  if (d.kind === 'elastic') { L.force = 4.5; L.color = '#7B5CFF'; } else { L.chain = 'closed'; L.color = '#FF7A1A'; }
+  if (d.kind === 'elastic') { L.force = 4.5; L.color = '#7B5CFF'; } else if (d.kind === 'wire') { L.diam = 1.5; L.color = '#7D8FB3'; L.hookA = false; L.hookB = false; L.from = 0; } else { L.chain = 'closed'; L.color = '#FF7A1A'; }
   S.links.push(L); cancelDraw(); S.show.marks = true; renderChips();
   S.tab = 'mk'; syncTabs(); S.selLink = L.id; openPanel(true); requestDraw();
 }
 function anchorPos(a, t) {
   if (a.anchor === 'mark') {
     const mk = S.marks.find(m => m.id === a.id); if (!mk) return null; const M = markerModel(mk, t); if (!M) return null;
-    return { p: M4.pt(M, [0, 0, mk.type === 'screw' ? 1.0 : mk.type === 'button' ? 0.8 : 0.3]), n: [M[8], M[9], M[10]] };
+    return { p: M4.pt(M, markAnchorLocal(mk)), n: [M[8], M[9], M[10]] };
   }
   if (a.anchor === 'tooth') { const jaw = S.jaws.find(j => j.kind === a.jaw); if (!jaw) return null; const m = toothMatrix(jaw, a.tooth, t); if (!m) return null; return { p: M4.pt(m, a.p.map((v, k) => v + a.n[k] * 0.5)), n: M4.dir(m, a.n) }; }
   return { p: a.p.map((v, k) => v + a.n[k] * 0.5), n: a.n };
@@ -2207,7 +2274,7 @@ function anchorPos(a, t) {
 function linkPts(L, t) { const out = []; for (const a of L.pts) { const q = anchorPos(a, t); if (!q) return null; out.push(q); } return out; }
 const segLen = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 // --- paths that wrap around teeth (taut string relaxed outside the 3D surfaces) ---
-function obstaclesAt(step, lo, hi) {
+function obstaclesAt(step, lo, hi, withGum) {
   // vertices (with outward normals) of teeth and attachments inside the box lo..hi at this step
   const P = [], N = [];
   for (const jaw of S.jaws) {
@@ -2226,6 +2293,7 @@ function obstaclesAt(step, lo, hi) {
       addGeom(t.geom, m);
     }
     for (const key of d.stageAttach[k] || []) { const a = d.attach.get(key), m = toothMatrix(jaw, a.tooth, step); if (m) addGeom(a.geom, m); }
+    if (withGum) { const gm = (jaw.buf && jaw.buf.gumRef && (d.gumMismatch ? jaw.buf.gumRef : nearestGum(d, k))) || null; if (gm && gm.nrm) addGeom(gm, IDM); }
   }
   const pos = new Float32Array(P);
   return { grid: new Grid(pos, 1.0), N: new Float32Array(N) };
@@ -2245,7 +2313,50 @@ function relaxSeg(a, b, out, O, clr) {
   }
   for (let i = out.length ? 1 : 0; i <= n; i++) out.push(pts[i]);
 }
+// wire: smooth curve through the clicked points, kept at a clearance outside teeth, attachments and gum; segment between two screws = plate
+function wirePath(L, step) {
+  const sig = L.pts.map(a => { if (a.anchor !== 'mark') return ''; const m = S.marks.find(x => x.id === a.id); return m ? Array.from(m.place).map(v => v.toFixed(3)).join(',') : 'x'; }).join('|') + '|' + L.diam;
+  if (!L._cache || L._sig !== sig) { L._cache = new Map(); L._sig = sig; }
+  if (L._cache.has(step)) return L._cache.get(step);
+  const A = linkPts(L, step); if (!A) return null;
+  const isScrew = a => { if (a.anchor !== 'mark') return false; const m = S.marks.find(x => x.id === a.id); return m && m.type === 'screw'; };
+  const plates = []; for (let k = 1; k < A.length; k++) if (isScrew(L.pts[k - 1]) && isScrew(L.pts[k])) plates.push([A[k - 1], A[k], k]);
+  const r = L.diam / 2, clr = r + 0.15;
+  const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9]; for (const q of A) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], q.p[k] - 8); hi[k] = Math.max(hi[k], q.p[k] + 8); }
+  const O = obstaclesAt(step, lo, hi, true);
+  // runs of points not joined by a plate
+  const runs = []; let cur = [0];
+  for (let k = 1; k < A.length; k++) { if (plates.some(p => p[2] === k)) { if (cur.length > 1) runs.push(cur); cur = [k]; } else cur.push(k); }
+  if (cur.length > 1) runs.push(cur);
+  const segs = [];
+  for (const run of runs) {
+    const P = run.map(i => A[i].p.map((v, k) => v + A[i].n[k] * (isScrew(L.pts[i]) ? 0 : clr - 0.5)));
+    const out = [];
+    for (let i = 0; i < P.length - 1; i++) { // Catmull-Rom
+      const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)]; const n = Math.max(4, Math.ceil(segLen(p1, p2) / 0.4));
+      for (let j = i ? 1 : 0; j <= n; j++) { const t = j / n, t2 = t * t, t3 = t2 * t; out.push([0, 1, 2].map(k => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t3))); }
+    }
+    // smooth lift: where the curve is too close to a surface, lift it by a smoothed (wide) amount → an even, fair line instead of following every ruga
+    const g = O.grid, GP = g.p, N = O.N, n = out.length;
+    const W1 = Math.max(3, Math.round(2.0 / 0.4)), W2 = Math.max(5, Math.round(4.0 / 0.4));
+    for (let round = 0; round < 12; round++) {
+      const req = new Float64Array(n), dir = out.map(() => [0, 0, 0]); let worst = 0;
+      for (let i = 1; i < n - 1; i++) { const q = out[i]; const d2 = g.nearest(q[0], q[1], q[2], 3); if (d2 === Infinity) continue; const j = g.i * 3; const sd = (q[0] - GP[j]) * N[j] + (q[1] - GP[j + 1]) * N[j + 1] + (q[2] - GP[j + 2]) * N[j + 2]; const need = Math.max(0, clr - Math.min(sd, Math.sqrt(d2))); req[i] = need; dir[i] = [N[j], N[j + 1], N[j + 2]]; worst = Math.max(worst, need); }
+      if (worst < 0.03) break;
+      const dil = new Float64Array(n); for (let i = 0; i < n; i++) { let m = 0; for (let k = Math.max(0, i - W1); k <= Math.min(n - 1, i + W1); k++) m = Math.max(m, req[k]); dil[i] = m; }
+      const lift = new Float64Array(n); const dsm = out.map(() => [0, 0, 0]);
+      for (let i = 1; i < n - 1; i++) { let sw = 0, sv = 0; for (let k = Math.max(0, i - W2); k <= Math.min(n - 1, i + W2); k++) { const w = Math.exp(-(((k - i) / (W2 / 2)) ** 2)); sw += w; sv += w * dil[k]; for (let c = 0; c < 3; c++) dsm[i][c] += w * dir[k][c]; } lift[i] = sv / sw * Math.min(1, Math.min(i, n - 1 - i) / W1); }
+      for (let i = 1; i < n - 1; i++) { const d = norm(dsm[i].some(v => v) ? dsm[i] : [0, 0, 1]); for (let c = 0; c < 3; c++) out[i][c] += d[c] * lift[i] * 1.05; }
+      for (let it = 0; it < 4; it++) for (let i = 1; i < n - 1; i++) for (let c = 0; c < 3; c++) out[i][c] = out[i][c] * 0.5 + (out[i - 1][c] + out[i + 1][c]) * 0.25;
+    }
+    segs.push(out);
+  }
+  let len = 0; for (const sg of segs) for (let i = 1; i < sg.length; i++) len += segLen(sg[i - 1], sg[i]);
+  const nrm = segs.map(sg => sg.map(q => { const d2 = O.grid.nearest(q[0], q[1], q[2], 3); if (d2 === Infinity) return null; const j = O.grid.i * 3; return [O.N[j], O.N[j + 1], O.N[j + 2]]; }));
+  const res = { segs, nrm, len, plates, screws: A.filter((a, i) => isScrew(L.pts[i])) }; L._cache.set(step, res); return res;
+}
 function linkPath(L, step) {
+  if (L.kind === 'wire') return wirePath(L, step);
   const sig = L.pts.map(a => { if (a.anchor !== 'mark') return ''; const m = S.marks.find(x => x.id === a.id); return m ? Array.from(m.place).map(v => v.toFixed(3)).join(',') : 'x'; }).join('|') + '|' + (L.chain || '');
   if (!L._cache || L._sig !== sig) { L._cache = new Map(); L._sig = sig; }
   if (L._cache.has(step)) return L._cache.get(step);
@@ -2315,6 +2426,24 @@ function drawLinks(t) {
     if (!L.pts.every(a => S.show[a.jaw] !== false)) continue;
     const R = linkPath(L, step); if (!R) continue;
     const sel = L.id === S.selLink; const col = sel ? mix(hex3(L.color), [1, 1, 1], 0.25) : hex3(L.color);
+    if (L.kind === 'wire') {
+      const r = L.diam / 2;
+      for (const sg of R.segs) { drawBall(sg[0], r, col); for (let i = 1; i < sg.length; i++) { drawTube(sg[i - 1], sg[i], r, col); drawBall(sg[i], r, col); } }
+      // plate between two screws, washers around the screw heads
+      for (const [a, b] of R.plates) { const L2 = segLen(a.p, b.p); const x = sub(b.p, a.p).map(v => v / L2); const z = norm(sub(a.n.map((v, k) => v + b.n[k]), x.map(v => v * dot(x, a.n.map((w, k) => w + b.n[k])))));
+        const mid = a.p.map((v, k) => (v + b.p[k]) / 2 - z[k] * 0.35); if (!markerBufs.plate) markerBufs.plate = upload(box(1, 1, 1));
+        const B = M4.basis(mid, z, x); for (let q = 0; q < 3; q++) { B[q] *= 3.0; B[4 + q] *= L2; B[8 + q] *= 0.7; } drawBuf(markerBufs.plate, B, col, 1, .6); }
+      if (!markerBufs.washer) markerBufs.washer = upload(lathe([[1.15, 0], [2.0, 0], [2.0, 0.7], [1.15, 0.7], [1.15, 0]], 30));
+      for (const a of R.screws) drawBuf(markerBufs.washer, M4.basis(a.p.map((v, k) => v - a.n[k] * 0.35), a.n, Math.abs(a.n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]), col, 1, .6);
+      // loops at the ends
+      for (const [on, sg, end] of [[L.hookA, R.segs[0], 0], [L.hookB, R.segs[R.segs.length - 1], 1]]) {
+        if (!on || !sg || sg.length < 2) continue; const e = end ? sg[sg.length - 1] : sg[0], pr = end ? sg[sg.length - 2] : sg[1]; const tg = norm(sub(e, pr));
+        const nn0 = (end ? R.nrm[R.nrm.length - 1][sg.length - 1] : R.nrm[0][0]) || [0, 0, 1]; const nn = norm(sub(nn0, tg.map(v => v * dot(nn0, tg))));
+        const sc = r / 0.36, Rr = 1.05 * sc; const side = cross(nn, tg); const c = e.map((v, k) => v + side[k] * Rr);
+        const B = M4.basis(c, nn, tg); for (let q = 0; q < 3; q++) { B[q] *= sc; B[4 + q] *= sc; B[8 + q] *= sc / 0.75; } drawBuf(linkBuf('ring'), B, col, 1, .6);
+      }
+      continue;
+    }
     if (L.kind === 'elastic') {
       const r = sel ? 0.5 : 0.4;
       for (const sg of R.segs) { drawBall(sg[0], r, col); for (let i = 1; i < sg.length; i++) { drawTube(sg[i - 1], sg[i], r, col); drawBall(sg[i], r, col); } }
@@ -2359,7 +2488,7 @@ function drawPreview() {
   const el = $('#drawN'); if (el) el.textContent = d.pts.length + (d.pts.length === 1 ? ' точка' : d.pts.length < 5 && d.pts.length > 1 ? ' точки' : ' точек');
   if (!VM) return;
   const Q = d.pts.map(a => { const q = anchorPos(a, S.t); return q ? project(q.p) : null; }).filter(Boolean);
-  const col = d.kind === 'elastic' ? '#7B5CFF' : '#FF7A1A';
+  const col = d.kind === 'elastic' ? '#7B5CFF' : d.kind === 'wire' ? '#5D6F95' : '#FF7A1A';
   let h = '';
   if (Q.length) {
     const pts = Q.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ');
@@ -2384,10 +2513,16 @@ function linksPanelHtml() {
     const sel = L.id === S.selLink;
     const colors = LINK_COLORS[L.kind];
     h += `<div class="grp" data-lsel="${L.id}" style="${sel ? 'border-color:var(--pink);box-shadow:0 0 0 2px rgba(229,21,90,.12)' : ''}">
-      <div style="display:flex;align-items:center;gap:8px"><i class="sw" style="background:${L.color};width:14px;height:14px"></i><b>${L.kind === 'elastic' ? (L.pts.length === 2 ? 'Эластик прямой' : L.pts.length === 3 ? 'Эластик треугольный' : L.pts.length === 4 ? 'Эластик коробочный' : `Эластик на ${L.pts.length} точек`) : 'Эластическая цепочка'}</b>
+      <div style="display:flex;align-items:center;gap:8px"><i class="sw" style="background:${L.color};width:14px;height:14px"></i><b>${L.kind === 'wire' ? 'Балка / проволока' : L.kind === 'elastic' ? (L.pts.length === 2 ? 'Эластик прямой' : L.pts.length === 3 ? 'Эластик треугольный' : L.pts.length === 4 ? 'Эластик коробочный' : `Эластик на ${L.pts.length} точек`) : 'Эластическая цепочка'}</b>
       <span class="sub" style="margin-left:auto">шаги</span><input class="num" type="number" min="0" max="${S.maxT}" value="${L.from}" data-lfrom="${L.id}"><span class="sub">–</span><input class="num" type="number" min="0" max="${S.maxT}" value="${L.to}" data-lto="${L.id}"><button class="x" data-ldel="${L.id}" title="Удалить">×</button></div>
       <div class="sub" style="margin:4px 0 6px">${linkWhere(L)}</div>`;
-    if (L.kind === 'elastic') {
+    if (L.kind === 'wire') {
+      const R0 = linkPath(L, Math.max(L.from, Math.min(L.to, Math.round(S.t))));
+      h += `<div class="ctrls" style="margin:4px 0"><span class="lbl">Диаметр</span><div class="seg">${WIRE_D.map(d => `<button data-wd="${L.id}" data-d="${d}" class="${L.diam === d ? 'on' : ''}">${String(d).replace('.', ',')}</button>`).join('')}</div><span class="sub">мм</span>
+        <select class="num" data-lcol="${L.id}">${Object.entries(LINK_COLORS_W).map(([n, c]) => `<option value="${c}" ${c === L.color ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div class="ctrls" style="margin:4px 0"><span class="lbl">Петли</span><label class="sub"><input type="checkbox" data-hka="${L.id}" ${L.hookA ? 'checked' : ''}> в начале</label><label class="sub" style="margin-left:10px"><input type="checkbox" data-hkb="${L.id}" ${L.hookB ? 'checked' : ''}> в конце</label></div>
+        ${R0 ? `<div class="row"><span>Длина проволоки</span><span class="mm" style="color:var(--purple)">${fmt(R0.len, 1)} мм</span></div>${R0.plates.length ? `<div class="row"><span>Пластина на минивинтах</span><span class="mm">${R0.plates.length} шт.</span></div>` : ''}` : ''}`;
+    } else if (L.kind === 'elastic') {
       const A = elasticAdvice(L);
       h += `<div class="ctrls" style="margin:4px 0"><span class="lbl">Сила</span><div class="seg">${[4.5, 6].map(oz => `<button data-lforce="${L.id}" data-oz="${oz}" class="${L.force === oz ? 'on' : ''}">${String(oz).replace('.', ',')} oz</button>`).join('')}</div>
         <select class="num" data-lforce2="${L.id}">${ELASTIC_FORCES.map(f => `<option value="${f.oz}" ${f.oz === L.force ? 'selected' : ''}>${String(f.oz).replace('.', ',')} oz — ${f.g} г</option>`).join('')}</select>
@@ -2431,6 +2566,9 @@ function bindLinksPanel(body) {
   body.querySelectorAll('[data-lpickset]').forEach(b => b.onclick = () => { const L = find(b.dataset.lpickset); L.force = +b.dataset.oz; L.pick = +b.dataset.i; upd(); });
   body.querySelectorAll('[data-lforce2]').forEach(i => i.onchange = () => { const L = find(i.dataset.lforce2); L.force = +i.value; L.pick = null; upd(); });
   body.querySelectorAll('[data-lcol]').forEach(i => i.onchange = () => { find(i.dataset.lcol).color = i.value; upd(); });
+  body.querySelectorAll('[data-wd]').forEach(b => b.onclick = () => { find(b.dataset.wd).diam = +b.dataset.d; upd(); });
+  body.querySelectorAll('[data-hka]').forEach(i => i.onchange = () => { find(i.dataset.hka).hookA = i.checked; upd(); });
+  body.querySelectorAll('[data-hkb]').forEach(i => i.onchange = () => { find(i.dataset.hkb).hookB = i.checked; upd(); });
   body.querySelectorAll('[data-lchain]').forEach(i => i.onchange = () => { find(i.dataset.lchain).chain = i.value; upd(); });
   body.querySelectorAll('[data-lsel]').forEach(g => g.onclick = e => { if (/INPUT|SELECT|BUTTON/.test(e.target.tagName)) return; S.selLink = S.selLink === +g.dataset.lsel ? null : +g.dataset.lsel; upd(); });
   if (S.selLink) { const g = body.querySelector(`[data-lsel="${S.selLink}"]`); if (g) g.scrollIntoView({ block: 'nearest' }); }
@@ -2463,6 +2601,8 @@ async function downloadSepMap() {
    Progress check: overlay a new intraoral scan on the planned step
    ============================================================ */
 const chkFiles = {}; let chkTarget = null;
+const SCAN_COLORS = { 'Голубой': '#0DB5E8', 'Жёлтый': '#F2C230', 'Зелёный': '#2FB86A', 'Фиолетовый': '#7B5CFF', 'Серый': '#8C8AA0' };
+S.scanAlpha = 0.6; S.scanCol = '#0DB5E8';
 S.chkStep = null;
 function checkPanelHtml() {
   const s = S.chkStep ?? Math.round(S.t);
@@ -2479,6 +2619,8 @@ function checkPanelHtml() {
   const C = S.check;
   if (C) {
     h += `<div class="ctrls"><span class="lbl">Результат для шага ${C.step}</span><button class="mini" id="chkGoStep">Перейти к шагу ${C.step}</button></div>
+      <div class="ctrls"><span class="lbl">Скан</span><input type="range" id="scanA" min="0.1" max="1" step="0.05" value="${S.scanAlpha}" style="flex:1"><b id="scanAv" style="min-width:42px;text-align:right">${Math.round(S.scanAlpha * 100)}%</b>
+        <select class="num" id="scanC">${Object.entries(SCAN_COLORS).map(([n, c]) => `<option value="${c}" ${c === S.scanCol ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
       <div class="devsc"></div><div class="scalelbl"><span>0 мм</span><span>0,25</span><span>0,5</span><span>≥ 0,8 мм</span></div>`;
     for (const k of ['upper', 'lower']) {
       const c = C.jaws[k]; if (!c) continue;
@@ -2492,7 +2634,7 @@ function checkPanelHtml() {
       }
       h += `</tbody></table>`;
     }
-    h += `<div class="legend">Скан совмещается в два этапа: сначала по всем зубам, затем уточняется по зубам, которые меньше всего отклонились (стабильная опора). Потом каждый зуб скана сравнивается со своим зубом в плане этого шага. «Отставание» — насколько коронка не дошла до запланированного положения; «Реализовано» — какая доля запланированного с начала лечения смещения и поворота уже произошла. На модели зубы окрашены по расстоянию до скана, голубым полупрозрачным показан сам скан.</div>`;
+    h += `<div class="legend">Скан совмещается в два этапа: сначала по всем зубам, затем уточняется по зубам, которые меньше всего отклонились (стабильная опора). Потом каждый зуб скана сравнивается со своим зубом в плане этого шага. «Отставание» — насколько коронка не дошла до запланированного положения; «Реализовано» — какая доля запланированного с начала лечения смещения и поворота уже произошла. На модели зубы окрашены по расстоянию до скана, сам скан показан полупрозрачным — его прозрачность и цвет меняются ползунком выше.</div>`;
   }
   return h;
 }
@@ -2501,6 +2643,8 @@ function bindCheckPanel(body) {
   body.querySelectorAll('[data-chkrm]').forEach(b => b.onclick = () => { delete chkFiles[b.dataset.chkrm]; renderPanel(); });
   const st = $('#chkStep'); if (st) st.onchange = () => { S.chkStep = Math.max(0, Math.min(S.maxT, Math.round(+st.value || 0))); };
   const go = $('#chkGo'); if (go) go.onclick = () => runCheck().catch(err => { console.error(err); setBusy(false); toast('Не получилось наложить скан: ' + (err.message || err)); });
+  const sa = $('#scanA'); if (sa) sa.oninput = () => { S.scanAlpha = +sa.value; S.show.scan = true; $('#scanAv').textContent = Math.round(S.scanAlpha * 100) + '%'; requestDraw(); };
+  const sc = $('#scanC'); if (sc) sc.onchange = () => { S.scanCol = sc.value; requestDraw(); };
   const gs = $('#chkGoStep'); if (gs) gs.onclick = () => { stop(); S.t = S.check.step; updateStepUI(); requestDraw(); };
   body.querySelectorAll('tr[data-i]').forEach(tr => tr.onclick = () => selectTooth(tr.dataset.k, +tr.dataset.i, false));
 }
