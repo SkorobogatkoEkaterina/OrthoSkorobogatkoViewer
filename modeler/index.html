@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Моделировщик элайнеров · 3.17</title>
+<title>Моделировщик элайнеров · 3.18</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -158,7 +158,7 @@ input.cmd{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;pad
   <aside id="side">
     <div class="brand">
       <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5c-2.2 0-3.5 1.8-3.5 4.3 0 3 1.2 5 1.8 8.2.4 2.3.9 4.5 2.1 4.5 1.4 0 1.5-3.3 2.4-5.2.4-.9 1.1-1.3 2.2-1.3s1.8.4 2.2 1.3c.9 1.9 1 5.2 2.4 5.2 1.2 0 1.7-2.2 2.1-4.5.6-3.2 1.8-5.2 1.8-8.2 0-2.5-1.3-4.3-3.5-4.3-1.9 0-3 1.1-5 1.1S8.9 3.5 7 3.5z"/></svg></div>
-      <div><b>Моделировщик элайнеров</b><small id="verLbl">версия 3.17</small></div>
+      <div><b>Моделировщик элайнеров</b><small id="verLbl">версия 3.18</small></div>
     </div>
 
     <div class="sec" id="secModels">
@@ -3635,7 +3635,7 @@ function stagesFor(kind, t, m) { if (mvZero(m) || !t.frame) return 0; const L = 
   const c = (v, l) => Math.ceil(Math.abs(v) / (l || 1e9) - 1e-6); return Math.max(1, c(dmax, L.tr), c(m.tq, L.tq), c(m.tp, L.tp || L.rot), c(m.rt, L.rt || L.rot), c(m.m, L.m), c(m.b, L.b), c(m.e, L.e)); }
 function toothStages(kind, t) { return stagesFor(kind, t, S.setup.mv[mvKey(kind, t.fdi)]); }
 function setupRecalc() {
-  const P = curPlan(); let start = 0;
+  S._lastEdit = performance.now(); const P = curPlan(); let start = 0;
   for (const L of P.layers) { L._n = {}; let n = 0; for (const k of ['upper', 'lower']) { const j = S.jaws[k]; if (!j || !j.seg) continue; for (const t of j.seg.teeth) { const st = stagesFor(k, t, L.mv[mvKey(k, t.fdi)]); if (st) { L._n[mvKey(k, t.fdi)] = st; n = Math.max(n, st); } } }
     L._start = start; L.dur = n; start += n; }
   for (const k of ['upper', 'lower']) { const j = S.jaws[k]; if (j && j.seg) for (const t of j.seg.teeth) t._stg = curLayer()._n[mvKey(k, t.fdi)] || 0; }
@@ -4054,7 +4054,9 @@ function alCover(kind) { const j = S.jaws[kind]; const key = j.seg.lab.length + 
   j._alc = { key, lab: j.seg.lab, d }; return d; }
 const AL_BASE = [178, 205, 245];
 function alShell(kind) { const j = S.jaws[kind]; if (!j || !j.seg) return null; const stKey = [S.setup.on ? S.setup.stage : -1, S.al.t, S.al.trim, S.al.T ? Array.from(S.al.T).map(v => v.toFixed(4)).join(',') : '', S.al.bite, curAtt().length, S.planI, lowerT0().join ? '' : Array.from(lowerT0()).map(v => v.toFixed(3)).join(',')].join('|');
-  if (j._als && j._als.key === stKey && j._als.g === j.g) return j._als; if (j._als) { freeBuf(j._als.buf); if (j._als.line) for (const l of j._als.line) { gl.deleteBuffer(l.pos); gl.deleteBuffer(l.nrm); } gl.deleteBuffer(j._als.col); }
+  if (j._als && j._als.key === stKey && j._als.g === j.g) return j._als;
+  if (j._als && j._als.g === j.g && performance.now() - (S._lastEdit || 0) < 600) { clearTimeout(j._alsTm); j._alsTm = setTimeout(requestDraw, 650); return j._als; } /* while teeth are being moved: rebuild the shell once they stop */
+  if (j._als) { freeBuf(j._als.buf); if (j._als.line) for (const l of j._als.line) { gl.deleteBuffer(l.pos); gl.deleteBuffer(l.nrm); } gl.deleteBuffer(j._als.col); }
   const d = alCover(kind); const sg = S.setup.on ? setupGeom(kind) : null; const Q = sg ? sg.Q : j.g.pos; const nr = sg ? computeNormals(Q, j.g.idx) : j.g.nrm; const I = j.g.idx, nv = Q.length / 3; const t = S.al.t;
   const pos = new Float32Array(Q.length); for (let v = 0; v < nv; v++) for (let c = 0; c < 3; c++) pos[v * 3 + c] = Q[v * 3 + c] + nr[v * 3 + c] * t;
   const ok = v => d[v] <= S.al.trim; const idx = []; for (let f = 0; f < I.length; f += 3) if (ok(I[f]) && ok(I[f + 1]) && ok(I[f + 2])) idx.push(I[f], I[f + 1], I[f + 2]);
@@ -4072,7 +4074,7 @@ function alShell(kind) { const j = S.jaws[kind]; if (!j || !j.seg) return null; 
   const line = []; for (const L of boundaryLoops(g.idx)) { if (L.length < 20) continue; let pts = []; const seq = [...L, L[0]];
     for (let i = 0; i < seq.length; i++) { const v = seq[i]; if (pts.length && Math.hypot(pos[v * 3] - pts[pts.length - 3], pos[v * 3 + 1] - pts[pts.length - 2], pos[v * 3 + 2] - pts[pts.length - 1]) > 2.5) { if (pts.length > 6) line.push(lineBuf(pts)); pts = []; } pts.push(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2]); }
     if (pts.length > 6) line.push(lineBuf(pts)); } /* линия обрезки; разрывы петли не соединяем прямой */
-  j._als = { key: stKey, g: j.g, buf, col: cb, line }; return j._als; }
+  j._als = { key: stKey, g: j.g, buf, col: cb, line, t: performance.now() }; return j._als; }
 function drawAligners(k, M) { if (!S.al.show) return; const s = alShell(k); if (!s) return; drawMesh(s.buf, M, [1, 1, 1], 0.5, s.col); }
 function drawAlignerLines(k, M) { if (!S.al.show) return; const s = S.jaws[k] && S.jaws[k]._als; if (!s) return; for (const l of s.line) drawLine(l, M, [0.48, 0.31, 1]); }
 function renderAl() { const box = $('#alInfo'); if (!box) return; const r = S.al.res; if (!r) { box.innerHTML = ''; return; }
@@ -4357,7 +4359,12 @@ function triWithHoles(outer, holes) {
 
 /* ---------------- балка во включённых дефектах: гладкий «мостик» между соседями дефекта, чтобы у элайнера не было поднутрений ---------------- */
 S.showBar = true;
-function defectPairs(kind) { // neighbours along the arch with missing teeth between them (both sides present = included defect)
+function defectPairs(kind) { /* which teeth are missing does not change while teeth move: computed once per segmentation */
+  const j = S.jaws[kind]; if (!j || !j.seg) return [];
+  const key = j.seg.teeth.map(t => t.fdi + (t.frame ? 'f' : '')).join('|');
+  if (j._dp && j._dp.key === key && j._dp.lab === j.seg.lab) return j._dp.out;
+  const out = defectPairs0(kind); j._dp = { key, lab: j.seg.lab, out }; return out; }
+function defectPairs0(kind) { // neighbours along the arch with missing teeth between them (both sides present = included defect)
   const j = S.jaws[kind]; if (!j || !j.seg) return []; const by = new Map(j.seg.teeth.filter(t => t.frame).map(t => [t.fdi, t])); const ord = ARCH_ORDER[kind]; const out = [];
   const present = ord.filter(f => by.has(f)); for (let i = 0; i + 1 < present.length; i++) { const a = present[i], b = present[i + 1]; const ia = ord.indexOf(a), ib = ord.indexOf(b); const ta = by.get(a), tb = by.get(b);
     const missing = ib - ia >= 2; const gap = pairSpace(kind, ta, tb, 0, 0); const wide = gap !== null && gap >= 2.9 && dist3(ta.frame.c, tb.frame.c) - ((ta.frame.r0 || 4) + (tb.frame.r0 || 4)) > 3; // a real gap, even if the numbering did not notice it
