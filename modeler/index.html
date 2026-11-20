@@ -2294,14 +2294,20 @@ async function segFromLabels(Nf, note) {
 /* ---------------- нейросеть DentalSegmentator прямо в браузере (onnxruntime-web: видеокарта WebGPU, иначе процессор) ---------------- */
 // files are named .wasm only so the artifact host serves them: ort-wasm.gz.wasm = gzip of the onnxruntime engine, ds0..3.wasm = parts of the ONNX model (fp16 weights)
 const AI = { ver: '1.31.1', parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
+const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
+/* файлы нейросети: рядом с программой, а если программа открыта как файл с компьютера или их нет рядом — с сайта на GitHub */
+async function aiFetch(path) {
+  if (location.protocol !== 'file:') { try { const r = await fetch(path); if (r.ok) return r; } catch (e) { } }
+  return fetch(AI_REMOTE + path);
+}
 async function aiSession(progress) {
   if (AI.sess) return AI.sess;
   const ort = await import(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${AI.ver}/dist/ort.webgpu.bundle.min.mjs`);
   AI.ort = ort; ort.env.wasm.numThreads = 1;
-  const gz = await fetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
+  const gz = await aiFetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
   ort.env.wasm.wasmBinary = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   const bufs = []; let tot = 0;
-  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await fetch(`model/ds${i}.wasm`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
+  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
   const model = new Uint8Array(tot); let o = 0; for (const b of bufs) { model.set(b, o); o += b.length; }
   const eps = (navigator.gpu && !AI.forceCPU) ? ['webgpu', 'wasm'] : ['wasm'];
   for (const ep of eps) { try { AI.sess = await ort.InferenceSession.create(model, { executionProviders: [ep], graphOptimizationLevel: 'all' }); AI.ep = ep; break; } catch (e) { console.warn('AI ' + ep, e); } }
