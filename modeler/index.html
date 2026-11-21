@@ -2234,7 +2234,7 @@ function splitTeeth(Nf, L, box, seeds) { // seeds (optional): [{lbl, pts: flat w
   if (seeds && seeds.length) { // scan-guided: each crown grows down into its own root; the step cost rises where the tooth is thin (contacts), so a crown does not leak into its neighbour
     const A = Nf.A; const M3 = [[A[0][0], A[0][1], A[0][2]], [A[1][0], A[1][1], A[1][2]], [A[2][0], A[2][1], A[2][2]]]; const det = M3[0][0] * (M3[1][1] * M3[2][2] - M3[1][2] * M3[2][1]) - M3[0][1] * (M3[1][0] * M3[2][2] - M3[1][2] * M3[2][0]) + M3[0][2] * (M3[1][0] * M3[2][1] - M3[1][1] * M3[2][0]);
     const inv = [[(M3[1][1] * M3[2][2] - M3[1][2] * M3[2][1]) / det, (M3[0][2] * M3[2][1] - M3[0][1] * M3[2][2]) / det, (M3[0][1] * M3[1][2] - M3[0][2] * M3[1][1]) / det], [(M3[1][2] * M3[2][0] - M3[1][0] * M3[2][2]) / det, (M3[0][0] * M3[2][2] - M3[0][2] * M3[2][0]) / det, (M3[0][2] * M3[1][0] - M3[0][0] * M3[1][2]) / det], [(M3[1][0] * M3[2][1] - M3[1][1] * M3[2][0]) / det, (M3[0][1] * M3[2][0] - M3[0][0] * M3[2][1]) / det, (M3[0][0] * M3[1][1] - M3[0][1] * M3[1][0]) / det]];
-    const C = new Int32Array(N); const dist = new Float32Array(N).fill(Infinity); const H = new MinHeap(1 << 16); let ns = 0;
+    const C = new Int32Array(N); const dist = new Float64Array(N).fill(Infinity); const H = new MinHeap(1 << 16); let ns = 0;
     for (const sd of seeds) for (let q = 0; q < sd.pts.length; q += 3) { const r = [sd.pts[q] - A[0][3], sd.pts[q + 1] - A[1][3], sd.pts[q + 2] - A[2][3]]; const ijk = [0, 1, 2].map(c => Math.round(inv[c][0] * r[0] + inv[c][1] * r[1] + inv[c][2] * r[2]) - lo[c]);
       if (ijk[0] < 0 || ijk[1] < 0 || ijk[2] < 0 || ijk[0] >= bx || ijk[1] >= by || ijk[2] >= bz) continue; const i = at(ijk[0], ijk[1], ijk[2]); if (!D[i] || C[i] === -1) continue; if (C[i] && C[i] !== sd.lbl) { C[i] = -1; continue; } C[i] = sd.lbl; dist[i] = 0; H.push(0, i); ns++; }
     for (let i = 0; i < N; i++) if (C[i] === -1) { C[i] = 0; dist[i] = Infinity; }
@@ -4051,7 +4051,7 @@ function alAdj(j) { if (j._adj && j._adj.g === j.g) return j._adj; const I = j.g
   for (let f = 0; f < I.length; f += 3) { const a = I[f], b = I[f + 1], c = I[f + 2]; nb[fill[a]++] = b; nb[fill[a]++] = c; nb[fill[b]++] = a; nb[fill[b]++] = c; nb[fill[c]++] = a; nb[fill[c]++] = b; }
   j._adj = { g: j.g, off: deg, nb }; return j._adj; }
 function alCover(kind) { const j = S.jaws[kind]; const key = j.seg.lab.length + ':' + S.al.trim; if (j._alc && j._alc.key === key && j._alc.lab === j.seg.lab) return j._alc.d;
-  const T = j.seg.teeth.length, lab = j.seg.lab, P = j.g.pos, nv = lab.length; const A = alAdj(j); const d = new Float32Array(nv).fill(Infinity); const H = new MinHeap(1024);
+  const T = j.seg.teeth.length, lab = j.seg.lab, P = j.g.pos, nv = lab.length; const A = alAdj(j); const d = new Float64Array(nv).fill(Infinity); const H = new MinHeap(1024);
   for (let v = 0; v < nv; v++) if (lab[v] < T) { d[v] = 0; H.push(0, v); }
   while (H.n) { const v = H.pop(); const dv = H.top; if (dv > d[v]) continue; if (dv > S.al.trim) continue; for (let k = A.off[v]; k < A.off[v + 1]; k++) { const u = A.nb[k]; const w = dv + Math.hypot(P[u * 3] - P[v * 3], P[u * 3 + 1] - P[v * 3 + 1], P[u * 3 + 2] - P[v * 3 + 2]); if (w < d[u] && w <= S.al.trim + 0.5) { d[u] = w; H.push(w, u); } } }
   j._alc = { key, lab: j.seg.lab, d }; return d; }

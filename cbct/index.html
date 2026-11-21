@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 1.4</title>
+<title>Наложение КЛКТ · 1.5</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -105,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.4</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.5</small></div>
   </div>
 
   <div class="sec" id="secA">
@@ -633,7 +633,7 @@ function splitTeeth(Nf, L, box, seeds) { // seeds (optional): [{lbl, pts: flat w
   if (seeds && seeds.length) { // scan-guided: each crown grows down into its own root; the step cost rises where the tooth is thin (contacts), so a crown does not leak into its neighbour
     const A = Nf.A; const M3 = [[A[0][0], A[0][1], A[0][2]], [A[1][0], A[1][1], A[1][2]], [A[2][0], A[2][1], A[2][2]]]; const det = M3[0][0] * (M3[1][1] * M3[2][2] - M3[1][2] * M3[2][1]) - M3[0][1] * (M3[1][0] * M3[2][2] - M3[1][2] * M3[2][0]) + M3[0][2] * (M3[1][0] * M3[2][1] - M3[1][1] * M3[2][0]);
     const inv = [[(M3[1][1] * M3[2][2] - M3[1][2] * M3[2][1]) / det, (M3[0][2] * M3[2][1] - M3[0][1] * M3[2][2]) / det, (M3[0][1] * M3[1][2] - M3[0][2] * M3[1][1]) / det], [(M3[1][2] * M3[2][0] - M3[1][0] * M3[2][2]) / det, (M3[0][0] * M3[2][2] - M3[0][2] * M3[2][0]) / det, (M3[0][2] * M3[1][0] - M3[0][0] * M3[1][2]) / det], [(M3[1][0] * M3[2][1] - M3[1][1] * M3[2][0]) / det, (M3[0][1] * M3[2][0] - M3[0][0] * M3[2][1]) / det, (M3[0][0] * M3[1][1] - M3[0][1] * M3[1][0]) / det]];
-    const C = new Int32Array(N); const dist = new Float32Array(N).fill(Infinity); const H = new MinHeap(1 << 16); let ns = 0;
+    const C = new Int32Array(N); const dist = new Float64Array(N).fill(Infinity); const H = new MinHeap(1 << 16); let ns = 0;
     for (const sd of seeds) for (let q = 0; q < sd.pts.length; q += 3) { const r = [sd.pts[q] - A[0][3], sd.pts[q + 1] - A[1][3], sd.pts[q + 2] - A[2][3]]; const ijk = [0, 1, 2].map(c => Math.round(inv[c][0] * r[0] + inv[c][1] * r[1] + inv[c][2] * r[2]) - lo[c]);
       if (ijk[0] < 0 || ijk[1] < 0 || ijk[2] < 0 || ijk[0] >= bx || ijk[1] >= by || ijk[2] >= bz) continue; const i = at(ijk[0], ijk[1], ijk[2]); if (!D[i] || C[i] === -1) continue; if (C[i] && C[i] !== sd.lbl) { C[i] = -1; continue; } C[i] = sd.lbl; dist[i] = 0; H.push(0, i); ns++; }
     for (let i = 0; i < N; i++) if (C[i] === -1) { C[i] = 0; dist[i] = Infinity; }
@@ -775,6 +775,127 @@ async function boneLabel(X, progress) {
     for (const id of fill) out[id] = L; }
   return out; }
 
+/* Teeth of one jaw → separate teeth, without a scan:
+   1) distance to the edge of the tooth mask (mm); cores = where it exceeds ~1 mm (contacts between teeth are thinner);
+   2) cores grow back over the mask in order of decreasing distance (watershed);
+   3) two neighbouring pieces are joined when they touch over a large area for their size — a tooth cut into pieces shares a whole cross-section,
+      two teeth touch only at a small contact. Small leftovers join their main neighbour. */
+let TCORE = 1.6, TMERGE = 0.22, TSPLIT = 1;
+/* Teeth of one jaw → separate teeth, guided by the crowns (no scan needed):
+   1) the crown zone = the last 4.5 mm of tooth tissue towards the occlusal side in every column — there the crowns touch only at small contacts;
+   2) crowns are separated by the distance-to-edge cores (threshold chosen so that the most crowns of a plausible size come apart);
+   3) every crown grows into its roots along the tooth tissue (nearest crown along the tooth) — a molar keeps all its roots, roots do not become separate «teeth»;
+   4) tooth tissue no crown reaches (germs deep in the bone) becomes its own tooth. */
+async function splitTeeth3(Nf, L, box) {
+  const NX = Nf.nx, NY = Nf.ny, lab = Nf.lab, A = Nf.A; const lo = box.lo.map(v => Math.max(0, v - 1)), hi = box.hi.map((v, c) => Math.min([NX, NY, Nf.nz][c] - 1, v + 1));
+  const bx = hi[0] - lo[0] + 1, by = hi[1] - lo[1] + 1, bz = hi[2] - lo[2] + 1, N = bx * by * bz; const sp = [0, 1, 2].map(c => Math.hypot(A[0][c], A[1][c], A[2][c])); const vox = sp[0] * sp[1] * sp[2];
+  const at = (x, y, z) => (z * by + y) * bx + x; const M = new Uint8Array(N);
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) if (lab[((lo[2] + z) * NY + lo[1] + y) * NX + lo[0] + x] === L) M[at(x, y, z)] = 1;
+  // which index direction is "up" (patient superior) and the occlusal side: upper teeth point down, lower up
+  const upK = Math.sign(A[2][2]) || 1, occDir = L === 3 ? -upK : upK; const zr = Math.round(4.5 / sp[2]);
+  const Cz = new Uint8Array(N);
+  for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { let tip = -1; if (occDir > 0) { for (let z = bz - 1; z >= 0; z--) if (M[at(x, y, z)]) { tip = z; break; } } else { for (let z = 0; z < bz; z++) if (M[at(x, y, z)]) { tip = z; break; } }
+    if (tip < 0) continue; for (let k = 0; k <= zr; k++) { const z = tip - occDir * k; if (z < 0 || z >= bz) break; if (M[at(x, y, z)]) Cz[at(x, y, z)] = 1; } }
+  // distance to the crown-zone edge (in-plane + vertical, real spacing)
+  const D = new Float32Array(N); for (let i = 0; i < N; i++) D[i] = Cz[i] ? 1e9 : 0; const nb = [];
+  for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy || dz) nb.push([dx, dy, dz, Math.hypot(dx * sp[0], dy * sp[1], dz * sp[2])]);
+  const fw = nb.filter(([dx, dy, dz]) => dz < 0 || (dz === 0 && (dy < 0 || (dy === 0 && dx < 0)))), bw = nb.filter(n => !fw.includes(n));
+  const pass = (list, dir) => { for (let z = dir > 0 ? 0 : bz - 1; dir > 0 ? z < bz : z >= 0; z += dir) for (let y = dir > 0 ? 0 : by - 1; dir > 0 ? y < by : y >= 0; y += dir) for (let x = dir > 0 ? 0 : bx - 1; dir > 0 ? x < bx : x >= 0; x += dir) { const i = at(x, y, z); if (!Cz[i]) continue; let d = D[i];
+      for (const [dx, dy, dz, w] of list) { const X = x + dx, Y = y + dy, Z = z + dz; if (X < 0 || Y < 0 || Z < 0 || X >= bx || Y >= by || Z >= bz) { d = Math.min(d, w); continue; } const v = D[at(X, Y, Z)] + w; if (v < d) d = v; } D[i] = d; } };
+  pass(fw, 1); pass(bw, -1); await sleep();
+  const N6 = [1, -1, bx, -bx, bx * by, -bx * by]; const okN = (i, d) => { const u = i + d; if (u < 0 || u >= N) return -1; if (Math.abs(d) === 1 && Math.floor(u / bx) !== Math.floor(i / bx)) return -1; if (Math.abs(d) === bx && Math.floor(u / (bx * by)) !== Math.floor(i / (bx * by))) return -1; return u; };
+  const comps = (t, mask) => { const C = new Int32Array(N); let n = 0; const sz = [0]; const st = [];
+    for (let i = 0; i < N; i++) { if (!mask[i] || D[i] <= t || C[i]) continue; n++; let c = 0; C[i] = n; st.push(i); while (st.length) { const v = st.pop(); c++; for (const d of N6) { const u = okN(v, d); if (u >= 0 && !C[u] && mask[u] && D[u] > t) { C[u] = n; st.push(u); } } } sz.push(c * vox); }
+    return { C, n, sz }; };
+  let best = null; for (const t of [0.5, 0.7, 0.9, 1.1, 1.3, 1.6, 2.0]) { const r = comps(t, Cz); const good = r.sz.filter(v => v >= 6).length; if (!best || good > best.good) best = { ...r, t, good }; }
+  const C = best.C; for (let i = 0; i < N; i++) if (C[i] && best.sz[C[i]] < 6) C[i] = 0;
+  // crowns grow over the crown zone, then over the whole tooth tissue (nearest crown along the tissue, Dijkstra with real step lengths)
+  const dist = new Float64Array(N).fill(Infinity); const H = new MinHeap(1 << 16); const stepL = d => Math.abs(d) === 1 ? sp[0] : Math.abs(d) === bx ? sp[1] : sp[2];
+  for (let i = 0; i < N; i++) if (C[i]) { dist[i] = 0; H.push(0, i); }
+  while (H.n) { const v = H.pop(), dv = H.top; if (dv > dist[v]) continue; for (const d of N6) { const u = okN(v, d); if (u < 0 || !M[u]) continue; const nd = dv + stepL(d) * (Cz[u] && !C[u] ? 1 : 1); if (nd < dist[u]) { dist[u] = nd; C[u] = C[v]; H.push(nd, u); } } }
+  await sleep();
+  // tissue no crown reached → its own tooth (germs)
+  let n = best.n; const st = [];
+  for (let i = 0; i < N; i++) { if (!M[i] || C[i]) continue; n++; let c = 0; C[i] = n; st.push(i); while (st.length) { const v = st.pop(); c++; for (const d of N6) { const u = okN(v, d); if (u >= 0 && M[u] && !C[u]) { C[u] = n; st.push(u); } } } }
+  // labels, sizes; pieces < 15 mm³ go to the neighbour they touch most, or away
+  const vol = new Float64Array(n + 1); for (let i = 0; i < N; i++) if (C[i]) vol[C[i]] += vox;
+  const touch = new Map(); for (let i = 0; i < N; i++) { const a = C[i]; if (!a || vol[a] >= 15) continue; for (const d of N6) { const u = okN(i, d); if (u < 0) continue; const b = C[u]; if (b && b !== a && vol[b] >= 15) { const k = a * 65536 + b; touch.set(k, (touch.get(k) || 0) + 1); } } }
+  const to = new Int32Array(n + 1).map((_, i) => i); const bestT = {}; for (const [k, c] of touch) { const a = Math.floor(k / 65536), b = k % 65536; if (!bestT[a] || c > bestT[a][1]) bestT[a] = [b, c]; }
+  for (let a = 1; a <= n; a++) if (vol[a] < 15) to[a] = bestT[a] ? bestT[a][0] : 0;
+  const map = new Int32Array(n + 1); let k = 0; for (let a = 1; a <= n; a++) if (vol[a] >= 15) map[a] = ++k;
+  const out = new Uint8Array(Nf.lab.length); const bxs = {};
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { const c0 = C[at(x, y, z)]; if (!c0) continue; const c = map[to[c0]]; if (!c) continue; const X = lo[0] + x, Y = lo[1] + y, Z = lo[2] + z; out[(Z * NY + Y) * NX + X] = c;
+    const b = bxs[c] || (bxs[c] = { lo: [X, Y, Z], hi: [X, Y, Z] }); if (X < b.lo[0]) b.lo[0] = X; if (Y < b.lo[1]) b.lo[1] = Y; if (Z < b.lo[2]) b.lo[2] = Z; if (X > b.hi[0]) b.hi[0] = X; if (Y > b.hi[1]) b.hi[1] = Y; if (Z > b.hi[2]) b.hi[2] = Z; }
+  window.__dbg = (window.__dbg || []).concat([`L${L}: t=${best.t} crowns=${best.good} total=${k}`]);
+  return { lab: out, n: k, box: bxs }; }
+async function splitTeeth2(Nf, L, box) {
+  const NX = Nf.nx, NY = Nf.ny, lab = Nf.lab; const lo = box.lo.map(v => Math.max(0, v - 1)), hi = box.hi.map((v, c) => Math.min([NX, NY, Nf.nz][c] - 1, v + 1));
+  const bx = hi[0] - lo[0] + 1, by = hi[1] - lo[1] + 1, bz = hi[2] - lo[2] + 1, N = bx * by * bz; const sp = [0, 1, 2].map(c => Math.hypot(Nf.A[0][c], Nf.A[1][c], Nf.A[2][c]));
+  const at = (x, y, z) => (z * by + y) * bx + x; const M = new Uint8Array(N);
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) if (lab[((lo[2] + z) * NY + lo[1] + y) * NX + lo[0] + x] === L) M[at(x, y, z)] = 1;
+  // chamfer distance (26 neighbours, real spacing)
+  const D = new Float32Array(N); for (let i = 0; i < N; i++) D[i] = M[i] ? 1e9 : 0; const nb = [];
+  for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy || dz) nb.push([dx, dy, dz, Math.hypot(dx * sp[0], dy * sp[1], dz * sp[2])]);
+  const fw = nb.filter(([dx, dy, dz]) => dz < 0 || (dz === 0 && (dy < 0 || (dy === 0 && dx < 0)))), bw = nb.filter(n => !fw.includes(n));
+  const pass = (list, dir) => { for (let z = dir > 0 ? 0 : bz - 1; dir > 0 ? z < bz : z >= 0; z += dir) for (let y = dir > 0 ? 0 : by - 1; dir > 0 ? y < by : y >= 0; y += dir) for (let x = dir > 0 ? 0 : bx - 1; dir > 0 ? x < bx : x >= 0; x += dir) { const i = at(x, y, z); if (!M[i]) continue; let d = D[i];
+      for (const [dx, dy, dz, w] of list) { const X = x + dx, Y = y + dy, Z = z + dz; if (X < 0 || Y < 0 || Z < 0 || X >= bx || Y >= by || Z >= bz) { d = Math.min(d, w); continue; } const v = D[at(X, Y, Z)] + w; if (v < d) d = v; } D[i] = d; } };
+  pass(fw, 1); pass(bw, -1); await sleep();
+  // cores
+  const C = new Int32Array(N); let n = 0; const st = []; const vox = sp[0] * sp[1] * sp[2]; const sizes = [0];
+  for (let i = 0; i < N; i++) { if (D[i] < TCORE || C[i]) continue; n++; let c = 0; C[i] = n; st.push(i); while (st.length) { const v = st.pop(); c++; const x = v % bx, y = Math.floor(v / bx) % by, z = Math.floor(v / (bx * by));
+      for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { const X = x + dx, Y = y + dy, Z = z + dz; if (X < 0 || Y < 0 || Z < 0 || X >= bx || Y >= by || Z >= bz) continue; const u = at(X, Y, Z); if (!C[u] && D[u] >= TCORE) { C[u] = n; st.push(u); } } } sizes.push(c * vox); }
+  // drop specks (< 1 mm³) as seeds
+  for (let i = 0; i < N; i++) if (C[i] && sizes[C[i]] < 1) C[i] = 0;
+  // watershed growth by decreasing distance
+  const H = new MinHeap(1 << 16); const N6 = [1, -1, bx, -bx, bx * by, -bx * by];
+  for (let i = 0; i < N; i++) if (C[i]) for (const d of N6) { const u = i + d; if (u >= 0 && u < N && M[u] && !C[u]) { H.push(-D[u], u); } }
+  while (H.n) { const u = H.pop(); if (C[u]) continue; let best = 0; for (const d of N6) { const w = u + d; if (w >= 0 && w < N && C[w]) { best = C[w]; break; } } if (!best) continue; C[u] = best; for (const d of N6) { const w = u + d; if (w >= 0 && w < N && M[w] && !C[w]) H.push(-D[w], w); } }
+  await sleep();
+  // region graph: volumes and contact areas (mm², face-weighted)
+  const vol = new Float64Array(n + 1); const area = new Map(); const fa = [sp[1] * sp[2], sp[0] * sp[2], sp[0] * sp[1]];
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { const i = at(x, y, z), a = C[i]; if (!a) continue; vol[a] += vox;
+    for (let c = 0; c < 3; c++) { const X = x + (c === 0), Y = y + (c === 1), Z = z + (c === 2); if (X >= bx || Y >= by || Z >= bz) continue; const b = C[at(X, Y, Z)]; if (b && b !== a) { const k = a < b ? a * 65536 + b : b * 65536 + a; area.set(k, (area.get(k) || 0) + fa[c]); } } }
+  const par = new Int32Array(n + 1).map((_, i) => i); const fnd = i => { while (par[i] !== i) i = par[i] = par[par[i]]; return i; };
+  for (let it = 0; it < 1000; it++) { // greedy: join the pair with the largest interface relative to the smaller piece
+    const agg = new Map(); for (const [k, a] of area) { const p = fnd(Math.floor(k / 65536)), q = fnd(k % 65536); if (p === q) continue; const kk = p < q ? p * 65536 + q : q * 65536 + p; agg.set(kk, (agg.get(kk) || 0) + a); }
+    const V = new Float64Array(n + 1); for (let i = 1; i <= n; i++) V[fnd(i)] += vol[i];
+    let best = null, bs = 0; for (const [k, a] of agg) { const p = Math.floor(k / 65536), q = k % 65536; const vs = Math.min(V[p], V[q]); const sc = vs < 25 ? 9 : a / Math.pow(vs, 2 / 3); if (sc > bs) { bs = sc; best = [p, q]; } }
+    (window.__dbg = window.__dbg || []).push(fmt(bs, 2) + '@' + Math.round(Math.min(V[best ? best[0] : 0], V[best ? best[1] : 0])));
+    if (!best || bs < TMERGE) break; const [p, q] = best; if (V[p] >= V[q]) par[q] = p; else par[p] = q; }
+  // final labels, drop pieces < 8 mm³ that touch nothing
+  const V = new Float64Array(n + 1); for (let i = 1; i <= n; i++) V[fnd(i)] += vol[i]; const map = new Int32Array(n + 1); let k = 0; for (let i = 1; i <= n; i++) if (fnd(i) === i && V[i] >= 8) map[i] = ++k;
+  const out = new Uint8Array(Nf.lab.length); const bxs = {};
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { const c0 = C[at(x, y, z)]; if (!c0) continue; const c = map[fnd(c0)]; if (!c) continue; const X = lo[0] + x, Y = lo[1] + y, Z = lo[2] + z; out[(Z * NY + Y) * NX + X] = c;
+    const b = bxs[c] || (bxs[c] = { lo: [X, Y, Z], hi: [X, Y, Z] }); if (X < b.lo[0]) b.lo[0] = X; if (Y < b.lo[1]) b.lo[1] = Y; if (Z < b.lo[2]) b.lo[2] = Z; if (X > b.hi[0]) b.hi[0] = X; if (Y > b.hi[1]) b.hi[1] = Y; if (Z > b.hi[2]) b.hi[2] = Z; }
+  return { lab: out, n: k, box: bxs }; }
+/* Front teeth have one root each. A front "tooth" whose apical part falls apart into two or more roots lying side by side is
+   several teeth stuck together at the crowns (crowded incisors): every root becomes a seed and claims its nearest tissue. */
+function splitByRoots(Nf, T, L, X) { const NX = Nf.nx, NY = Nf.ny, A = Nf.A, lab = T.lab; const sp = [0, 1, 2].map(c => Math.hypot(A[0][c], A[1][c], A[2][c])); const vox = sp[0] * sp[1] * sp[2]; const upK = Math.sign(A[2][2]) || 1; const apDir = L === 3 ? upK : -upK;
+  let next = T.n; const ids = Object.keys(T.box).map(Number);
+  for (const id of ids) { const b = T.box[id]; const cx = (b.lo[0] + b.hi[0]) / 2, cy = (b.lo[1] + b.hi[1]) / 2, cz = (b.lo[2] + b.hi[2]) / 2; const wx = A[0][0] * cx + A[0][1] * cy + A[0][2] * cz + A[0][3];
+    if (X.xMid !== undefined && Math.abs(wx - X.xMid) > 17) continue; // front teeth only (molars and premolars have several roots)
+    const bx = b.hi[0] - b.lo[0] + 1, by = b.hi[1] - b.lo[1] + 1, bz = b.hi[2] - b.lo[2] + 1, N = bx * by * bz; const at = (x, y, z) => (z * by + y) * bx + x; const M = new Uint8Array(N); let cnt = 0;
+    for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) if (lab[((b.lo[2] + z) * NY + b.lo[1] + y) * NX + b.lo[0] + x] === id) { M[at(x, y, z)] = 1; cnt++; }
+    // the level (horizontal slice) where the piece falls apart into the most separate roots, within the apical 75 %
+    const C = new Int32Array(N); let n = 0; const sz = [0]; let bestZ = -1, bestK = 1; const amin = 1.2 / (sp[0] * sp[1]);
+    const slice = (z, write) => { const L2 = new Int32Array(bx * by); let k = 0, kk = 0; const st2 = []; const areas = [];
+      for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { if (!M[at(x, y, z)] || L2[y * bx + x]) continue; k++; let c = 0; L2[y * bx + x] = k; st2.push(y * bx + x);
+        while (st2.length) { const v = st2.pop(); c++; const vx = v % bx, vy = Math.floor(v / bx); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X2 = vx + dx, Y2 = vy + dy; if (X2 < 0 || Y2 < 0 || X2 >= bx || Y2 >= by) continue; const u = Y2 * bx + X2; if (M[at(X2, Y2, z)] && !L2[u]) { L2[u] = k; st2.push(u); } } } areas.push(c); }
+      const big = areas.map((c, q) => c >= amin ? q + 1 : 0).filter(Boolean); if (write) { for (const q of big) { n++; sz.push(areas[q - 1] * vox); for (let p = 0; p < bx * by; p++) if (L2[p] === q) C[at(p % bx, Math.floor(p / bx), z)] = n; } } return big.length; };
+    const z0 = apDir > 0 ? Math.floor(bz * 0.25) : 0, z1 = apDir > 0 ? bz - 1 : Math.ceil(bz * 0.75);
+    for (let z = z0; z <= z1; z++) { const k = slice(z, false); if (k > bestK) { bestK = k; bestZ = z; } }
+    if (bestZ < 0) continue; slice(bestZ, true);
+    const roots = []; for (let r = 1; r <= n; r++) roots.push(r); if (roots.length < 2) continue;
+    // seeds grow over the whole piece (nearest root along the tissue)
+    const own = new Int32Array(N); const dist = new Float64Array(N).fill(Infinity); const H = new MinHeap(1 << 14); for (let i = 0; i < N; i++) if (C[i] && roots.includes(C[i])) { own[i] = C[i]; dist[i] = 0; H.push(0, i); }
+    const nbs = [[1, 0, 0, sp[0]], [-1, 0, 0, sp[0]], [0, 1, 0, sp[1]], [0, -1, 0, sp[1]], [0, 0, 1, sp[2]], [0, 0, -1, sp[2]]];
+    while (H.n) { const v = H.pop(), dv = H.top; if (dv > dist[v]) continue; const vx = v % bx, vy = Math.floor(v / bx) % by, vz = Math.floor(v / (bx * by)); for (const [dx, dy, dz, w] of nbs) { const X2 = vx + dx, Y2 = vy + dy, Z2 = vz + dz; if (X2 < 0 || Y2 < 0 || Z2 < 0 || X2 >= bx || Y2 >= by || Z2 >= bz) continue; const u = at(X2, Y2, Z2); if (!M[u]) continue; const nd = dv + w; if (nd < dist[u]) { dist[u] = nd; own[u] = own[v]; H.push(nd, u); } } }
+    { const oc = {}; let unown = 0; for (let i = 0; i < N; i++) if (M[i]) { if (own[i]) oc[own[i]] = (oc[own[i]] || 0) + 1; else unown++; } window.__dbg = (window.__dbg || []).concat(['own ' + JSON.stringify(oc) + ' un ' + unown + ' bestZ ' + bestZ + '/' + bz + ' sz ' + sz.map(v => v.toFixed(1)).join(',')]); }
+    const newId = {}; roots.forEach((r, k) => newId[r] = k === 0 ? id : ++next); delete T.box[id];
+    for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { const i = at(x, y, z); if (!M[i] || !own[i]) continue; const nid = newId[own[i]]; const X2 = b.lo[0] + x, Y2 = b.lo[1] + y, Z2 = b.lo[2] + z; lab[(Z2 * NY + Y2) * NX + X2] = nid;
+      const bb = T.box[nid] || (T.box[nid] = { lo: [X2, Y2, Z2], hi: [X2, Y2, Z2] }); for (let c = 0; c < 3; c++) { const v = [X2, Y2, Z2][c]; if (v < bb.lo[c]) bb.lo[c] = v; if (v > bb.hi[c]) bb.hi[c] = v; } }
+    window.__dbg = (window.__dbg || []).concat([`roots: piece ${id} → ${roots.length}`]); }
+  T.n = next; }
 /* pieces that are much smaller than a tooth and touch a tooth (a root cut off from its crown) are joined to that tooth */
 function mergeFragments(Nf, T) { const NX = Nf.nx, NY = Nf.ny, lab = T.lab; const cnt = new Float64Array(T.n + 1); const touch = new Map();
   const lo = [0, 1, 2].map(c => Math.min(...Object.values(T.box).map(b => b.lo[c]))), hi = [0, 1, 2].map(c => Math.max(...Object.values(T.box).map(b => b.hi[c])));
@@ -871,7 +992,7 @@ async function afterSeg(slot) {
     g = bigComponents(g, bone ? 1500 : 100); if (!g.idx.length) continue; busy(true, `«${nm}»: сглаживаю поверхность (${nmP})…`, (q + 0.95) / jobs.length); await sleep(); taubin(g, bone ? 26 : 12); X.mesh[key] = makeMesh(g); }
   for (const t of X.teeth || []) freeMesh(t.m); X.teeth = [];
   for (const [part, L] of [['tu', 3], ['tl', 4]]) { if (!B[L]) continue; busy(true, `«${nm}»: разделяю зубы ${part === 'tu' ? 'верхней' : 'нижней'} челюсти…`, 0.9); await sleep();
-    try { const T = splitTeeth(Nf, L, B[L]); mergeFragments(Nf, T); const list = [];
+    try { const T = TSPLIT === 3 ? await splitTeeth3(Nf, L, B[L]) : TSPLIT === 2 ? await splitTeeth2(Nf, L, B[L]) : splitTeeth(Nf, L, B[L]); if (TSPLIT === 1) { mergeFragments(Nf, T); splitByRoots(Nf, T, L, X); } const list = [];
       for (let i = 1; i <= T.n; i++) { if (!T.box[i]) continue; let g = bigComponents(await labelMesh(Nf, i, 1, T.box[i].lo, T.box[i].hi, null, { lab: T.lab, blur: 2 }), 60); if (g.idx.length < 300) continue; taubin(g, 16);
         const n = g.pos.length / 3, c = [0, 0, 0]; for (let v = 0; v < n; v++) for (let q = 0; q < 3; q++) c[q] += g.pos[v * 3 + q] / n; list.push({ part, g, c, i }); }
       numberTeeth(X, list, part); for (const t of list) X.teeth.push({ part, fdi: t.fdi, c: t.c, m: makeMesh(t.g), M: M4.ident(), sel: false, li: t.i, src: T.lab }); }
