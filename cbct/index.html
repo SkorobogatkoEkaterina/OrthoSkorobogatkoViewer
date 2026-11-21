@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 1.0</title>
+<title>Наложение КЛКТ · 1.1</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -63,6 +63,10 @@ table.ms th{color:var(--muted);font-weight:700}
 table.ms td:first-child,table.ms th:first-child{text-align:left}
 table.ms button{border:0;background:none;color:var(--muted);padding:0 2px}
 .nud{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 6px;align-items:center;font-size:12px;margin-top:6px}
+.tch{display:inline-block;min-width:22px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:2px 1px;margin:1px;font-size:10.5px;font-weight:700;cursor:pointer;background:#fff;color:var(--ink)}
+.tch.sel{background:var(--purple);border-color:var(--purple);color:#fff}
+.tch.act{box-shadow:0 0 0 2px var(--pink)}
+.trow{display:flex;justify-content:center;flex-wrap:wrap}
 .nud span.v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 details{margin-top:8px}
 details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:pointer}
@@ -101,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.0</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.1</small></div>
   </div>
 
   <div class="sec" id="secA">
@@ -176,8 +180,20 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div id="measList"></div>
   </div>
 
+  <div class="sec" id="secT">
+    <h3><span class="n">5</span>Зубы<button class="q" data-h="hT">?</button></h3>
+    <div class="help" id="hT">Каждый зуб выделяется отдельно и получает номер по FDI (номер можно исправить двойным щелчком по нему). Щёлкните номера, чтобы выбрать зубы, и сохраните их одним STL — например, все зубы верхней челюсти в один файл — или каждый зуб отдельным файлом. «Двигать зуб»: щёлкните зуб на модели и тяните мышью — левая кнопка двигает, правая (или Ctrl) поворачивает вокруг центра зуба; точные шаги — кнопками. Сохранённые STL учитывают перемещения.</div>
+    <div class="row"><button class="btn sm on" data-ts="A">До</button><button class="btn sm" data-ts="B">После</button><label class="ck" style="margin:0 0 0 6px"><input type="checkbox" id="tCol" checked> цветные зубы</label></div>
+    <div id="tList" class="sub" style="margin-top:6px">Зубы появятся после загрузки КЛКТ.</div>
+    <div class="row"><button class="btn sm" id="tSelU">Все ВЧ</button><button class="btn sm" id="tSelL">Все НЧ</button><button class="btn sm" id="tSelN">Снять выбор</button></div>
+    <div class="row"><button class="btn sm primary" id="tStl" disabled>Выбранные — одним STL</button><button class="btn sm" id="tZip" disabled>Каждый отдельно (ZIP)</button></div>
+    <div class="row"><button class="btn sm" id="tMove">✋ Двигать зуб</button><button class="btn sm" id="tResetAll">Вернуть все зубы</button></div>
+    <div id="tMoveBox" class="hidden"><div class="sub" id="tMoveInfo" style="margin-top:6px">Щёлкните зуб на модели.</div><div class="nud" id="tNud"></div>
+      <div class="row"><button class="btn sm" id="tReset">Вернуть этот зуб</button><button class="btn sm" id="tMap">Пересчитать карту</button></div></div>
+  </div>
+
   <div class="sec" id="secE">
-    <h3><span class="n">5</span>Сохранить<button class="q" data-h="hE">?</button></h3>
+    <h3><span class="n">6</span>Сохранить<button class="q" data-h="hE">?</button></h3>
     <div class="help" id="hE">«Отчёт» — страница для печати или PDF: виды спереди, сбоку и снизу с картой расстояний, точность совмещения и таблица измерений. Картинка вида, модели «до» и «после» уже в общей системе координат (STL — для любой программы, PLY — «после» с цветной картой), таблица измерений и матрица совмещения (её можно применить к снимку «после» в другой программе).</div>
     <div class="row">
       <button class="btn sm primary" id="exRep" disabled>Отчёт</button>
@@ -488,6 +504,147 @@ function bigComponents(g, minFaces) {
   for (let t = 0; t < g.idx.length; t += 3) { const r = fnd(g.idx[t]); if (cnt.get(r) < minFaces) continue; for (let e = 0; e < 3; e++) { const v = g.idx[t + e]; if (map[v] < 0) { map[v] = P.length / 3; P.push(g.pos[v * 3], g.pos[v * 3 + 1], g.pos[v * 3 + 2]); } I.push(map[v]); } comp.push(r); }
   const o = { pos: new Float32Array(P), idx: Uint32Array.from(I) }; o.nrm = computeNormals(o.pos, o.idx); o.faceComp = Int32Array.from(comp); return o;
 }
+class MinHeap {
+  constructor(n) { this.k = new Float64Array(n); this.v = new Int32Array(n); this.n = 0; }
+  push(key, val) { let i = this.n++; if (i >= this.k.length) { const k2 = new Float64Array(this.k.length * 2), v2 = new Int32Array(this.k.length * 2); k2.set(this.k); v2.set(this.v); this.k = k2; this.v = v2; }
+    while (i > 0) { const p = (i - 1) >> 1; if (this.k[p] <= key) break; this.k[i] = this.k[p]; this.v[i] = this.v[p]; i = p; } this.k[i] = key; this.v[i] = val; }
+  pop() { const rk = this.k[0], rv = this.v[0]; const k = this.k[--this.n], v = this.v[this.n]; let i = 0;
+    while (true) { let c = 2 * i + 1; if (c >= this.n) break; if (c + 1 < this.n && this.k[c + 1] < this.k[c]) c++; if (this.k[c] >= k) break; this.k[i] = this.k[c]; this.v[i] = this.v[c]; i = c; }
+    this.k[i] = k; this.v[i] = v; this.top = rk; return rv; }
+}
+const CROWN_H = { upper: [10.5, 9, 10.5, 8, 7.5, 7, 6.5, 6], lower: [9, 9, 10.5, 8, 7.5, 7, 6.5, 6] };
+const GUM_D = { upper: [11, 10, 11, 9.5, 9, 8, 8, 8], lower: [9.5, 9.5, 11, 9.5, 9, 8, 8, 8] };
+const SEGP = { ttBand: 3, ttBeta: 15, cej: 3.2, crestGap: 2, crestW: 4, alpha: 80, gumExtra: 1.5, gumBias: 6, toothBias: 2, seedFrac: 0.5, seedR: 1.5, rw: true, curvR: 0.6, ctRefine: false, crest: 2.5, boneClose: 2, ctIn: 0.6, ctOut: 0.9, promW: 1, promCap: 3.5, promMin: 1.6, promMinAnt: 1.6, promAntMM: 16, midPen: 0.3, papMin: 0.5, papStrong: 1.0, papStrongAnt: 0.6, papW: 1, papCap: 3, papMaxMM: 24, promPen: 3, skipPen: 2.2, meanCost: false, beta: 8, rwIters: 600, rwTol: 1e-4, rwThr: 0.55 };
+function adjacency(nv, idx) { // CSR vertex neighbours
+  const deg = new Uint32Array(nv + 1);
+  for (let f = 0; f < idx.length; f++) deg[idx[f] + 1] += 2;
+  for (let i = 0; i < nv; i++) deg[i + 1] += deg[i];
+  const nb = new Uint32Array(deg[nv]), fill = deg.slice(0, nv);
+  for (let f = 0; f < idx.length; f += 3) { const a = idx[f], b = idx[f + 1], c = idx[f + 2]; nb[fill[a]++] = b; nb[fill[a]++] = c; nb[fill[b]++] = a; nb[fill[b]++] = c; nb[fill[c]++] = a; nb[fill[c]++] = b; }
+  return { off: deg, nb };
+}
+function boundaryLoops(idx) {
+  const E = new Map(); const K = (a, b) => a * 4294967296 + b;
+  for (let f = 0; f < idx.length; f += 3) for (let e = 0; e < 3; e++) { const a = idx[f + e], b = idx[f + (e + 1) % 3]; const r = K(b, a); if (E.has(r)) E.delete(r); else E.set(K(a, b), 1); }
+  const next = new Map(); for (const k of E.keys()) { const a = Math.floor(k / 4294967296), b = k - a * 4294967296; next.set(a, b); }
+  const seen = new Set(), loops = [];
+  for (const s of next.keys()) { if (seen.has(s)) continue; const L = []; let v = s; while (v !== undefined && !seen.has(v)) { seen.add(v); L.push(v); v = next.get(v); } if (L.length > 2) loops.push(L); }
+  return loops.sort((a, b) => b.length - a.length);
+}
+function toothnessRW(g, H, seed, beta, iters) { // seed: Int8 (1 tooth, 0 gum, -1 free)
+  const nv = H.length, off = g.adj.off, nb = g.adj.nb; const W = new Float32Array(nb.length), D = new Float32Array(nv);
+  for (let v = 0; v < nv; v++) for (let q = off[v]; q < off[v + 1]; q++) { const u = nb[q]; const h = Math.min(H[u], H[v]); const w = Math.exp(-beta * Math.max(0, -h)) + 1e-6; W[q] = w; D[v] += w; }
+  const x = new Float32Array(nv); for (let v = 0; v < nv; v++) x[v] = seed[v] === 1 ? 1 : seed[v] === 0 ? 0 : 0.5;
+  // preconditioned CG on free vertices: D x - sum w x_u = sum over seeded neighbours
+  const r = new Float32Array(nv), z = new Float32Array(nv), d = new Float32Array(nv), Ad = new Float32Array(nv);
+  const Amul = (src, dst) => { for (let v = 0; v < nv; v++) { if (seed[v] >= 0) { dst[v] = 0; continue; } let s = D[v] * src[v]; for (let q = off[v]; q < off[v + 1]; q++) { const u = nb[q]; if (seed[u] < 0) s -= W[q] * src[u]; } dst[v] = s; } };
+  // r = b - A x
+  for (let v = 0; v < nv; v++) { if (seed[v] >= 0) { r[v] = 0; continue; } let s = -D[v] * x[v]; for (let q = off[v]; q < off[v + 1]; q++) s += W[q] * x[nb[q]]; r[v] = s; }
+  let rz = 0; for (let v = 0; v < nv; v++) { z[v] = r[v] / (D[v] || 1); d[v] = z[v]; rz += r[v] * z[v]; }
+  const r0 = Math.sqrt(rz) || 1;
+  for (let it = 0; it < iters; it++) {
+    Amul(d, Ad); let dAd = 0; for (let v = 0; v < nv; v++) dAd += d[v] * Ad[v]; if (!(dAd > 0)) break; const a = rz / dAd;
+    let rz2 = 0; for (let v = 0; v < nv; v++) { x[v] += a * d[v]; r[v] -= a * Ad[v]; z[v] = r[v] / (D[v] || 1); rz2 += r[v] * z[v]; }
+    const b = rz2 / rz; rz = rz2; for (let v = 0; v < nv; v++) d[v] = z[v] + b * d[v];
+    if (Math.sqrt(rz) < SEGP.rwTol * r0) break;
+  }
+  return x;
+}
+function vertexCurv(g, iters = 3) {
+  const p = g.pos, n = g.nrm, nv = p.length / 3, adj = g.adj, off = adj.off, nb = adj.nb; let H = new Float32Array(nv);
+  for (let v = 0; v < nv; v++) { let s = 0, c = 0; for (let q = off[v]; q < off[v + 1]; q++) { const u = nb[q]; const ex = p[u * 3] - p[v * 3], ey = p[u * 3 + 1] - p[v * 3 + 1], ez = p[u * 3 + 2] - p[v * 3 + 2]; const L2 = ex * ex + ey * ey + ez * ez + 1e-12; s += ((n[u * 3] - n[v * 3]) * ex + (n[u * 3 + 1] - n[v * 3 + 1]) * ey + (n[u * 3 + 2] - n[v * 3 + 2]) * ez) / L2; c++; } H[v] = c ? s / c : 0; }
+  for (let it = 0; it < iters; it++) { const H2 = new Float32Array(nv); for (let v = 0; v < nv; v++) { let s = 0, c = 0; for (let q = off[v]; q < off[v + 1]; q++) { s += H[nb[q]]; c++; } H2[v] = 0.5 * H[v] + 0.5 * (c ? s / c : H[v]); } H = H2; }
+  return H;
+}
+function watershed(g, OF, AC, teeth, kind, alpha = SEGP.alpha) {
+  const p = g.pos, n = g.nrm, nv = p.length / 3; const adj = g.adj || (g.adj = adjacency(nv, g.idx));
+  const lab = new Int16Array(nv).fill(-2), dist = new Float64Array(nv).fill(Infinity); const H = new MinHeap(nv);
+  const GUM = teeth.length;
+  // tooth seeds: small crown patch around the seed vertex
+  teeth.forEach((t, li) => { const sp = [p[t.seed * 3], p[t.seed * 3 + 1], p[t.seed * 3 + 2]]; const r = Math.min(SEGP.seedR, Math.abs(t.t1 - t.t0) / 4 || 1.2);
+    for (let v = 0; v < nv; v++) { const d = (p[v * 3] - sp[0]) ** 2 + (p[v * 3 + 1] - sp[1]) ** 2 + (p[v * 3 + 2] - sp[2]) ** 2; if (d < r * r && OF.depth(v) < 3) { lab[v] = li; dist[v] = 0; H.push(0, v); } }
+    if (SEGP.seedFrac > 0) { // a wider core of the crown: the middle of the tooth along the arch, close to the arch line, upper part of the crown
+      const w = Math.abs(t.t1 - t.t0), ch = (CROWN_H[kind][t.k] || 7) * SEGP.seedFrac, sd = OF.depth(t.seed);
+      for (let v = 0; v < nv; v++) { if (lab[v] >= 0) continue; if (Math.abs(AC.T[v] - t.tc) > w * 0.22 || AC.D[v] > 3.2) continue; const dp = OF.depth(v); if (dp - sd > ch) continue; lab[v] = li; dist[v] = 0; H.push(0, v); } } });
+  // gum seeds: deep or far from the arch, plus the scan border
+  const thrAt = v => { for (const t of teeth) { const lo = Math.min(t.t0, t.t1), hi = Math.max(t.t0, t.t1); if (AC.T[v] >= lo && AC.T[v] < hi) return GUM_D[kind][t.k] || 8; } return 9; };
+  for (let v = 0; v < nv; v++) { if (lab[v] >= 0) continue; if (OF.depth(v) > thrAt(v) + SEGP.gumExtra || AC.D[v] > 8.5) { lab[v] = GUM; dist[v] = 0; H.push(0, v); } }
+  for (const L of boundaryLoops(g.idx)) for (const v of L) if (lab[v] < 0) { lab[v] = GUM; dist[v] = 0; H.push(0, v); }
+  const off = adj.off, nb = adj.nb; const done = new Uint8Array(nv);
+  const seedRW = new Int8Array(nv).fill(-1); for (let v = 0; v < nv; v++) if (lab[v] === GUM) seedRW[v] = 0; else if (lab[v] >= 0) seedRW[v] = 1;
+  const dep = new Float32Array(nv), thr = new Float32Array(nv); for (let v = 0; v < nv; v++) { dep[v] = OF.depth(v); thr[v] = thrAt(v); }
+  while (H.n) {
+    const v = H.pop(); const dv = H.top; if (done[v]) continue; done[v] = 1; const isGum = lab[v] === GUM;
+    for (let q = off[v]; q < off[v + 1]; q++) { const u = nb[q]; if (done[u]) continue;
+      const ex = p[u * 3] - p[v * 3], ey = p[u * 3 + 1] - p[v * 3 + 1], ez = p[u * 3 + 2] - p[v * 3 + 2]; const L2 = ex * ex + ey * ey + ez * ez + 1e-12, L = Math.sqrt(L2);
+      const kap = ((n[u * 3] - n[v * 3]) * ex + (n[u * 3 + 1] - n[v * 3 + 1]) * ey + (n[u * 3 + 2] - n[v * 3 + 2]) * ez) / L2;
+      // the gum front gets expensive when it climbs towards the cusps, the crown front when it goes deep
+      const rel = dep[u] / (thr[u] + SEGP.gumExtra); const bias = isGum ? 1 + SEGP.gumBias * Math.max(0, 1 - rel) : 1 + SEGP.toothBias * Math.max(0, rel - 0.85);
+      const w = L * (1 + alpha * Math.max(0, -kap)) * bias; const nd = dv + w;
+      if (nd < dist[u]) { dist[u] = nd; lab[u] = lab[v]; H.push(nd, u); } }
+  }
+  for (let v = 0; v < nv; v++) if (lab[v] < 0) lab[v] = GUM;
+  if (SEGP.rw) { // tooth ↔ gum by random walker; the Dijkstra labels only split the teeth from each other
+    if (!g.curv) { let s = 0, c = 0; for (let f = 0; f < g.idx.length; f += 9) { const a = g.idx[f], b = g.idx[f + 1]; s += Math.hypot(p[a * 3] - p[b * 3], p[a * 3 + 1] - p[b * 3 + 1], p[a * 3 + 2] - p[b * 3 + 2]); c++; } const el = s / Math.max(1, c);
+      g.curv = vertexCurv(g, Math.max(3, Math.min(40, Math.round((SEGP.curvR / el) ** 2)))); }
+    const H = g.curv; const P = toothnessRW(g, H, seedRW, SEGP.beta, SEGP.rwIters); g.rwP = P;
+    for (let v = 0; v < nv; v++) if (P[v] < SEGP.rwThr) lab[v] = GUM;
+    // crown vertices the Dijkstra gave to the gum: take the label of the neighbouring crown
+    const q = []; for (let v = 0; v < nv; v++) if (lab[v] !== GUM) q.push(v);
+    for (let i = 0; i < q.length; i++) { const v = q[i]; for (let k = off[v]; k < off[v + 1]; k++) { const u = nb[k]; if (lab[u] === GUM && P[u] >= SEGP.rwThr && seedRW[u] !== 0) { lab[u] = lab[v]; q.push(u); } } }
+  }
+  // clean-up: keep for each tooth only the component that holds its seed
+  const keep = new Uint8Array(nv); const stack = [];
+  teeth.forEach((t, li) => { if (lab[t.seed] !== li) return; stack.push(t.seed); keep[t.seed] = 1; while (stack.length) { const v = stack.pop(); for (let q = off[v]; q < off[v + 1]; q++) { const u = nb[q]; if (!keep[u] && lab[u] === li) { keep[u] = 1; stack.push(u); } } } });
+  for (let v = 0; v < nv; v++) if (lab[v] !== GUM && !keep[v]) lab[v] = GUM;
+  // small gum islands inside a crown → tooth
+  const seen = new Uint8Array(nv);
+  for (let v0 = 0; v0 < nv; v0++) { if (lab[v0] !== GUM || seen[v0]) continue; const comp = [v0]; seen[v0] = 1; let touchBorder = false; const nbLab = new Set();
+    for (let i = 0; i < comp.length && comp.length < 400; i++) { const v = comp[i]; if (OF.depth(v) > 6) touchBorder = true; for (let q = off[v]; q < off[v + 1]; q++) { const u = nb[q]; if (lab[u] === GUM) { if (!seen[u]) { seen[u] = 1; comp.push(u); } } else nbLab.add(lab[u]); } }
+    if (comp.length < 400 && !touchBorder && nbLab.size === 1) { const l = [...nbLab][0]; for (const v of comp) lab[v] = l; } }
+  return lab;
+}
+function splitTeeth(Nf, L, box, seeds) { // seeds (optional): [{lbl, pts: flat world coords}] — crowns from the scan
+  const { lab, nx: NX, ny: NY } = Nf; const lo = box.lo.map(v => v - 1), hi = box.hi.map(v => v + 1); const bx = hi[0] - lo[0] + 1, by = hi[1] - lo[1] + 1, bz = hi[2] - lo[2] + 1, N = bx * by * bz;
+  const sp = [0, 1, 2].map(c => Math.hypot(Nf.A[0][c], Nf.A[1][c], Nf.A[2][c]));
+  const D = new Float32Array(N); const at = (x, y, z) => (z * by + y) * bx + x;
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { const X = lo[0] + x, Y = lo[1] + y, Z = lo[2] + z; if (X < 0 || Y < 0 || Z < 0 || X >= NX || Y >= NY || Z >= Nf.nz) continue; if (lab[(Z * NY + Y) * NX + X] === L) D[at(x, y, z)] = 1e9; }
+  // two-pass chamfer (26 neighbours, real spacing)
+  const nb = []; for (let dz = -1; dz <= 1; dz++) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy && !dz) continue; nb.push([dx, dy, dz, Math.hypot(dx * sp[0], dy * sp[1], dz * sp[2])]); }
+  const fw = nb.filter(([dx, dy, dz]) => dz < 0 || (dz === 0 && (dy < 0 || (dy === 0 && dx < 0)))), bw = nb.filter(n => !fw.includes(n));
+  const pass = (list, dir) => { for (let z = dir > 0 ? 0 : bz - 1; dir > 0 ? z < bz : z >= 0; z += dir) for (let y = dir > 0 ? 0 : by - 1; dir > 0 ? y < by : y >= 0; y += dir) for (let x = dir > 0 ? 0 : bx - 1; dir > 0 ? x < bx : x >= 0; x += dir) { const i = at(x, y, z); if (!D[i]) continue; let v = D[i]; for (const [dx, dy, dz, w] of list) { const xx = x + dx, yy = y + dy, zz = z + dz; if (xx < 0 || yy < 0 || zz < 0 || xx >= bx || yy >= by || zz >= bz) { v = Math.min(v, w); continue; } const u = D[at(xx, yy, zz)] + w; if (u < v) v = u; } D[i] = v; } };
+  pass(fw, 1); pass(bw, -1);
+  const comps = t => { const C = new Int32Array(N); let n = 0; const sz = [0]; const st = [];
+    for (let i = 0; i < N; i++) { if (D[i] <= t || C[i]) continue; n++; let c = 0; C[i] = n; st.push(i); while (st.length) { const v = st.pop(); c++; const x = v % bx, y = Math.floor(v / bx) % by, z = Math.floor(v / (bx * by)); for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { const xx = x + dx, yy = y + dy, zz = z + dz; if (xx < 0 || yy < 0 || zz < 0 || xx >= bx || yy >= by || zz >= bz) continue; const u = at(xx, yy, zz); if (!C[u] && D[u] > t) { C[u] = n; st.push(u); } } } sz.push(c); }
+    const vmm = sp[0] * sp[1] * sp[2]; const keep = sz.map(c => c * vmm >= 8); const map = new Int32Array(n + 1); let k = 0; for (let j = 1; j <= n; j++) if (keep[j]) map[j] = ++k; for (let i = 0; i < N; i++) C[i] = map[C[i]]; return { C, n: k }; };
+  let best = null;
+  if (seeds && seeds.length) { // scan-guided: each crown grows down into its own root; the step cost rises where the tooth is thin (contacts), so a crown does not leak into its neighbour
+    const A = Nf.A; const M3 = [[A[0][0], A[0][1], A[0][2]], [A[1][0], A[1][1], A[1][2]], [A[2][0], A[2][1], A[2][2]]]; const det = M3[0][0] * (M3[1][1] * M3[2][2] - M3[1][2] * M3[2][1]) - M3[0][1] * (M3[1][0] * M3[2][2] - M3[1][2] * M3[2][0]) + M3[0][2] * (M3[1][0] * M3[2][1] - M3[1][1] * M3[2][0]);
+    const inv = [[(M3[1][1] * M3[2][2] - M3[1][2] * M3[2][1]) / det, (M3[0][2] * M3[2][1] - M3[0][1] * M3[2][2]) / det, (M3[0][1] * M3[1][2] - M3[0][2] * M3[1][1]) / det], [(M3[1][2] * M3[2][0] - M3[1][0] * M3[2][2]) / det, (M3[0][0] * M3[2][2] - M3[0][2] * M3[2][0]) / det, (M3[0][2] * M3[1][0] - M3[0][0] * M3[1][2]) / det], [(M3[1][0] * M3[2][1] - M3[1][1] * M3[2][0]) / det, (M3[0][1] * M3[2][0] - M3[0][0] * M3[2][1]) / det, (M3[0][0] * M3[1][1] - M3[0][1] * M3[1][0]) / det]];
+    const C = new Int32Array(N); const dist = new Float32Array(N).fill(Infinity); const H = new MinHeap(1 << 16); let ns = 0;
+    for (const sd of seeds) for (let q = 0; q < sd.pts.length; q += 3) { const r = [sd.pts[q] - A[0][3], sd.pts[q + 1] - A[1][3], sd.pts[q + 2] - A[2][3]]; const ijk = [0, 1, 2].map(c => Math.round(inv[c][0] * r[0] + inv[c][1] * r[1] + inv[c][2] * r[2]) - lo[c]);
+      if (ijk[0] < 0 || ijk[1] < 0 || ijk[2] < 0 || ijk[0] >= bx || ijk[1] >= by || ijk[2] >= bz) continue; const i = at(ijk[0], ijk[1], ijk[2]); if (!D[i] || C[i] === -1) continue; if (C[i] && C[i] !== sd.lbl) { C[i] = -1; continue; } C[i] = sd.lbl; dist[i] = 0; H.push(0, i); ns++; }
+    for (let i = 0; i < N; i++) if (C[i] === -1) { C[i] = 0; dist[i] = Infinity; }
+    const st = Math.min(sp[0], sp[1], sp[2]);
+    while (H.n) { const i = H.pop(); const dv = H.top; if (dv > dist[i] || !C[i]) continue; const x = i % bx, y = Math.floor(i / bx) % by, z = Math.floor(i / (bx * by));
+      for (const [dx, dy, dz, w] of nb) { const xx = x + dx, yy = y + dy, zz = z + dz; if (xx < 0 || yy < 0 || zz < 0 || xx >= bx || yy >= by || zz >= bz) continue; const u = at(xx, yy, zz); if (!D[u]) continue;
+        const nd = dv + w * (1 + 4 * Math.max(0, 1.6 - D[u]) / 1.6); if (nd < dist[u]) { dist[u] = nd; C[u] = C[i]; H.push(nd, u); } } }
+    // what no crown reached (e.g. an unerupted wisdom tooth) becomes its own teeth
+    let n = Math.max(0, ...seeds.map(s => s.lbl)); const rest = new Int32Array(N); const stk = []; const vmm = sp[0] * sp[1] * sp[2];
+    for (let i = 0; i < N; i++) { if (!D[i] || C[i] || rest[i]) continue; const comp = [i]; rest[i] = 1; for (let q2 = 0; q2 < comp.length; q2++) { const v = comp[q2]; const x = v % bx, y = Math.floor(v / bx) % by, z = Math.floor(v / (bx * by)); for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { const xx = x + dx, yy = y + dy, zz = z + dz; if (xx < 0 || yy < 0 || zz < 0 || xx >= bx || yy >= by || zz >= bz) continue; const u = at(xx, yy, zz); if (D[u] && !C[u] && !rest[u]) { rest[u] = 1; comp.push(u); } } }
+      if (comp.length * vmm >= 25) { n++; for (const v of comp) C[v] = n; } }
+    best = { C, n, t: 'scan', seeded: ns };
+  } else for (const t of [0.9, 1.2, 1.5, 1.8, 2.1, 2.5]) { const r = comps(t); if (r.n <= 16 && (!best || r.n > best.n)) best = { ...r, t }; }
+  // grow back: highest distance first (watershed on the distance map)
+  const C = best.C; const order = []; if (best.t !== 'scan') { for (let i = 0; i < N; i++) if (D[i] && !C[i]) order.push(i); order.sort((a, b) => D[b] - D[a]); }
+  for (let pass2 = 0; pass2 < 6 && order.length; pass2++) { let left = 0; for (const i of order) { if (C[i]) continue; const x = i % bx, y = Math.floor(i / bx) % by, z = Math.floor(i / (bx * by)); let lbl = 0, bd = -1;
+      for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) { const xx = x + dx, yy = y + dy, zz = z + dz; if (xx < 0 || yy < 0 || zz < 0 || xx >= bx || yy >= by || zz >= bz) continue; const u = at(xx, yy, zz); if (C[u] && D[u] > bd) { bd = D[u]; lbl = C[u]; } }
+      if (lbl) C[i] = lbl; else left++; } if (!left) break; }
+  // label map in the full grid (only inside the box) + per-tooth boxes
+  const out = new Uint8Array(Nf.lab.length); const bxs = {};
+  for (let z = 0; z < bz; z++) for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { const c = C[at(x, y, z)]; if (!c) continue; const X = lo[0] + x, Y = lo[1] + y, Z = lo[2] + z; out[(Z * NY + Y) * NX + X] = c; const b = bxs[c] || (bxs[c] = { lo: [X, Y, Z], hi: [X, Y, Z] }); for (const [k2, v] of [[0, X], [1, Y], [2, Z]]) { if (v < b.lo[k2]) b.lo[k2] = v; if (v > b.hi[k2]) b.hi[k2] = v; } }
+  return { lab: out, n: best.n, box: bxs, t: best.t, seeded: best.seeded };
+}
 /* ============================================================
    Наложение КЛКТ до/после лечения по основанию черепа
    © Екатерина Скоробогатько · @katya_skorobogatko
@@ -503,10 +660,16 @@ const S = {
   reg: null,                  // {c, t0, p (6), pAuto, ncc, cal:[a,b], q}
   T: M4.ident(), Ti: M4.ident(),
   show: { A: true, B: true, map: true, parts: { skull: true, mand: true, tu: true, tl: true, skin: false } },
-  alphaA: 0.35, boneAlpha: 1, range: 3, meas: [], measMode: 0, measA: null,
+  alphaA: 0.35, boneAlpha: 1, range: 3, toothCol: true, tSlot: 'A', tSel: null, moveMode: false, meas: [], measMode: 0, measA: null,
   P: null, slMode: 'fuse', blend: 0.5, win: 2400, showZone: true
 };
 const PARTS = [['skull', 1, 'череп/ВЧ'], ['mand', 2, 'НЧ'], ['tu', 3, 'зубы ВЧ'], ['tl', 4, 'зубы НЧ'], ['skin', 0, 'лицо']];
+// everything drawn for one scan: bone parts and, when the teeth are split, each tooth with its own move
+function items(slot, all) { const X = S[slot]; const out = []; if (!X) return out; const base = slot === 'B' ? S.Ti : M4.ident();
+  for (const [k] of PARTS) { if (!all && !S.show.parts[k]) continue;
+    if ((k === 'tu' || k === 'tl') && X.teeth && X.teeth.length) { for (const t of X.teeth) if (t.part === k) out.push({ k, m: t.m, M: M4.mul(base, t.M), t }); continue; }
+    const m = X.mesh[k]; if (m) out.push({ k, m, M: base }); }
+  return out; }
 
 /* ---------------- help buttons, tabs ---------------- */
 document.querySelectorAll('.q[data-h]').forEach(b => b.onclick = () => $('#' + b.dataset.h).classList.toggle('show'));
@@ -594,6 +757,25 @@ async function boneLabel(X, progress) {
     for (const id of fill) out[id] = L; }
   return out; }
 
+/* pieces that are much smaller than a tooth and touch a tooth (a root cut off from its crown) are joined to that tooth */
+function mergeFragments(Nf, T) { const NX = Nf.nx, NY = Nf.ny, lab = T.lab; const cnt = new Float64Array(T.n + 1); const touch = new Map();
+  const lo = [0, 1, 2].map(c => Math.min(...Object.values(T.box).map(b => b.lo[c]))), hi = [0, 1, 2].map(c => Math.max(...Object.values(T.box).map(b => b.hi[c])));
+  for (let z = lo[2]; z <= hi[2]; z++) for (let y = lo[1]; y <= hi[1]; y++) for (let x = lo[0]; x <= hi[0]; x++) { const id = (z * NY + y) * NX + x, a = lab[id]; if (!a) continue; cnt[a]++;
+    for (const d of [1, NX, NX * NY]) { const b = lab[id + d]; if (b && b !== a) { const k = a < b ? a * 1000 + b : b * 1000 + a; touch.set(k, (touch.get(k) || 0) + 1); } } }
+  const med = percentile(Array.from(cnt).slice(1).filter(v => v > 0), 0.5); const map = new Int32Array(T.n + 1).map((_, i) => i);
+  const order = [...Array(T.n).keys()].map(i => i + 1).sort((a, b) => cnt[a] - cnt[b]);
+  for (const a of order) { if (cnt[a] >= 0.4 * med) break; let best = 0, bc = 0; for (const [k, c] of touch) { const p = Math.floor(k / 1000), q = k % 1000; const o = p === a ? q : q === a ? p : 0; if (o && c > bc && cnt[o] > cnt[a]) { bc = c; best = o; } }
+    if (best && bc > 15) { map[a] = best; cnt[best] += cnt[a]; cnt[a] = 0; const bb = T.box[best], ba = T.box[a]; for (let c = 0; c < 3; c++) { bb.lo[c] = Math.min(bb.lo[c], ba.lo[c]); bb.hi[c] = Math.max(bb.hi[c], ba.hi[c]); } delete T.box[a]; } }
+  const fin = i => { while (map[i] !== i) i = map[i]; return i; };
+  for (let z = lo[2]; z <= hi[2]; z++) for (let y = lo[1]; y <= hi[1]; y++) for (let x = lo[0]; x <= hi[0]; x++) { const id = (z * NY + y) * NX + x; if (lab[id]) lab[id] = fin(lab[id]); } }
+/* FDI numbers from the position along the arch: side by the skull midline, order by the angle from the front */
+function numberTeeth(X, list, part) { if (!list.length) return; const cy = list.reduce((s, t) => s + t.c[1], 0) / list.length; const xm = X.xMid !== undefined ? X.xMid : list.reduce((s, t) => s + t.c[0], 0) / list.length;
+  for (const side of [-1, 1]) { const sideL = list.filter(t => Math.sign(t.c[0] - xm || -1) === side); // LPS: x < midline = patient's right
+    sideL.forEach(t => t.ang = Math.atan2(Math.abs(t.c[0] - xm), -(t.c[1] - cy) + 25)); sideL.sort((a, b) => a.ang - b.ang);
+    const q = part === 'tu' ? (side < 0 ? 1 : 2) : (side < 0 ? 4 : 3); sideL.forEach((t, i) => t.fdi = q * 10 + Math.min(9, i + 1)); } }
+const TOOTH_PAL = [[0.98, 0.72, 0.72], [0.99, 0.84, 0.6], [0.98, 0.95, 0.62], [0.72, 0.92, 0.66], [0.6, 0.9, 0.88], [0.62, 0.78, 0.98], [0.78, 0.7, 0.98], [0.96, 0.7, 0.92]];
+function toothColor(t, slot) { if (S.tSel === t) return [0.9, 0.08, 0.35]; if (t.sel) return [0.42, 0.32, 0.88]; const c = TOOTH_PAL[((t.fdi % 10) - 1 + 8) % 8]; return slot === 'B' ? c.map(v => v * 0.92) : c; }
+
 /* Taubin smoothing (λ/μ): removes the voxel terraces without shrinking the bone */
 function taubin(g, iters, lam = 0.5, mu = -0.53) {
   const P = g.pos, I = g.idx, n = P.length / 3; const deg = new Uint32Array(n + 1);
@@ -641,7 +823,7 @@ async function loadCT(slot, src) {
   } catch (e) { console.error(e); toast(`КЛКТ «${nm}»: ` + e.message); }
   busy(false);
 }
-function freeSlot(slot) { const X = S[slot]; if (!X) return; for (const k in X.mesh) freeMesh(X.mesh[k]); S[slot] = null; S.reg = null; S.T = M4.ident(); S.Ti = M4.ident(); }
+function freeSlot(slot) { const X = S[slot]; if (!X) return; for (const k in X.mesh) freeMesh(X.mesh[k]); for (const t of X.teeth || []) freeMesh(t.m); S[slot] = null; S.reg = null; S.T = M4.ident(); S.Ti = M4.ident(); }
 function thresholdSeg(V) { // without the network: one "bone" label
   const N = V.nx * V.ny * V.nz; const h = new Float64Array(64); for (let i = 0; i < N; i += 7) { const v = V.vol[i]; if (v > -300) h[Math.min(63, Math.max(0, Math.floor((v + 300) / 100)))]++; }
   const thr = 450; const lab = new Uint8Array(N); for (let i = 0; i < N; i++) if (V.vol[i] > thr) lab[i] = 1;
@@ -668,6 +850,14 @@ async function afterSeg(slot) {
   for (let q = 0; q < jobs.length; q++) { const [key, L, nmP] = jobs[q]; const bone = L <= 2;
     let g = await labelMesh(Nf, L, bone ? sb : 1, B[L].lo, B[L].hi, f => busy(true, `«${nm}»: строю поверхность (${nmP})…`, (q + f) / jobs.length), bone ? { pool: 'max', close: 2, blur: 2, lab: bl || undefined } : { blur: 1 });
     g = bigComponents(g, bone ? 1500 : 100); if (!g.idx.length) continue; busy(true, `«${nm}»: сглаживаю поверхность (${nmP})…`, (q + 0.95) / jobs.length); await sleep(); taubin(g, bone ? 14 : 8); X.mesh[key] = makeMesh(g); }
+  for (const t of X.teeth || []) freeMesh(t.m); X.teeth = [];
+  for (const [part, L] of [['tu', 3], ['tl', 4]]) { if (!B[L]) continue; busy(true, `«${nm}»: разделяю зубы ${part === 'tu' ? 'верхней' : 'нижней'} челюсти…`, 0.9); await sleep();
+    try { const T = splitTeeth(Nf, L, B[L]); mergeFragments(Nf, T); const list = [];
+      for (let i = 1; i <= T.n; i++) { if (!T.box[i]) continue; let g = bigComponents(await labelMesh(Nf, i, 1, T.box[i].lo, T.box[i].hi, null, { lab: T.lab, blur: 1 }), 60); if (g.idx.length < 300) continue; taubin(g, 8);
+        const n = g.pos.length / 3, c = [0, 0, 0]; for (let v = 0; v < n; v++) for (let q = 0; q < 3; q++) c[q] += g.pos[v * 3 + q] / n; list.push({ part, g, c }); }
+      numberTeeth(X, list, part); for (const t of list) X.teeth.push({ part, fdi: t.fdi, c: t.c, m: makeMesh(t.g), M: M4.ident(), sel: false }); }
+    catch (e) { console.warn('split', e); } }
+  X.teeth.sort((a, b) => a.fdi - b.fdi);
   try { busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95); const stp = Math.max(1, Math.round(1 / X.V.sx)); let g = await surfaceNets(X.V, -350, stp, f => busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95 + 0.05 * f));
     g = bigComponents(g, 40000); if (g.idx.length) { taubin(g, 6); X.mesh.skin = makeMesh(g); } } catch (e) { console.warn('skin', e); }
   $('#info' + slot).textContent = `${X.name} · ${X.V.nx}×${X.V.ny}×${X.V.nz}, ${fmt(X.V.sx, 2)} мм · ${X.segSrc}`; $('#slot' + slot).classList.add('ok');
@@ -675,7 +865,7 @@ async function afterSeg(slot) {
   S.reg = null; updT(); $('#hint').classList.add('hidden');
   $('#regGo').disabled = !(S.A && S.B); $('#exPng').disabled = $('#exStl').disabled = false; $('#measBtn').disabled = !(S.A && S.B);
   if (slot === 'A' || !S.P) { S.P = volCenter(S.A || S.B); fitView(); }
-  renderRegInfo(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
+  renderRegInfo(); renderTeeth(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
 }
 function volCenter(X) { const V = X.V; return [0, 1, 2].map(r => V.origin[r] + V.ex[r] * V.sx * (V.nx - 1) / 2 + V.ey[r] * V.sy * (V.ny - 1) / 2 + V.ez[r] * V.sz * (V.nz - 1) / 2); }
 
@@ -833,9 +1023,9 @@ function nearest(H, pos, cell, p, maxR) { const cx = Math.floor(p[0] / cell), cy
   return best; }
 function computeMaps() {
   if (!S.A || !S.B) return; const cell = 1.5, maxR = Math.max(8, S.range * 2.5); const zf = S.reg ? zoneFn(S.A, S.reg.lim, S.reg.mode) : zoneFn(S.A); const qd = [];
-  for (const [key] of PARTS) { const ma = S.A.mesh[key], mb = S.B.mesh[key]; if (!mb) continue; mb.dist = null; if (!ma) continue;
+  for (const it of items('B', true)) { const key = it.k, mb = it.m, ma = S.A.mesh[key]; mb.dist = null; if (!ma) continue;
     if (!ma.hash) ma.hash = buildHash(ma.g.pos, cell);
-    const P = mb.g.pos, n = P.length / 3, D = new Float32Array(n), T = S.Ti;
+    const P = mb.g.pos, n = P.length / 3, D = new Float32Array(n), T = it.M;
     for (let v = 0; v < n; v++) { const p = M4.pt(T, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); const w = nearest(ma.hash, ma.g.pos, cell, p, maxR);
       if (w < 0) { D[v] = NaN; continue; } const ex = p[0] - ma.g.pos[w * 3], ey = p[1] - ma.g.pos[w * 3 + 1], ez = p[2] - ma.g.pos[w * 3 + 2]; const d = Math.hypot(ex, ey, ez);
       const s = ex * ma.g.nrm[w * 3] + ey * ma.g.nrm[w * 3 + 1] + ez * ma.g.nrm[w * 3 + 2]; D[v] = s < 0 ? -d : d;
@@ -851,7 +1041,7 @@ function colorize(m) { if (!m.dist) return; const n = m.dist.length, c = new Flo
   m.col = c; if (m.cbo) { gl.bindBuffer(gl.ARRAY_BUFFER, m.cbo); gl.bufferData(gl.ARRAY_BUFFER, c, gl.STATIC_DRAW); } else { m.cbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.cbo); gl.bufferData(gl.ARRAY_BUFFER, c, gl.STATIC_DRAW); } }
 function renderLegend() { const st = []; for (let i = 0; i <= 20; i++) { const t = -1 + i / 10; const c = mapColor(Math.abs(t) < 0.12 ? 0 : Math.sign(t) * (Math.abs(t) - 0.12) / 0.88); st.push(`rgb(${c.map(v => Math.round(v * 255)).join(',')}) ${i * 5}%`); }
   $('#legBar').style.background = `linear-gradient(90deg,${st.join(',')})`; $('#legLo').textContent = '−' + fmt(S.range, 1); $('#legHi').textContent = '+' + fmt(S.range, 1) + ' мм'; }
-$('#mapRange').onchange = () => { S.range = Math.max(0.5, parseFloat(String($('#mapRange').value).replace(',', '.')) || 3); renderLegend(); if (S.B) for (const k in S.B.mesh) colorize(S.B.mesh[k]); requestDraw(); };
+$('#mapRange').onchange = () => { S.range = Math.max(0.5, parseFloat(String($('#mapRange').value).replace(',', '.')) || 3); renderLegend(); if (S.B) for (const it of items('B', true)) colorize(it.m); requestDraw(); };
 
 /* ============================================================
    WebGL
@@ -905,9 +1095,9 @@ function draw() {
   const alB = k => k === 'skin' ? 0.5 : isBone(k) ? bA : 1, alA = k => showB ? (k === 'skin' ? Math.min(S.alphaA, 0.3) : S.alphaA) : (k === 'skin' ? 0.4 : isBone(k) ? bA : 1);
   const pass = transp => { // opaque surfaces first, then the see-through ones (no depth writes) so the inner ones stay visible
     if (transp) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }
-    if (showB) for (const [k] of PARTS) { const m = S.B.mesh[k]; if (!m || !S.show.parts[k] || (alB(k) < 0.99) !== transp) continue; const map = !!(S.show.map && S.reg && m.dist); drawMesh(m, S.Ti, colB(k, map), alB(k), map); }
+    if (showB) for (const it of items('B')) { const k = it.k, m = it.m; if ((alB(k) < 0.99) !== transp) continue; const map = !!(S.show.map && S.reg && m.dist); drawMesh(m, it.M, it.t && !map && S.toothCol ? toothColor(it.t, 'B') : colB(k, map), alB(k), map); }
     if (showA) { if (showB) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(2, 8); } /* where both coincide, "after" wins */
-      for (const [k] of PARTS) { const m = S.A.mesh[k]; if (!m || !S.show.parts[k] || (alA(k) < 0.99) !== transp) continue; drawMesh(m, I, colA(k), alA(k), false); }
+      for (const it of items('A')) { const k = it.k; if ((alA(k) < 0.99) !== transp) continue; drawMesh(it.m, it.M, it.t && S.toothCol && !showB ? toothColor(it.t, 'A') : colA(k), alA(k), false); }
       gl.disable(gl.POLYGON_OFFSET_FILL); }
     if (transp) { gl.depthMask(true); gl.disable(gl.BLEND); } };
   pass(false); pass(true);
@@ -934,11 +1124,11 @@ window.addEventListener('resize', () => { requestDraw(); });
 /* ---------------- picking: nearest visible vertex under the cursor ---------------- */
 function pickAt(e, which) { // which: 'A' | 'B'
   const r = canvas.getBoundingClientRect(); const mx = (e.clientX - r.left) / r.width * 2 - 1, my = 1 - (e.clientY - r.top) / r.height * 2; const tol = 6 / r.width * 2, tolY = 6 / r.height * 2;
-  const X = S[which]; if (!X) return null; const M = which === 'B' ? S.Ti : M4.ident(); const MVP = M4.mul(PM || projM(), M4.mul(VM || viewM(), M)); let best = null;
-  for (const [k] of PARTS) { const m = X.mesh[k]; if (!m || !S.show.parts[k]) continue; const P = m.g.pos, n = P.length / 3;
+  const X = S[which]; if (!X) return null; let best = null; const VP = M4.mul(PM || projM(), VM || viewM());
+  for (const it of items(which)) { const k = it.k, m = it.m, MVP = M4.mul(VP, it.M); const P = m.g.pos, n = P.length / 3;
     for (let v = 0; v < n; v++) { const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2]; const cx = MVP[0] * x + MVP[4] * y + MVP[8] * z + MVP[12]; if (Math.abs(cx - mx) > tol) continue; const cy = MVP[1] * x + MVP[5] * y + MVP[9] * z + MVP[13]; if (Math.abs(cy - my) > tolY) continue;
-      const cz = MVP[2] * x + MVP[6] * y + MVP[10] * z + MVP[14]; if (!best || cz < best.z) best = { z: cz, k, v, m }; } }
-  if (!best) return null; const P = best.m.g.pos, v = best.v; const p = M4.pt(M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); return { p, part: best.k, d: best.m.dist ? best.m.dist[v] : null };
+      const cz = MVP[2] * x + MVP[6] * y + MVP[10] * z + MVP[14]; if (!best || cz < best.z) best = { z: cz, k, v, m, it }; } }
+  if (!best) return null; const P = best.m.g.pos, v = best.v; const p = M4.pt(best.it.M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); return { p, part: best.k, d: best.m.dist ? best.m.dist[v] : null, tooth: best.it.t };
 }
 let probeTm = 0;
 function probe(e) { const el = $('#probe'); if (!S.reg || !S.show.B || S.measMode) { el.style.display = 'none'; return; } const now = performance.now(); if (now - probeTm < 50) return; probeTm = now;
@@ -1022,14 +1212,14 @@ $('#blendBox').style.display = 'none';
    ============================================================ */
 function saveBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
 function baseName() { const n = (S.A && S.A.name || 'КЛКТ').replace(/\.(nii(\.gz)?|zip)$/i, '').replace(/[\\/:*?"<>|]+/g, '_'); return n; }
-function meshesOf(slot, M) { const out = []; const X = S[slot]; if (!X) return out; for (const [k] of PARTS) { const m = X.mesh[k]; if (!m || !S.show.parts[k]) continue; out.push({ m, M }); } return out; }
+function meshesOf(slot) { return items(slot).map(it => ({ m: it.m, M: it.M })); }
 function stlBlob(list) { let nt = 0; for (const { m } of list) nt += m.g.idx.length / 3; const buf = new ArrayBuffer(84 + nt * 50), dv = new DataView(buf); const hdr = 'CBCT superimposition (c) E. Skorobogatko @katya_skorobogatko'; for (let i = 0; i < 80; i++) dv.setUint8(i, i < hdr.length ? hdr.charCodeAt(i) : 32); dv.setUint32(80, nt, true); let o = 84;
   for (const { m, M } of list) { const P = m.g.pos, I = m.g.idx; for (let t = 0; t < I.length; t += 3) { const p = [I[t], I[t + 1], I[t + 2]].map(v => M4.pt(M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]])); const n = norm(cross(sub3(p[1], p[0]), sub3(p[2], p[0])));
       for (let k = 0; k < 3; k++) dv.setFloat32(o + k * 4, n[k] || 0, true); for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) dv.setFloat32(o + 12 + j * 12 + k * 4, p[j][k], true); o += 50; } }
   return new Blob([buf], { type: 'model/stl' }); }
 $('#exPng').onclick = () => { S.snapBg = true; draw(); canvas.toBlob(b => saveBlob(b, baseName() + '_наложение.png')); S.snapBg = false; requestDraw(); };
-$('#exStl').onclick = () => { if (S.A) saveBlob(stlBlob(meshesOf('A', M4.ident())), baseName() + '_до.stl'); if (S.B) setTimeout(() => saveBlob(stlBlob(meshesOf('B', S.Ti)), baseName() + '_после_совмещено.stl'), 400); };
-$('#exPly').onclick = () => { const list = meshesOf('B', S.Ti); let nv = 0, nf = 0; for (const { m } of list) { nv += m.g.pos.length / 3; nf += m.g.idx.length / 3; }
+$('#exStl').onclick = () => { if (S.A) saveBlob(stlBlob(meshesOf('A')), baseName() + '_до.stl'); if (S.B) setTimeout(() => saveBlob(stlBlob(meshesOf('B')), baseName() + '_после_совмещено.stl'), 400); };
+$('#exPly').onclick = () => { const list = meshesOf('B'); let nv = 0, nf = 0; for (const { m } of list) { nv += m.g.pos.length / 3; nf += m.g.idx.length / 3; }
   const head = `ply\nformat binary_little_endian 1.0\ncomment CBCT superimposition (c) E. Skorobogatko @katya_skorobogatko\nelement vertex ${nv}\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nproperty float distance_mm\nelement face ${nf}\nproperty list uchar int vertex_indices\nend_header\n`;
   const hb = new TextEncoder().encode(head); const buf = new ArrayBuffer(hb.length + nv * 19 + nf * 13); new Uint8Array(buf).set(hb); const dv = new DataView(buf); let o = hb.length, base = 0; const fo0 = hb.length + nv * 19; let fo = fo0;
   for (const { m, M } of list) { const P = m.g.pos, n = P.length / 3; for (let v = 0; v < n; v++) { const p = M4.pt(M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); for (let k = 0; k < 3; k++) dv.setFloat32(o + k * 4, p[k], true);
@@ -1067,6 +1257,64 @@ async function gpuCheck() { const el = $('#gpuInfo');
     el.innerHTML = `Видеокарта для нейросети: <b class="${weak ? 'bad' : big ? 'ok' : ''}">${nm}</b>` + (weak ? '<br>Это встроенная видеокарта. Назначьте браузеру мощную: Параметры Windows → Система → Дисплей → Графика → браузер → «Высокая производительность», затем перезапустите браузер.' : ''); }
   catch (e) { el.textContent = 'Видеокарта: ' + e.message; } }
 gpuCheck();
+/* ============================================================
+   Teeth: list, selection, STL export, moving
+   ============================================================ */
+function renderTeeth() { const X = S[S.tSlot], el = $('#tList'); document.querySelectorAll('[data-ts]').forEach(b => b.classList.toggle('on', b.dataset.ts === S.tSlot));
+  if (!X || !X.teeth || !X.teeth.length) { el.innerHTML = X ? 'Зубы не найдены.' : 'Зубы появятся после загрузки КЛКТ.'; $('#tStl').disabled = $('#tZip').disabled = true; return; }
+  const chip = t => `<span class="tch${t.sel ? ' sel' : ''}${S.tSel === t ? ' act' : ''}" data-f="${X.teeth.indexOf(t)}" title="двойной щелчок — изменить номер">${t.fdi}</span>`;
+  const q = n => X.teeth.filter(t => Math.floor(t.fdi / 10) === n).sort((a, b) => a.fdi - b.fdi);
+  const row = (n, nm) => `<div style="display:flex;align-items:center;gap:4px;margin-top:2px"><span class="sub" style="width:74px;font-size:11px">${nm}</span><div>${q(n).map(chip).join('') || '<span class="sub">—</span>'}</div></div>`;
+  el.innerHTML = row(1, 'ВЧ справа') + row(2, 'ВЧ слева') + row(4, 'НЧ справа') + row(3, 'НЧ слева') +
+    `<div class="sub" style="text-align:center">верхняя ${q(1).length + q(2).length} · нижняя ${q(3).length + q(4).length} · выбрано ${X.teeth.filter(t => t.sel).length}</div>`;
+  el.querySelectorAll('[data-f]').forEach(c => { const t = X.teeth[+c.dataset.f]; c.onclick = () => { t.sel = !t.sel; renderTeeth(); requestDraw(); };
+    c.ondblclick = () => { const v = prompt('Номер зуба по FDI', t.fdi); const n = parseInt(v); if (n >= 11 && n <= 48 && n % 10 >= 1 && n % 10 <= 9) { t.fdi = n; t.part = n < 30 ? 'tu' : 'tl'; X.teeth.sort((a, b) => a.fdi - b.fdi); renderTeeth(); requestDraw(); } }; });
+  const ns = X.teeth.filter(t => t.sel).length; $('#tStl').disabled = !ns; $('#tZip').disabled = !ns; renderToothMove(); }
+document.querySelectorAll('[data-ts]').forEach(b => b.onclick = () => { S.tSlot = b.dataset.ts; S.tSel = null; renderTeeth(); requestDraw(); });
+$('#tCol').onchange = () => { S.toothCol = $('#tCol').checked; requestDraw(); };
+const selTeeth = f => { const X = S[S.tSlot]; if (!X || !X.teeth) return; X.teeth.forEach(t => t.sel = f(t)); renderTeeth(); requestDraw(); };
+$('#tSelU').onclick = () => selTeeth(t => t.part === 'tu'); $('#tSelL').onclick = () => selTeeth(t => t.part === 'tl'); $('#tSelN').onclick = () => selTeeth(() => false);
+function toothItems() { return items(S.tSlot, true).filter(it => it.t && it.t.sel); }
+const slotName = () => S.tSlot === 'A' ? 'до' : 'после';
+$('#tStl').onclick = () => { const li = toothItems(); if (!li.length) return; const nums = li.map(it => it.t.fdi); const up = nums.every(n => n < 30), lo = nums.every(n => n > 30);
+  saveBlob(stlBlob(li.map(it => ({ m: it.m, M: it.M }))), `${baseName()}_${slotName()}_зубы_${up && nums.length > 1 ? 'ВЧ' : lo && nums.length > 1 ? 'НЧ' : nums.join('-')}.stl`); };
+$('#tZip').onclick = async () => { const li = toothItems(); if (!li.length) return; const files = []; for (const it of li) files.push({ name: `tooth_${it.t.fdi}.stl`, data: new Uint8Array(await stlBlob([{ m: it.m, M: it.M }]).arrayBuffer()) });
+  saveBlob(zipStore(files), `${baseName()}_${slotName()}_зубы.zip`); };
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) { const enc = new TextEncoder(); const parts = [], cen = []; let off = 0;
+  for (const f of files) { const nm = enc.encode(f.name), crc = crc32(f.data); const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x800, true); h.setUint32(14, crc, true); h.setUint32(18, f.data.length, true); h.setUint32(22, f.data.length, true); h.setUint16(26, nm.length, true);
+    parts.push(new Uint8Array(h.buffer), nm, f.data); const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x800, true); c.setUint32(16, crc, true); c.setUint32(20, f.data.length, true); c.setUint32(24, f.data.length, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cen.push(new Uint8Array(c.buffer), nm); off += 30 + nm.length + f.data.length; }
+  const cs = cen.reduce((s, a) => s + a.length, 0); const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(e.buffer)], { type: 'application/zip' }); }
+// moving
+function rodrigues(ax, ang) { const [x, y, z] = norm(ax), c = Math.cos(ang), s = Math.sin(ang), C = 1 - c; return [c + x * x * C, x * y * C - z * s, x * z * C + y * s, y * x * C + z * s, c + y * y * C, y * z * C - x * s, z * x * C - y * s, z * y * C + x * s, c + z * z * C]; }
+function slotDir(d) { if (S.tSlot !== 'B') return d; const T = S.T; return [T[0] * d[0] + T[4] * d[1] + T[8] * d[2], T[1] * d[0] + T[5] * d[1] + T[9] * d[2], T[2] * d[0] + T[6] * d[1] + T[10] * d[2]]; } // A-world direction → the tooth's own scan
+function moveTooth(t, dA, axA, ang) { // dA: shift in the A frame (mm); axA/ang: rotation about the tooth centre
+  if (dA) { const d = slotDir(dA); t.M = M4.mul(M4.fromR([1, 0, 0, 0, 1, 0, 0, 0, 1], d), t.M); }
+  if (axA && ang) { const c = M4.pt(t.M, t.c); const R = rodrigues(slotDir(axA), ang); const Rc = [R[0] * c[0] + R[1] * c[1] + R[2] * c[2], R[3] * c[0] + R[4] * c[1] + R[5] * c[2], R[6] * c[0] + R[7] * c[1] + R[8] * c[2]]; t.M = M4.mul(M4.fromR(R, [c[0] - Rc[0], c[1] - Rc[1], c[2] - Rc[2]]), t.M); }
+  t.moved = true; if (t.m.dist) t.m.stale = true; renderToothMove(); requestDraw(); }
+const TNUD = [['Вправо/влево', [-1, 0, 0], null, 0.25, ' мм'], ['Вперёд/назад', [0, -1, 0], null, 0.25, ' мм'], ['Вверх/вниз', [0, 0, 1], null, 0.25, ' мм'], ['Наклон вперёд/назад', null, [1, 0, 0], 2, '°'], ['Наклон вбок', null, [0, 1, 0], 2, '°'], ['Поворот', null, [0, 0, 1], 2, '°']];
+function renderToothMove() { $('#tMoveBox').classList.toggle('hidden', !S.moveMode); const t = S.tSel; if (!S.moveMode) return;
+  if (!t) { $('#tMoveInfo').textContent = 'Щёлкните зуб на модели («' + slotName() + '»).'; $('#tNud').innerHTML = ''; return; }
+  const c0 = t.c, c1 = M4.pt(t.M, t.c); let d = [0, 1, 2].map(i => c1[i] - c0[i]); if (S.tSlot === 'B') { const Ti = S.Ti; d = [Ti[0] * d[0] + Ti[4] * d[1] + Ti[8] * d[2], Ti[1] * d[0] + Ti[5] * d[1] + Ti[9] * d[2], Ti[2] * d[0] + Ti[6] * d[1] + Ti[10] * d[2]]; }
+  const tx = dirText(d); $('#tMoveInfo').innerHTML = `Зуб <b>${t.fdi}</b> («${slotName()}»): центр сдвинут ${tx.join(', ')} · всего ${fmt(Math.hypot(...d), 2)} мм`;
+  $('#tNud').innerHTML = TNUD.map(([n, dv, ax, st, u], i) => `<span>${n}</span><span class="v">±${fmt(st, st < 1 ? 2 : 0)}${u}</span><button class="btn sm" data-tn="${i}" data-s="-1">−</button><button class="btn sm" data-tn="${i}" data-s="1">+</button>`).join('');
+  $('#tNud').querySelectorAll('[data-tn]').forEach(b => b.onclick = () => { const [, dv, ax, st] = TNUD[+b.dataset.tn]; const sg = +b.dataset.s; if (dv) moveTooth(t, dv.map(v => v * st * sg)); else moveTooth(t, null, ax, sg * st * Math.PI / 180); }); }
+$('#tMove').onclick = () => { S.moveMode = !S.moveMode; $('#tMove').classList.toggle('on', S.moveMode); if (!S.moveMode) S.tSel = null; renderTeeth(); requestDraw(); };
+$('#tReset').onclick = () => { if (S.tSel) { S.tSel.M = M4.ident(); renderToothMove(); requestDraw(); } };
+$('#tResetAll').onclick = () => { for (const sl of ['A', 'B']) for (const t of (S[sl] && S[sl].teeth) || []) t.M = M4.ident(); renderToothMove(); requestDraw(); };
+$('#tMap').onclick = () => { if (!S.reg) { toast('Карта появится после совмещения'); return; } busy(true, 'Считаю карту расстояний…', 0.5); setTimeout(() => { computeMaps(); renderRegInfo(); busy(false); requestDraw(); }, 30); };
+let tDrag = null;
+canvas.addEventListener('pointerdown', e => { if (!S.moveMode || e.button === 1) return; const h = pickAt(e, S.tSlot); if (!h || !h.tooth) return;
+  e.stopImmediatePropagation(); S.tSel = h.tooth; tDrag = { x: e.clientX, y: e.clientY, rot: e.button === 2 || e.ctrlKey }; canvas.setPointerCapture(e.pointerId); renderTeeth(); requestDraw(); }, true);
+canvas.addEventListener('pointermove', e => { if (!tDrag) return; e.stopImmediatePropagation(); const dx = e.clientX - tDrag.x, dy = e.clientY - tDrag.y; tDrag.x = e.clientX; tDrag.y = e.clientY;
+  const r = canvas.getBoundingClientRect(); const k = cam.halfH * 2 / r.height; const e3 = eyeDir(), f = e3.map(v => -v); const up = [-Math.sin(cam.ph) * Math.sin(cam.th), Math.sin(cam.ph) * Math.cos(cam.th), Math.cos(cam.ph)]; const s = norm(cross(f, up)), u = cross(s, f);
+  if (tDrag.rot) { if (dx) moveTooth(S.tSel, null, u, dx * 0.01); if (dy) moveTooth(S.tSel, null, s, dy * 0.01); }
+  else moveTooth(S.tSel, s.map((v, i) => v * dx * k - u[i] * dy * k)); }, true);
+canvas.addEventListener('pointerup', e => { if (tDrag) { tDrag = null; e.stopImmediatePropagation(); } }, true);
+
 renderLegend(); renderRegInfo(); requestDraw();
 window.__S = S;
 </script>
