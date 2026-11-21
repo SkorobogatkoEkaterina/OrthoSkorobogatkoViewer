@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 1.5</title>
+<title>Наложение КЛКТ · 1.6</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -105,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.5</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.6</small></div>
   </div>
 
   <div class="sec" id="secA">
@@ -148,6 +148,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <option value="skull">Весь череп выше нёба (больше кости, только взрослые)</option>
     </select>
     <div class="fld"><span id="roiLimLbl">Сдвиг зоны вверх(+)/вниз(−), мм</span><input id="roiLim" type="number" step="1" value="0"></div>
+    <label class="ck" title="Разные томографы бывают откалиброваны по-разному (до 1–2 % по размеру). Галочка подгоняет масштаб второго снимка по зоне основания черепа. У растущих пациентов включайте только если снимки сделаны на разных аппаратах."><input type="checkbox" id="useScale"> снимки с разных томографов — подогнать масштаб</label>
     <div class="row"><button class="btn primary" id="regGo" disabled>Совместить</button><button class="btn" id="regFine" disabled title="Ещё раз уточнить на полном разрешении">Уточнить</button></div>
     <div class="res" id="regInfo"></div>
     <details id="nudBox"><summary>Ручная доводка</summary>
@@ -355,7 +356,7 @@ async function readDicom(entries, progress) { // entries: [{name, data}] or File
   const R = items[0].inf.rows, C = items[0].inf.cols, ps = items[0].inf.ps || [0.2, 0.2];
   const dz = items.length > 1 ? Math.abs(z(items[items.length - 1]) - z(items[0])) / (items.length - 1) || (items[0].inf.thick || ps[0]) : ps[0];
   // downsample so that the volume stays < ~60 M voxels
-  let f = 1; while ((R / f) * (C / f) * (items.length / f) > 7.2e7) f++;
+  let f = 1; while ((R / f) * (C / f) * (items.length / f) > 1.4e8) f++;
   const nx = Math.floor(C / f), ny = Math.floor(R / f), nz = Math.floor(items.length / f);
   const vol = new Int16Array(nx * ny * nz);
   for (let k = 0; k < nz; k++) {
@@ -736,14 +737,15 @@ function volAffine(V) { return [0, 1, 2].map(r => [V.ex[r] * V.sx, V.ey[r] * V.s
 function rotM(rx, ry, rz) { // degrees → row-major 3×3, R = Rz·Ry·Rx
   const a = rx * Math.PI / 180, b = ry * Math.PI / 180, c = rz * Math.PI / 180; const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), cc = Math.cos(c), sc = Math.sin(c);
   return [cc * cb, cc * sb * sa - sc * ca, cc * sb * ca + sc * sa, sc * cb, sc * sb * sa + cc * ca, sc * sb * ca - cc * sa, -sb, cb * sa, cb * ca]; }
-function paramT(p, c, t0) { const R = rotM(p[0], p[1], p[2]); const Rc = [R[0] * c[0] + R[1] * c[1] + R[2] * c[2], R[3] * c[0] + R[4] * c[1] + R[5] * c[2], R[6] * c[0] + R[7] * c[1] + R[8] * c[2]];
+function paramT(p, c, t0, sc = 1) { const R = rotM(p[0], p[1], p[2]).map(v => v * sc); const Rc = [R[0] * c[0] + R[1] * c[1] + R[2] * c[2], R[3] * c[0] + R[4] * c[1] + R[5] * c[2], R[6] * c[0] + R[7] * c[1] + R[8] * c[2]];
   return M4.fromR(R, [0, 1, 2].map(i => c[i] + t0[i] + p[3 + i] - Rc[i])); }
 function percentile(arr, q) { if (!arr.length) return NaN; const a = Float64Array.from(arr).sort(); return a[Math.min(a.length - 1, Math.max(0, Math.round(q * (a.length - 1))))]; }
 
 /* level of the cribriform plate: the top of the ethmoid air cells behind the nasion, on the midline */
 function cribLevel(X) { const V = X.V, K = idxAffine(nativeLevel(V)); const hu = w => { const x = Math.round(K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3]), y = Math.round(K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3]), z = Math.round(K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]);
     if (x < 0 || y < 0 || z < 0 || x >= V.nx || y >= V.ny || z >= V.nz) return NaN; return V.vol[(z * V.ny + y) * V.nx + x]; };
-  const tops = []; for (let dx = -8; dx <= 8; dx += 2) for (let dy = 14; dy <= 38; dy += 2) { let top = null; for (let z = X.zT + 20; z <= X.zT + 85; z += 0.5) { const v = hu([X.xMid + dx, X.yN + dy, z]); if (v === v && v < -450) top = z; } if (top !== null) tops.push(top); }
+  const tops = []; for (let dx = -8; dx <= 8; dx += 2) for (let dy = 14; dy <= 38; dy += 2) { let top = null; for (let z = X.zT + 28; z <= X.zT + 72; z += 0.5) { const v = hu([X.xMid + dx, X.yN + dy, z]); if (!(v === v && v < -450)) continue;
+      let capped = false; for (let h = 1.5; h <= 14; h += 0.5) { const u = hu([X.xMid + dx, X.yN + dy, z + h]); if (u === u && u > -250) { capped = true; break; } } if (capped) top = z; } if (top !== null) tops.push(top); } /* an air cell must have bone/brain above it — the empty corners outside the scan field do not count */
   X.cribAuto = tops.length > 20; return X.cribAuto ? percentile(tops, 0.8) + 1 : X.zT + 52; }
 
 /* Bone around the roots: the network often leaves the thin cortical plate over the roots and the alveolar crest out of the bone label.
@@ -982,6 +984,11 @@ async function afterSeg(slot) {
     for (let q = 0; q < p1.length; q += 3) if (Math.abs(p1[q + 2] - (X.zT + 55)) < 5 && Math.abs(p1[q] - X.xMid) < 10) ys.push(p1[q + 1]);
     X.yN = ys.length > 20 ? percentile(ys, 0.01) : percentile(p1.filter((_, q) => q % 3 === 1), 0.02); }
   X.zC = cribLevel(X);
+  { const Vv = X.V, K = idxAffine({ ...Vv, native: true }); const hb = [], hs = []; const stp = Math.max(1, Math.floor(Nf.lab.length / 2e6));
+    for (let q = 0; q < Nf.lab.length; q += stp) { const l = Nf.lab[q]; const i = q % Nf.nx, j = Math.floor(q / Nf.nx) % Nf.ny, k = Math.floor(q / (Nf.nx * Nf.ny)); const w = [0, 1, 2].map(r => A[r][0] * i + A[r][1] * j + A[r][2] * k + A[r][3]);
+      const x = Math.round(K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3]), y = Math.round(K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3]), z = Math.round(K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]); if (x < 0 || y < 0 || z < 0 || x >= Vv.nx || y >= Vv.ny || z >= Vv.nz) continue;
+      const v = Vv.vol[(z * Vv.ny + y) * Vv.nx + x]; if (l === 1 || l === 2) hb.push(v); else if (l === 0 && v > -500) hs.push(v); }
+    const mB = percentile(hb, 0.5), mS = percentile(hs, 0.4); Vv.nrm = mB - mS > 50 ? [1000 / (mB - mS), -mS * 1000 / (mB - mS)] : [1, 0]; X.grey = [mS, mB]; }
   // surfaces
   const B = labelBoxes(Nf); const sp = [0, 1, 2].map(c => Math.hypot(Nf.A[0][c], Nf.A[1][c], Nf.A[2][c])); const sb = sp[0] < 0.45 ? 2 : 1;
   for (const k in X.mesh) freeMesh(X.mesh[k]); X.mesh = {};
@@ -1012,24 +1019,26 @@ function volCenter(X) { const V = X.V; return [0, 1, 2].map(r => V.origin[r] + V
 /* ============================================================
    Registration: voxel-based, normalised cross-correlation of bone in the stable zone
    ============================================================ */
-const HU_LO = -500, HU_HI = 2200; const clampHU = v => v < HU_LO ? HU_LO : v > HU_HI ? HU_HI : v;
+/* every scan is brought to one grey scale first (different machines give very different numbers): soft tissue → 0, bone → 1000 */
+const HU_LO = -700, HU_HI = 2600; const clampHU = v => v < HU_LO ? HU_LO : v > HU_HI ? HU_HI : v;
 function mkLevel(V, step) { // block-averaged copy along the volume's own axes
+  const ns = V.nrm ? V.nrm[0] : 1, no = V.nrm ? V.nrm[1] : 0;
   const f = [V.sx, V.sy, V.sz].map(s => Math.max(1, Math.round(step / s))); const nx = Math.floor(V.nx / f[0]), ny = Math.floor(V.ny / f[1]), nz = Math.floor(V.nz / f[2]);
   const d = new Float32Array(nx * ny * nz), w = 1 / (f[0] * f[1] * f[2]); const src = V.vol;
   for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { let s = 0;
-    for (let c = 0; c < f[2]; c++) for (let b = 0; b < f[1]; b++) { const row = ((k * f[2] + c) * V.ny + j * f[1] + b) * V.nx + i * f[0]; for (let a = 0; a < f[0]; a++) s += clampHU(src[row + a]); }
+    for (let c = 0; c < f[2]; c++) for (let b = 0; b < f[1]; b++) { const row = ((k * f[2] + c) * V.ny + j * f[1] + b) * V.nx + i * f[0]; for (let a = 0; a < f[0]; a++) s += clampHU(src[row + a] * ns + no); }
     d[(k * ny + j) * nx + i] = s * w; }
   const sx = V.sx * f[0], sy = V.sy * f[1], sz = V.sz * f[2]; const o = [0, 1, 2].map(r => V.origin[r] + V.ex[r] * V.sx * (f[0] - 1) / 2 + V.ey[r] * V.sy * (f[1] - 1) / 2 + V.ez[r] * V.sz * (f[2] - 1) / 2);
   return { d, nx, ny, nz, sx, sy, sz, origin: o, ex: V.ex, ey: V.ey, ez: V.ez, native: false };
 }
-function nativeLevel(V) { return { d: V.vol, nx: V.nx, ny: V.ny, nz: V.nz, sx: V.sx, sy: V.sy, sz: V.sz, origin: V.origin, ex: V.ex, ey: V.ey, ez: V.ez, native: true }; }
+function nativeLevel(V) { return { s: V.nrm ? V.nrm[0] : 1, o: V.nrm ? V.nrm[1] : 0, d: V.vol, nx: V.nx, ny: V.ny, nz: V.nz, sx: V.sx, sy: V.sy, sz: V.sz, origin: V.origin, ex: V.ex, ey: V.ey, ez: V.ez, native: true }; }
 function idxAffine(L) { // world → continuous index, as 3×4 rows
   return [[L.ex[0] / L.sx, L.ex[1] / L.sx, L.ex[2] / L.sx, -dot(L.ex, L.origin) / L.sx], [L.ey[0] / L.sy, L.ey[1] / L.sy, L.ey[2] / L.sy, -dot(L.ey, L.origin) / L.sy], [L.ez[0] / L.sz, L.ez[1] / L.sz, L.ez[2] / L.sz, -dot(L.ez, L.origin) / L.sz]]; }
 function sampleL(L, x, y, z) { // trilinear, NaN outside
   if (x < 0 || y < 0 || z < 0 || x > L.nx - 1 || y > L.ny - 1 || z > L.nz - 1) return NaN;
   const x0 = Math.min(L.nx - 2, x | 0), y0 = Math.min(L.ny - 2, y | 0), z0 = Math.min(L.nz - 2, z | 0); const u = x - x0, v = y - y0, w = z - z0; const d = L.d, NX = L.nx, P = NX * L.ny; const i = (z0 * L.ny + y0) * NX + x0;
   let a = d[i], b = d[i + 1], c = d[i + NX], e = d[i + NX + 1], f = d[i + P], g = d[i + P + 1], h = d[i + P + NX], k = d[i + P + NX + 1];
-  if (L.native) { a = clampHU(a); b = clampHU(b); c = clampHU(c); e = clampHU(e); f = clampHU(f); g = clampHU(g); h = clampHU(h); k = clampHU(k); }
+  if (L.native) { const s = L.s, o = L.o; a = clampHU(a * s + o); b = clampHU(b * s + o); c = clampHU(c * s + o); e = clampHU(e * s + o); f = clampHU(f * s + o); g = clampHU(g * s + o); h = clampHU(h * s + o); k = clampHU(k * s + o); }
   return ((a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + e * u) * v) * (1 - w) + ((f * (1 - u) + g * u) * (1 - v) + (h * (1 - u) + k * u) * v) * w;
 }
 function roiLimit() { return parseFloat(String($('#roiLim').value).replace(',', '.')) || 0; }
@@ -1131,15 +1140,31 @@ async function register(fine) {
       for (let q = 0; q < n; q++) { const a = avN[q]; if (a !== a) continue; const w = M4.pt(T, [jit[q * 3], jit[q * 3 + 1], jit[q * 3 + 2]]); const b = sampleL(NB, K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3], K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3], K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]); if (b === b) res[q] = Math.abs((b - cal[1]) / cal[0] - a); }
       const thr = percentile(Array.from(res).filter(v => v === v), 0.85); wt = new Uint8Array(n); for (let q = 0; q < n; q++) wt[q] = res[q] === res[q] && res[q] <= thr ? 1 : 0;
       fin = await optimize(NB, jit, avN, p, c, t0, [0.15, 0.15, 0.15, 0.15, 0.15, 0.15], [0.005, 0.005, 0.005, 0.005, 0.005, 0.005], 400, wt); p = fin.p; }
-    const res = nccCost(NB, jit, avN, paramT(p, c, t0), wt);
-    S.reg = { c, t0, p, pAuto: p.slice(), ncc: -res.c, cal: res.cal || [1, 0], lim, mode: roiModeV(), secs: (performance.now() - t00) / 1000, nPts: jit.length / 3 };
+    // final polish: Nelder–Mead in all 6 parameters at once (rotations and shifts are coupled in a long, thin zone — one-at-a-time steps stop too early)
+    busy(true, 'Совмещение: окончательное уточнение…', 0.95); await sleep();
+    p = await nelderMead(q => nccCost(NB, jit, avN, paramT(q, c, t0), wt).c, p, [0.4, 0.4, 0.4, 0.3, 0.3, 0.3], 600);
+    // the two machines may differ in size calibration: the scale that fits the zone best is measured (and used only if the doctor asks)
+    let sc = 1; { const g = q => nccCost(NB, jit, avN, paramT(p, c, t0, q), wt).c; let lo = 0.95, hi = 1.05; for (let it = 0; it < 28; it++) { const m1 = lo + (hi - lo) * 0.382, m2 = lo + (hi - lo) * 0.618; if (g(m1) < g(m2)) hi = m2; else lo = m1; } sc = (lo + hi) / 2; }
+    const useSc = $('#useScale').checked; if (useSc) { busy(true, 'Совмещение: учитываю разный масштаб аппаратов…', 0.97); await sleep(); const q = await nelderMead(q => nccCost(NB, jit, avN, paramT(q.slice(0, 6), c, t0, q[6]), wt).c, [...p, sc], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.004], 700); p = q.slice(0, 6); sc = q[6]; }
+    const res = nccCost(NB, jit, avN, paramT(p, c, t0, useSc ? sc : 1), wt);
+    S.reg = { c, t0, p, pAuto: p.slice(), sc, useSc, ncc: -res.c, cal: res.cal || [1, 0], lim, mode: roiModeV(), secs: (performance.now() - t00) / 1000, nPts: jit.length / 3 };
     updT(); busy(true, 'Считаю карту расстояний…', 0.93); await sleep(); computeMaps(); renderRegInfo(); renderNudge();
     if (!S.opSet) { S.opSet = true; S.opA = 0.4; $('#opA').value = 0.4; }
     $('#regFine').disabled = false; $('#exPly').disabled = $('#exMat').disabled = $('#exRep').disabled = false;
   } catch (e) { console.error(e); toast('Совмещение: ' + e.message); }
   busy(false); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
 }
-function updT() { S.T = S.reg ? paramT(S.reg.p, S.reg.c, S.reg.t0) : M4.ident(); S.Ti = M4.invRigid(S.T); if (S.cut) S.cut.dirty = true; }
+function inv4(m) { const a = [0, 1, 2].map(r => [m[r], m[4 + r], m[8 + r], m[12 + r]]); const B = inv3x4(a); return new Float32Array([B[0][0], B[1][0], B[2][0], 0, B[0][1], B[1][1], B[2][1], 0, B[0][2], B[1][2], B[2][2], 0, B[0][3], B[1][3], B[2][3], 1]); }
+async function nelderMead(f, x0, step, maxEval) { const n = x0.length; let S0 = [x0.slice()]; for (let i = 0; i < n; i++) { const x = x0.slice(); x[i] += step[i]; S0.push(x); } let F = S0.map(f); let ev = n + 1;
+  while (ev < maxEval) { const ord = F.map((v, i) => i).sort((a, b) => F[a] - F[b]); S0 = ord.map(i => S0[i]); F = ord.map(i => F[i]);
+    if (Math.abs(F[n] - F[0]) < 1e-7) break; const cen = Array(n).fill(0); for (let i = 0; i < n; i++) for (let k = 0; k < n; k++) cen[k] += S0[i][k] / n;
+    const xr = cen.map((v, k) => v + (v - S0[n][k])); const fr = f(xr); ev++;
+    if (fr < F[0]) { const xe = cen.map((v, k) => v + 2 * (v - S0[n][k])); const fe = f(xe); ev++; if (fe < fr) { S0[n] = xe; F[n] = fe; } else { S0[n] = xr; F[n] = fr; } }
+    else if (fr < F[n - 1]) { S0[n] = xr; F[n] = fr; }
+    else { const xc = cen.map((v, k) => v + 0.5 * (S0[n][k] - v)); const fc = f(xc); ev++; if (fc < F[n]) { S0[n] = xc; F[n] = fc; } else { for (let i = 1; i <= n; i++) { S0[i] = S0[i].map((v, k) => S0[0][k] + 0.5 * (v - S0[0][k])); F[i] = f(S0[i]); ev++; } } }
+    if (ev % 50 < 2) await sleep(); }
+  let b = 0; for (let i = 1; i <= n; i++) if (F[i] < F[b]) b = i; return S0[b]; }
+function updT() { S.T = S.reg ? paramT(S.reg.p, S.reg.c, S.reg.t0, S.reg.useSc ? S.reg.sc : 1) : M4.ident(); S.Ti = inv4(S.T); if (S.cut) S.cut.dirty = true; }
 $('#regGo').onclick = () => register(false);
 $('#regFine').onclick = () => register(true);
 $('#roiMode').onchange = () => { $('#roiLim').value = $('#roiMode').value === 'acb' ? 0 : 20; $('#roiLimLbl').textContent = $('#roiMode').value === 'acb' ? 'Сдвиг зоны вверх(+)/вниз(−), мм' : 'Нижняя граница зоны, мм над верхушками корней'; if ($('#viewSl').style.display === 'block') drawSlices(); };
@@ -1151,6 +1176,7 @@ function renderRegInfo() {
   const tr = M4.pt(S.T, r.c).map((v, i) => v - r.c[i]); const sh = Math.hypot(...tr);
   el.innerHTML = `<div>Совпадение костей в зоне: <b class="${cls}">${q === undefined ? '—' : fmt(q, 2) + ' мм'}</b> <span class="sub">(медиана расхождения поверхностей; хорошо — до 0,4 мм, это точность построения поверхностей)</span></div>
     <div class="sub">Корреляция плотности ${fmt(r.ncc, 3)} · ${r.nPts.toLocaleString('ru')} точек · ${r.mode === 'acb' ? 'передний отдел основания черепа' + (S.A.cribAuto ? '' : ' (уровень решётчатой пластинки не найден — проверьте зону на срезах)') + (r.lim ? ', сдвиг ' + fmt(r.lim, 0) + ' мм' : '') : 'череп выше нёба, от ' + fmt(r.lim, 0) + ' мм над корнями'} · ${fmt(r.secs, 0)} с</div>
+    <div class="sub">Масштаб второго снимка ${Math.abs(r.sc - 1) < 0.004 ? 'совпадает с первым' : (r.sc > 1 ? 'больше' : 'меньше') + ' на ' + fmt(Math.abs(r.sc - 1) * 100, 1) + ' %' + (r.useSc ? ' — учтено' : ' (разные томографы? можно учесть галочкой выше)')}.</div>
     <div class="sub">Голова на втором снимке была повёрнута на ${fmt(ang, 1)}° и сдвинута на ${fmt(sh, 1)} мм — это убрано.</div>`;
 }
 
@@ -1172,12 +1198,18 @@ function nearest(H, pos, cell, p, maxR) { const cx = Math.floor(p[0] / cell), cy
       for (const v of a) { const ex = pos[v * 3] - p[0], ey = pos[v * 3 + 1] - p[1], ez = pos[v * 3 + 2] - p[2]; const d = ex * ex + ey * ey + ez * ez; if (d < bd) { bd = d; best = v; } } }
     if (best >= 0 && Math.sqrt(bd) <= r * cell) break; }
   return best; }
+// is a point inside the scanned field of «before»? outside it (beyond the volume, or in the empty corners of a round field) there is nothing to compare with
+function inFieldA(p) { const V = S.A.V; const K = S.A._K || (S.A._K = idxAffine({ ...V, native: true })); let ok = 0, tot = 0;
+  for (const d of [[0, 0, 0], [5, 0, 0], [-5, 0, 0], [0, 5, 0], [0, -5, 0], [0, 0, 5], [0, 0, -5]]) { const w = [p[0] + d[0], p[1] + d[1], p[2] + d[2]]; tot++;
+    const x = Math.round(K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3]), y = Math.round(K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3]), z = Math.round(K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]);
+    if (x < 1 || y < 1 || z < 1 || x >= V.nx - 1 || y >= V.ny - 1 || z >= V.nz - 1) continue; const v = V.vol[(z * V.ny + y) * V.nx + x]; if (v > -990) ok++; }
+  return ok === tot; }
 function computeMaps() {
   if (!S.A || !S.B) return; const cell = 1.5, maxR = Math.max(8, S.range * 2.5); const zf = S.reg ? zoneFn(S.A, S.reg.lim, S.reg.mode) : zoneFn(S.A); const qd = [];
   for (const it of items('B', true)) { const key = it.k, mb = it.m, ma = S.A.mesh[key]; mb.dist = null; if (!ma) continue;
     if (!ma.hash) ma.hash = buildHash(ma.g.pos, cell);
     const P = mb.g.pos, n = P.length / 3, D = new Float32Array(n), T = it.M;
-    for (let v = 0; v < n; v++) { const p = M4.pt(T, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); const w = nearest(ma.hash, ma.g.pos, cell, p, maxR);
+    for (let v = 0; v < n; v++) { const p = M4.pt(T, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); if (!inFieldA(p)) { D[v] = NaN; continue; } const w = nearest(ma.hash, ma.g.pos, cell, p, maxR);
       if (w < 0) { D[v] = NaN; continue; } const ex = p[0] - ma.g.pos[w * 3], ey = p[1] - ma.g.pos[w * 3 + 1], ez = p[2] - ma.g.pos[w * 3 + 2]; const d = Math.hypot(ex, ey, ez);
       const s = ex * ma.g.nrm[w * 3] + ey * ma.g.nrm[w * 3 + 1] + ez * ma.g.nrm[w * 3 + 2]; D[v] = s < 0 ? -d : d;
       if (key === 'skull' && (v % 3 === 0) && zf(p[0], p[1], p[2])) qd.push(d); }
@@ -1244,7 +1276,7 @@ function draw() {
   const showB = S.B && S.show.B, showA = S.A && S.show.A; const bA = S.boneAlpha; const isT = k => k === 'tu' || k === 'tl'; const isBone = k => k === 'skull' || k === 'mand';
   const colA = k => S.reg && showB ? (k === 'skin' ? [0.86, 0.84, 0.83] : [0.84, 0.84, 0.86]) : isT(k) ? COL_T : k === 'skin' ? [0.93, 0.84, 0.78] : k === 'mand' ? [0.70, 0.80, 0.97] : [0.95, 0.95, 0.97];
   const colB = (k, map) => map ? COL_B : isT(k) ? [0.98, 0.80, 0.85] : k === 'mand' ? [0.93, 0.52, 0.66] : COL_B;
-  const part = k => k === 'skin' ? 0.45 : isBone(k) ? bA : 1; const alB = k => S.opB * part(k), alA = k => S.opA * part(k);
+  const part = k => k === 'skin' ? 0.45 : isBone(k) ? bA : 1; const alB = k => S.opB * part(k), alA = k => (showB && S.reg && isT(k) ? Math.min(S.opA, 0.35) : S.opA) * part(k); /* «before» teeth stay a light ghost over the coloured «after» teeth */
   const pass = transp => { // opaque surfaces first, then the see-through ones (no depth writes) so the inner ones stay visible
     if (transp) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }
     if (showB) for (const it of items('B')) { const k = it.k, m = it.m; if ((alB(k) < 0.99) !== transp) continue; const map = !!(S.show.map && S.reg && m.dist); drawMesh(m, it.M, it.t && !map && S.toothCol ? toothColor(it.t, 'B') : colB(k, map), alB(k), map); }
@@ -1289,7 +1321,7 @@ precision highp float; in vec2 vUV; uniform sampler2D uTex; out vec4 o; void mai
 const qprog = (() => { const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; }; const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, QVS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, QFS)); gl.bindAttribLocation(p, 0, 'aPos'); gl.bindAttribLocation(p, 3, 'aUV'); gl.linkProgram(p); return p; })();
 const qBuf = gl.createBuffer(), qUV = gl.createBuffer(), qTex = gl.createTexture(); gl.bindBuffer(gl.ARRAY_BUFFER, qUV); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]), gl.STATIC_DRAW);
 function cutTexture(p) { const N = 384, img = new Uint8Array(N * N * 4); const LA = S.A ? nativeLevel(S.A.V) : null, LB = S.B ? nativeLevel(S.B.V) : null; const KA = LA && idxAffine(LA), KB = LB && idxAffine(LB); const T = S.T;
-  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 700 - S.win / 2, hi = 700 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255)); const fuse = !!(S.reg && LB && S.show.B);
+  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 450 - S.win / 2, hi = 450 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255)); const fuse = !!(S.reg && LB && S.show.B);
   const smp = (L, K, w) => sampleL(L, K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3], K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3], K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]);
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = (i + 0.5) / N - 0.5, b = (j + 0.5) / N - 0.5; const w = [0, 1, 2].map(k => p.c[k] + p.u[k] * a * p.F + p.v[k] * b * p.F);
     const va = LA ? smp(LA, KA, w) : NaN; let vb = NaN; if (fuse) { vb = smp(LB, KB, M4.pt(T, w)); if (vb === vb) vb = (vb - cal[1]) / cal[0]; } else if (!LA && LB) vb = smp(LB, KB, w);
@@ -1383,7 +1415,7 @@ function worldToPix(cv, w) { const [, R, D] = SLV.find(s => s[0] === cv); const 
 function drawSlices() {
   if (!S.A && !S.B) return; const X = S.A || S.B; const F = slField(), c = volCenter(X); if (!S.P) S.P = c.slice();
   const LA = S.A ? nativeLevel(S.A.V) : null, LB = S.B ? nativeLevel(S.B.V) : null; const KA = LA && idxAffine(LA), KB = LB && idxAffine(LB); const T = S.T;
-  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 700 - S.win / 2, hi = 700 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255));
+  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 450 - S.win / 2, hi = 450 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255));
   const zf = S.A ? zoneFn(S.A) : null; const showZ = S.A && S.A.seg;
   for (const [cv, R, D, ax] of SLV) { const can = $(cv), W = can.width, ctx = can.getContext('2d'); const img = ctx.createImageData(W, W); const px = img.data;
     for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const u = (x + 0.5) / W - 0.5, v = (y + 0.5) / W - 0.5; const w = [0, 1, 2].map(i => c[i] + R[i] * u * F + D[i] * v * F); w[ax] = S.P[ax];
