@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
+<title>Наложение КЛКТ · 1.0</title>
+<style>
+:root{
+  --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
+  --purple:#362395; --pink:#E5155A; --cyan:#0DB4E7;
+  --shadow:0 10px 30px rgba(54,35,149,.10), 0 2px 6px rgba(35,27,75,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+#app{position:fixed;inset:0;display:grid;grid-template-columns:350px 1fr}
+#side{overflow:auto;background:#fff;border-right:1px solid var(--line);padding:16px 16px 10px;display:flex;flex-direction:column;gap:12px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--pink));display:grid;place-items:center;flex:none}
+.logo svg{width:24px;height:24px}
+.brand b{display:block;font-size:16px;line-height:1.2}
+.brand small{display:block;font-size:11.5px;color:var(--muted);font-weight:600}
+.sec{border:1px solid var(--line);border-radius:16px;padding:12px}
+.sec h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--purple);display:flex;align-items:center;gap:8px}
+.sec h3 .n{width:20px;height:20px;border-radius:7px;background:var(--purple);color:#fff;display:grid;place-items:center;font-size:11px;letter-spacing:0}
+.sec h3 .q{margin-left:auto;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:11px;font-weight:800;padding:0;letter-spacing:0}
+.sec h3 .q:hover{border-color:var(--purple);color:var(--purple)}
+.help{display:none;font-size:12px;color:var(--muted);line-height:1.5;background:var(--soft);border-radius:10px;padding:8px 10px;margin-bottom:8px}
+.help.show{display:block}
+.sub{font-size:12px;color:var(--muted);line-height:1.45}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 11px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.btn:hover{border-color:var(--purple);color:var(--purple)}
+.btn.on{background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn.primary:hover{color:#fff;filter:brightness(1.05)}
+.btn.sm{padding:5px 8px;font-size:12px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.slot{display:flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:8px 10px;font-size:12.5px;margin-top:6px}
+.slot.ok{border-style:solid;background:var(--soft)}
+.slot .k{font-weight:800;flex:none}
+.slot .f{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.slot.ok .f{color:var(--ink)}
+.dot{width:12px;height:12px;border-radius:4px;flex:none}
+label.ck{display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:6px;cursor:pointer}
+label.ck input{accent-color:var(--pink)}
+.fld{display:grid;grid-template-columns:1fr 92px;gap:6px;align-items:center;font-size:12.5px;margin-top:6px}
+.fld input,.fld select{border:1px solid var(--line);border-radius:10px;padding:6px 8px;width:100%;background:#fff}
+select.s{border:1px solid var(--line);border-radius:10px;padding:7px 8px;background:#fff;font-size:12.5px;width:100%;margin-top:6px}
+.ok{color:#1E7A45}.warn{color:#B45F06}.bad{color:var(--pink)}
+.res{font-size:12.5px;line-height:1.5;margin-top:6px}
+.res div{margin-top:3px}
+.legend{margin-top:8px}
+.legend .bar{height:12px;border-radius:6px}
+.legend .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:3px}
+table.ms{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+table.ms td,table.ms th{border-bottom:1px solid var(--line);padding:4px 3px;text-align:right}
+table.ms th{color:var(--muted);font-weight:700}
+table.ms td:first-child,table.ms th:first-child{text-align:left}
+table.ms button{border:0;background:none;color:var(--muted);padding:0 2px}
+.nud{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 6px;align-items:center;font-size:12px;margin-top:6px}
+.nud span.v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+details{margin-top:8px}
+details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:pointer}
+.foot{font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:6px;line-height:1.5}
+.foot a{color:var(--purple);font-weight:700;text-decoration:none}
+#main{position:relative;overflow:hidden}
+#tabs{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:4px;background:#fff;border-radius:14px;padding:4px;box-shadow:var(--shadow)}
+#tabs .btn{border:0}
+#view3d,#viewSl{position:absolute;inset:0}
+#gl{width:100%;height:100%;display:block;touch-action:none}
+#views{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:4px;background:#fff;border-radius:14px;padding:4px;box-shadow:var(--shadow)}
+#views .btn{border:0}
+#hint{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;text-align:center;color:var(--muted);font-size:14px}
+#hint b{display:block;font-size:20px;color:var(--ink);margin-bottom:6px}
+#probe{position:absolute;pointer-events:none;background:rgba(35,27,75,.88);color:#fff;font-size:12px;padding:4px 8px;border-radius:8px;display:none;white-space:nowrap}
+#viewSl{display:none;padding:64px 14px 14px;overflow:auto}
+#slGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.slv{background:#000;border-radius:14px;overflow:hidden;position:relative}
+.slv canvas{width:100%;display:block;cursor:crosshair}
+.slv .t{position:absolute;top:8px;left:10px;color:#fff;font-size:12px;font-weight:700;text-shadow:0 1px 2px #000}
+.slv .o{position:absolute;font-size:11px;color:#ddd;text-shadow:0 1px 2px #000}
+#slBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border-radius:14px;padding:8px 12px;box-shadow:var(--shadow);margin-bottom:10px;font-size:12.5px}
+#slBar input[type=range]{accent-color:var(--pink)}
+#busy{position:fixed;inset:0;background:rgba(244,246,250,.72);display:grid;place-items:center;z-index:50}
+#busy.hidden{display:none}
+#busy .card{background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:18px 22px;min-width:340px;max-width:480px}
+#busy .t{font-weight:700;font-size:14px}
+#busy .pb{height:8px;border-radius:4px;background:var(--soft);margin-top:10px;overflow:hidden}
+#busy .pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--pink))}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;z-index:60;display:none;max-width:70vw}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+<aside id="side">
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.0</small></div>
+  </div>
+
+  <div class="sec" id="secA">
+    <h3><span class="n">1</span>КЛКТ до лечения<button class="q" data-h="hA">?</button></h3>
+    <div class="help" id="hA">Откройте папку с DICOM (весь срез целиком), отдельные файлы, ZIP-архив или файл NIfTI (.nii / .nii.gz). Программа сама найдёт кость, челюсти и зубы нейросетью DentalSegmentator прямо в браузере — снимки никуда не отправляются. Если сегментация уже есть (NIfTI от DentalSegmentator), её можно приложить кнопкой «сегментация» — так быстрее.</div>
+    <div class="slot" id="slotA"><span class="dot" style="background:#C9C4E6"></span><span class="k">До</span><span class="f" id="infoA">не загружено</span></div>
+    <div class="row">
+      <button class="btn sm" data-open="A" data-kind="dir">📁 Папка DICOM</button>
+      <button class="btn sm" data-open="A" data-kind="files">Файлы</button>
+      <button class="btn sm" data-open="A" data-kind="zip">ZIP</button>
+      <button class="btn sm" data-open="A" data-kind="nii">NIfTI</button>
+      <button class="btn sm" data-open="A" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
+    </div>
+  </div>
+
+  <div class="sec" id="secB">
+    <h3><span class="n">2</span>КЛКТ после лечения<button class="q" data-h="hB">?</button></h3>
+    <div class="help" id="hB">Второй снимок того же пациента. Положение головы, аппарат и размер поля могут отличаться — программа это учтёт. Важно, чтобы на обоих снимках было видно основание черепа (верхние стенки орбит, решётчатая кость, клиновидная пазуха, турецкое седло).</div>
+    <div class="slot" id="slotB"><span class="dot" style="background:#E5155A"></span><span class="k">После</span><span class="f" id="infoB">не загружено</span></div>
+    <div class="row">
+      <button class="btn sm" data-open="B" data-kind="dir">📁 Папка DICOM</button>
+      <button class="btn sm" data-open="B" data-kind="files">Файлы</button>
+      <button class="btn sm" data-open="B" data-kind="zip">ZIP</button>
+      <button class="btn sm" data-open="B" data-kind="nii">NIfTI</button>
+      <button class="btn sm" data-open="B" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
+    </div>
+    <select class="s" id="segMode" title="Как искать кость и зубы">
+      <option value="precise" selected>Нейросеть · точно</option>
+      <option value="fast">Нейросеть · быстрее</option>
+      <option value="thr">Без нейросети · по плотности</option>
+    </select>
+  </div>
+
+  <div class="sec" id="secR">
+    <h3><span class="n">3</span>Наложение<button class="q" data-h="hR">?</button></h3>
+    <div class="help" id="hR">Снимок «после» совмещается со снимком «до» по костям, которые не меняются при лечении. По умолчанию — передний отдел основания черепа, как в методе Cevidanes: лобная кость над назионом, решётчатая пластинка, крыши орбит, клиновидная кость до турецкого седла (после 7 лет этот отдел почти не растёт, поэтому метод подходит и детям). Совмещение по вокселям (плотности): программа поворачивает и сдвигает второй снимок, пока картины костей в зоне не совпадут лучше всего. Зона показана красным на срезах, её нижнюю границу (розовая линия) можно перетащить мышью. «Весь череп выше нёба» берёт больше кости — точнее у взрослых, но у растущих пациентов туда попадает растущая верхняя челюсть.</div>
+    <select class="s" id="roiMode">
+      <option value="acb" selected>Передний отдел основания черепа (Cevidanes)</option>
+      <option value="skull">Весь череп выше нёба (больше кости, только взрослые)</option>
+    </select>
+    <div class="fld"><span>Нижняя граница зоны, мм над верхушками корней</span><input id="roiLim" type="number" step="1" value="40"></div>
+    <div class="row"><button class="btn primary" id="regGo" disabled>Совместить</button><button class="btn" id="regFine" disabled title="Ещё раз уточнить на полном разрешении">Уточнить</button></div>
+    <div class="res" id="regInfo"></div>
+    <details id="nudBox"><summary>Ручная доводка</summary>
+      <div class="sub" style="margin-top:4px">Сдвиги и повороты снимка «после» относительно «до». После правки нажмите «Пересчитать карту».</div>
+      <div class="nud" id="nud"></div>
+      <div class="row"><button class="btn sm" id="nudMap">Пересчитать карту</button><button class="btn sm" id="nudReset">Вернуть автоматическое</button></div>
+    </details>
+  </div>
+
+  <div class="sec" id="secV">
+    <h3><span class="n">4</span>Результат<button class="q" data-h="hV">?</button></h3>
+    <div class="help" id="hV">Сиреневым — «до» (полупрозрачно), «после» окрашен картой расстояний до положения «до»: зелёный — без изменений, жёлтый/красный — кость или зуб сместились наружу (вперёд, вниз, в сторону от исходной поверхности), голубой/синий — внутрь. Наведите мышь на «после», чтобы увидеть число в мм. «Измерить сдвиг»: щёлкните точку на «до», затем ту же точку на «после» — программа покажет сдвиг по осям: вправо/влево, вперёд/назад, вверх/вниз.</div>
+    <div class="row">
+      <label class="ck" style="margin:0"><input type="checkbox" id="shA" checked> до</label>
+      <label class="ck" style="margin:0"><input type="checkbox" id="shB" checked> после</label>
+      <label class="ck" style="margin:0"><input type="checkbox" id="shMap" checked> карта расстояний</label>
+    </div>
+    <div class="row">
+      <label class="ck" style="margin:0"><input type="checkbox" data-part="skull" checked> череп/ВЧ</label>
+      <label class="ck" style="margin:0"><input type="checkbox" data-part="mand" checked> НЧ</label>
+      <label class="ck" style="margin:0"><input type="checkbox" data-part="tu" checked> зубы ВЧ</label>
+      <label class="ck" style="margin:0"><input type="checkbox" data-part="tl" checked> зубы НЧ</label>
+      <label class="ck" style="margin:0"><input type="checkbox" data-part="skin"> лицо</label>
+    </div>
+    <div class="fld"><span>Прозрачность «до»</span><input id="alphaA" type="range" min="0" max="1" step="0.05" value="0.35"></div>
+    <div class="fld"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
+    <div class="legend" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
+    <div class="row"><button class="btn" id="measBtn" disabled>📏 Измерить сдвиг</button></div>
+    <div id="measList"></div>
+  </div>
+
+  <div class="sec" id="secE">
+    <h3><span class="n">5</span>Сохранить<button class="q" data-h="hE">?</button></h3>
+    <div class="help" id="hE">«Отчёт» — страница для печати или PDF: виды спереди, сбоку и снизу с картой расстояний, точность совмещения и таблица измерений. Картинка вида, модели «до» и «после» уже в общей системе координат (STL — для любой программы, PLY — «после» с цветной картой), таблица измерений и матрица совмещения (её можно применить к снимку «после» в другой программе).</div>
+    <div class="row">
+      <button class="btn sm primary" id="exRep" disabled>Отчёт</button>
+      <button class="btn sm" id="exPng" disabled>Картинка PNG</button>
+      <button class="btn sm" id="exStl" disabled>STL до/после</button>
+      <button class="btn sm" id="exPly" disabled>PLY с картой</button>
+      <button class="btn sm" id="exCsv" disabled>Измерения CSV</button>
+      <button class="btn sm" id="exMat" disabled>Матрица</button>
+    </div>
+  </div>
+
+  <div class="foot">© Екатерина Скоробогатько · Мир цифровой стоматологии<br><a href="https://instagram.com/katya_skorobogatko" target="_blank" rel="noopener">@katya_skorobogatko</a> · <a href="https://orthoskorobogatko.ru" target="_blank" rel="noopener">orthoskorobogatko.ru</a></div>
+</aside>
+
+<main id="main">
+  <div id="tabs"><button class="btn on" data-tab="3d">3D</button><button class="btn" data-tab="sl">Срезы</button></div>
+  <div id="view3d">
+    <canvas id="gl"></canvas>
+    <div id="hint"><div><b>Загрузите два КЛКТ</b>слева: до лечения и после, затем «Совместить»</div></div>
+    <div id="probe"></div>
+    <div id="views">
+      <button class="btn" data-v="front">Спереди</button><button class="btn" data-v="right">Справа</button><button class="btn" data-v="left">Слева</button><button class="btn" data-v="top">Сверху</button><button class="btn" data-v="bottom">Снизу</button>
+    </div>
+  </div>
+  <div id="viewSl">
+    <div id="slBar">
+      <b>Показ:</b>
+      <select class="s" id="slMode" style="width:auto;margin:0">
+        <option value="fuse" selected>До — сиреневым, после — зелёным</option>
+        <option value="blend">Ползунок до ↔ после</option>
+        <option value="check">Шахматка</option>
+      </select>
+      <span id="blendBox">до <input id="slBlend" type="range" min="0" max="1" step="0.02" value="0.5"> после</span>
+      <label class="ck" style="margin:0"><input type="checkbox" id="slZone" checked> зона совмещения</label>
+      <span>окно <input id="slWin" type="range" min="400" max="4000" step="50" value="2400"></span>
+      <span class="sub">Щелчок — переместить перекрестье; колесо — листать; розовую линию зоны можно тянуть.</span>
+    </div>
+    <div id="slGrid">
+      <div class="slv"><canvas id="slAx" width="420" height="420"></canvas><span class="t">Аксиальный</span></div>
+      <div class="slv"><canvas id="slCo" width="420" height="420"></canvas><span class="t">Корональный</span></div>
+      <div class="slv"><canvas id="slSa" width="420" height="420"></canvas><span class="t">Сагиттальный</span></div>
+    </div>
+  </div>
+</main>
+</div>
+<div id="busy" class="hidden"><div class="card"><div class="t" id="busyT">…</div><div class="pb"><i id="busyP"></i></div></div></div>
+<div id="toast"></div>
+<input type="file" id="inDir" webkitdirectory multiple class="hidden">
+<input type="file" id="inFiles" multiple class="hidden">
+<input type="file" id="inZip" accept=".zip" class="hidden">
+<input type="file" id="inNii" accept=".nii,.gz" class="hidden">
+<input type="file" id="inSeg" accept=".nii,.gz" class="hidden">
+<script>
+const sleep = () => new Promise(r => setTimeout(r, 0));
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); };
+const M4 = {
+  ident: () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),
+  mul(a, b) { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; },
+  invRigid(m) { const o = new Float32Array(16); for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) o[c * 4 + r] = m[r * 4 + c]; for (let r = 0; r < 3; r++) o[12 + r] = -(o[r] * m[12] + o[4 + r] * m[13] + o[8 + r] * m[14]); o[15] = 1; return o; },
+  pt(m, p) { return [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]]; },
+  fromR(R, t) { return new Float32Array([R[0], R[3], R[6], 0, R[1], R[4], R[7], 0, R[2], R[5], R[8], 0, t[0], t[1], t[2], 1]); },
+  rot(axis, ang) { const c = Math.cos(ang), s = Math.sin(ang); const m = M4.ident(); const [i, j] = axis === 'x' ? [1, 2] : axis === 'y' ? [2, 0] : [0, 1]; m[i * 4 + i] = c; m[j * 4 + j] = c; m[i * 4 + j] = s; m[j * 4 + i] = -s; return m; },
+  scale(x, y, z) { const m = M4.ident(); m[0] = x; m[5] = y; m[10] = z; return m; }
+};
+function computeNormals(pos, idx) {
+  const n = new Float32Array(pos.length);
+  for (let f = 0; f < idx.length; f += 3) {
+    const a = idx[f] * 3, b = idx[f + 1] * 3, c = idx[f + 2] * 3;
+    const ux = pos[b] - pos[a], uy = pos[b + 1] - pos[a + 1], uz = pos[b + 2] - pos[a + 2], vx = pos[c] - pos[a], vy = pos[c + 1] - pos[a + 1], vz = pos[c + 2] - pos[a + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    n[a] += nx; n[a + 1] += ny; n[a + 2] += nz; n[b] += nx; n[b + 1] += ny; n[b + 2] += nz; n[c] += nx; n[c + 1] += ny; n[c + 2] += nz;
+  }
+  for (let k = 0; k < n.length; k += 3) { const l = Math.hypot(n[k], n[k + 1], n[k + 2]) || 1; n[k] /= l; n[k + 1] /= l; n[k + 2] /= l; }
+  return n;
+}
+async function unzipEntries(file, filter, progress) {
+  const buf = new Uint8Array(await file.arrayBuffer()); const dv = new DataView(buf.buffer);
+  let e = buf.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--; if (e < 0) throw new Error('это не ZIP');
+  let n = dv.getUint16(e + 10, true), off = dv.getUint32(e + 16, true); const out = [];
+  if (off === 0xffffffff || n === 0xffff) { // zip64
+    const l = dv.getUint32(e - 20 + 8, true); const z = Number(dv.getBigUint64(e - 20 + 8, true)); const r = z || l; n = Number(dv.getBigUint64(r + 32, true)); off = Number(dv.getBigUint64(r + 48, true)); }
+  const list = [];
+  for (let i = 0, p = off; i < n; i++) {
+    const method = dv.getUint16(p + 10, true); let csize = dv.getUint32(p + 20, true); const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true); let lo = dv.getUint32(p + 42, true);
+    const name = new TextDecoder(dv.getUint16(p + 8, true) & 0x800 ? 'utf-8' : 'ibm866').decode(buf.subarray(p + 46, p + 46 + nl));
+    if (csize === 0xffffffff || lo === 0xffffffff) { let q = p + 46 + nl; const qe = q + xl; while (q < qe) { const id = dv.getUint16(q, true), sz = dv.getUint16(q + 2, true); if (id === 1) { let r = q + 4; if (dv.getUint32(p + 24, true) === 0xffffffff) r += 8; if (csize === 0xffffffff) { csize = Number(dv.getBigUint64(r, true)); r += 8; } if (lo === 0xffffffff) lo = Number(dv.getBigUint64(r, true)); } q += 4 + sz; } }
+    list.push({ name, method, csize, lo }); p += 46 + nl + xl + cl;
+  }
+  const sel = list.filter(x => !x.name.endsWith('/') && filter(x.name));
+  for (const x of sel) out.push({ name: x.name, get: async () => { const ln = dv.getUint16(x.lo + 26, true), lx = dv.getUint16(x.lo + 28, true); const data = buf.subarray(x.lo + 30 + ln + lx, x.lo + 30 + ln + lx + x.csize);
+    if (x.method === 0) return data; const ds = new DecompressionStream('deflate-raw'); return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(ds)).arrayBuffer()); } });
+  return out;
+}
+function parseDicom(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength); let p = 132; if (u8.length < 132 || dv.getUint32(128) !== 0x4449434d) p = 0;
+  const info = {}; let explicit = true, ts = '', fg = false;
+  const str = (o, l) => new TextDecoder('latin1').decode(u8.subarray(o, o + l)).replace(/\0/g, '').trim();
+  while (p < u8.length - 8) {
+    const g = dv.getUint16(p, true), e = dv.getUint16(p + 2, true); let vr = String.fromCharCode(u8[p + 4], u8[p + 5]), l, h;
+    const isExp = g === 2 ? true : explicit;
+    if (isExp && /^[A-Z]{2}$/.test(vr)) { if (['OB', 'OW', 'OF', 'SQ', 'UT', 'UN', 'OD', 'OL', 'UC', 'UR'].includes(vr)) { l = dv.getUint32(p + 8, true); h = 12; } else { l = dv.getUint16(p + 6, true); h = 8; } }
+    else { vr = ''; l = dv.getUint32(p + 4, true); h = 8; }
+    if (g === 0x7fe0 && e === 0x0010) { info.pixOff = p + h; info.pixLen = l === 0xffffffff ? -1 : l; break; }
+    if (l === 0xffffffff) { p += h; continue; } // undefined-length sequence: walk into it
+    if (g === 0x5200 && (e === 0x9229 || e === 0x9230)) fg = true; // enhanced multi-frame: shared / per-frame functional groups
+    if (vr === 'SQ' && fg) { p += h; continue; }
+    if (g === 0xfffe) { p += 8; continue; }
+    const o = p + h;
+    if (g === 2 && e === 0x10) { ts = str(o, l); explicit = ts !== '1.2.840.10008.1.2'; info.ts = ts; }
+    else if (g === 0x28 && e === 0x10) info.rows = dv.getUint16(o, true);
+    else if (g === 0x28 && e === 0x11) info.cols = dv.getUint16(o, true);
+    else if (g === 0x28 && e === 0x30) info.ps = str(o, l).split('\\').map(Number);
+    else if (g === 0x28 && e === 0x100) info.bits = dv.getUint16(o, true);
+    else if (g === 0x28 && e === 0x103) info.signed = dv.getUint16(o, true);
+    else if (g === 0x28 && e === 0x1052) info.inter = parseFloat(str(o, l));
+    else if (g === 0x28 && e === 0x1053) info.slope = parseFloat(str(o, l));
+    else if (g === 0x20 && e === 0x32) { const q = str(o, l).split('\\').map(Number); if (fg) (info.posList || (info.posList = [])).push(q); else info.pos = q; }
+    else if (g === 0x28 && e === 0x08) info.frames = parseInt(str(o, l)) || 1;
+    else if (g === 0x20 && e === 0x37) info.iop = str(o, l).split('\\').map(Number);
+    else if (g === 0x20 && e === 0x13) info.inst = parseInt(str(o, l));
+    else if (g === 0x18 && e === 0x50) info.thick = parseFloat(str(o, l));
+    p = o + l;
+  }
+  return info;
+}
+async function readDicom(entries, progress) { // entries: [{name, data}] or Files
+  const items = [];
+  for (let i = 0; i < entries.length; i++) {
+    const it = entries[i]; const get = it.get || (async () => new Uint8Array(await it.arrayBuffer())); const u8 = await get();
+    let inf; try { inf = parseDicom(u8); } catch (e) { continue; }
+    if (!inf.rows || !inf.pixOff) continue;
+    if (inf.ts && !/^1\.2\.840\.10008\.1\.2(\.1)?$/.test(inf.ts)) throw new Error('снимки сжаты (формат ' + inf.ts + '). Выгрузите КЛКТ без сжатия (Uncompressed / Explicit Little Endian).');
+    if (inf.frames > 1) { // one file = whole series (OP 3D Pro and other enhanced CT): split into virtual slices
+      let buf = null; const getAll = async () => buf || (buf = await get()); const fr = inf.frames, pl = inf.posList && inf.posList.length >= fr ? inf.posList : null;
+      if (!inf.pos && pl) inf.pos = pl[0]; const step = inf.thick || (inf.ps ? inf.ps[0] : 0.3);
+      for (let k = 0; k < fr; k++) items.push({ inf: { ...inf, frames: 1, pixOff: inf.pixOff + k * inf.rows * inf.cols * 2, pos: pl ? pl[k] : [(inf.pos || [0, 0, 0])[0], (inf.pos || [0, 0, 0])[1], (inf.pos || [0, 0, 0])[2] + k * step] }, get: getAll });
+      buf = u8; continue; }
+    items.push({ inf, get });
+    if (i % 25 === 0) { progress(0.3 * i / entries.length); await sleep(); }
+  }
+  if (items.length < 10) throw new Error('в выбранных файлах нет серии срезов DICOM');
+  const z = it => it.inf.pos ? it.inf.pos[2] : (it.inf.inst || 0);
+  items.sort((a, b) => z(a) - z(b));
+  const R = items[0].inf.rows, C = items[0].inf.cols, ps = items[0].inf.ps || [0.2, 0.2];
+  const dz = items.length > 1 ? Math.abs(z(items[items.length - 1]) - z(items[0])) / (items.length - 1) || (items[0].inf.thick || ps[0]) : ps[0];
+  // downsample so that the volume stays < ~60 M voxels
+  let f = 1; while ((R / f) * (C / f) * (items.length / f) > 7.2e7) f++;
+  const nx = Math.floor(C / f), ny = Math.floor(R / f), nz = Math.floor(items.length / f);
+  const vol = new Int16Array(nx * ny * nz);
+  for (let k = 0; k < nz; k++) {
+    const it = items[k * f]; const u8 = await it.get(); const inf = it.inf;
+    const sl = inf.slope || 1, ic = inf.inter || 0; const dv = new DataView(u8.buffer, u8.byteOffset + inf.pixOff, R * C * 2); const signed = inf.signed === 1;
+    for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+      let s = 0; for (let b = 0; b < f; b++) for (let a = 0; a < f; a++) { const o = ((y * f + b) * C + x * f + a) * 2; s += signed ? dv.getInt16(o, true) : dv.getUint16(o, true); }
+      const v = s / (f * f) * sl + ic; vol[(k * ny + y) * nx + x] = Math.max(-32000, Math.min(32000, Math.round(v)));
+    }
+    if (k % 10 === 0) { progress(0.3 + 0.7 * k / nz); await sleep(); }
+  }
+  const p0 = items[0].inf.pos || [0, 0, 0], iop = items[0].inf.iop || [1, 0, 0, 0, 1, 0];
+  const ex = iop.slice(0, 3), ey = iop.slice(3, 6), ez = norm(cross(ex, ey)); const sgn = Math.sign(z(items[items.length - 1]) - z(items[0])) || 1;
+  return { vol, nx, ny, nz, sx: ps[1] * f, sy: ps[0] * f, sz: dz * f, origin: p0, ex, ey, ez: ez.map(v => v * sgn), n: items.length, f, items, R, C, ps, dz };
+}
+async function loadHiRes(V, lo, hi, progress) { // lo/hi: world-box corners
+  if (V.f === 1) return V; const it = V.items, ps = V.ps; const toIdx = w => { const r = sub3(w, V.origin); return [dot(r, V.ex) / ps[1], dot(r, V.ey) / ps[0], dot(r, V.ez) / V.dz]; };
+  let a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9]; for (const x of [lo[0], hi[0]]) for (const y of [lo[1], hi[1]]) for (const z of [lo[2], hi[2]]) { const q = toIdx([x, y, z]); for (let c = 0; c < 3; c++) { a[c] = Math.min(a[c], q[c]); b[c] = Math.max(b[c], q[c]); } }
+  const lim = [V.C, V.R, it.length]; a = a.map((v, c) => Math.max(0, Math.floor(v))); b = b.map((v, c) => Math.min(lim[c] - 1, Math.ceil(v)));
+  const nx = b[0] - a[0] + 1, ny = b[1] - a[1] + 1, nz = b[2] - a[2] + 1; if (nx * ny * nz > 1.2e8) return null;
+  const vol = new Int16Array(nx * ny * nz);
+  for (let k = 0; k < nz; k++) { const item = it[a[2] + k]; const u8 = await item.get(); const inf = item.inf; const sl = inf.slope || 1, ic = inf.inter || 0; const dv = new DataView(u8.buffer, u8.byteOffset + inf.pixOff, V.R * V.C * 2); const sg = inf.signed === 1;
+    for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) { const o = ((a[1] + y) * V.C + a[0] + x) * 2; const v = (sg ? dv.getInt16(o, true) : dv.getUint16(o, true)) * sl + ic; vol[(k * ny + y) * nx + x] = Math.max(-32000, Math.min(32000, Math.round(v))); }
+    if (k % 10 === 0) { progress && progress(k / nz); await sleep(); } }
+  const origin = [0, 1, 2].map(i => V.origin[i] + V.ex[i] * a[0] * ps[1] + V.ey[i] * a[1] * ps[0] + V.ez[i] * a[2] * V.dz);
+  return { vol, nx, ny, nz, sx: ps[1], sy: ps[0], sz: V.dz, origin, ex: V.ex, ey: V.ey, ez: V.ez };
+}
+const AI = { ver: '1.31.1', parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
+const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
+async function aiFetch(path) {
+  if (location.protocol !== 'file:') { try { const r = await fetch(path); if (r.ok) return r; } catch (e) { } }
+  return fetch(AI_REMOTE + path);
+}
+async function aiSession(progress) {
+  if (AI.sess) return AI.sess;
+  const ort = await import(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${AI.ver}/dist/ort.webgpu.bundle.min.mjs`);
+  AI.ort = ort; ort.env.wasm.numThreads = 1;
+  const gz = await aiFetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
+  ort.env.wasm.wasmBinary = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+  const bufs = []; let tot = 0;
+  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
+  const model = new Uint8Array(tot); let o = 0; for (const b of bufs) { model.set(b, o); o += b.length; }
+  const eps = (navigator.gpu && !AI.forceCPU) ? ['webgpu', 'wasm'] : ['wasm'];
+  for (const ep of eps) { try { AI.sess = await ort.InferenceSession.create(model, { executionProviders: [ep], graphOptimizationLevel: 'all' }); AI.ep = ep; break; } catch (e) { console.warn('AI ' + ep, e); } }
+  if (!AI.sess) throw new Error('браузер не смог запустить нейросеть');
+  return AI.sess;
+}
+async function aiSegmentCT(V, mode, progress) {
+  const scale = mode.scale || 1.5; const ps = AI.patch;
+  let F = V; if (V.f > 1) { // the network wants full resolution: re-read the slices around the whole field
+    const corners = []; for (const a of [0, V.nx - 1]) for (const b of [0, V.ny - 1]) for (const c of [0, V.nz - 1]) corners.push([0, 1, 2].map(i => V.origin[i] + V.ex[i] * a * V.sx + V.ey[i] * b * V.sy + V.ez[i] * c * V.sz));
+    const lo = [0, 1, 2].map(i => Math.min(...corners.map(p => p[i]))), hi = [0, 1, 2].map(i => Math.max(...corners.map(p => p[i])));
+    F = await loadHiRes(V, lo, hi, f => progress('Читаю КЛКТ в полном разрешении…', 0.05 * f)) || V; }
+  // network grid: axes (a,b,c) = (rows y, slices z, columns x), spacing AI.sp·scale
+  const tsp = AI.sp.map(v => v * scale); const sy = tsp[0], sz = tsp[1], sx = tsp[2];
+  const Nc = Math.max(1, Math.floor((F.nx - 1) * F.sx / sx) + 1), Na = Math.max(1, Math.floor((F.ny - 1) * F.sy / sy) + 1), Nb = Math.max(1, Math.floor((F.nz - 1) * F.sz / sz) + 1);
+  const A = Math.max(Na, ps[0]), B = Math.max(Nb, ps[1]), C = Math.max(Nc, ps[2]); const pa = (A - Na) >> 1, pb = (B - Nb) >> 1, pc = (C - Nc) >> 1;
+  const nlo = (AI.norm.lo - AI.norm.mean) / AI.norm.std; const X = new Float32Array(A * B * C).fill(nlo); const vol = F.vol, fx = F.nx, fy = F.ny, fz = F.nz;
+  const smp = (x, y, z) => { const x0 = Math.min(fx - 2, Math.floor(x)), y0 = Math.min(fy - 2, Math.floor(y)), z0 = Math.min(fz - 2, Math.floor(z)); const u = x - x0, v = y - y0, w = z - z0; const at = (i, j, k) => vol[(k * fy + j) * fx + i];
+    return ((at(x0, y0, z0) * (1 - u) + at(x0 + 1, y0, z0) * u) * (1 - v) + (at(x0, y0 + 1, z0) * (1 - u) + at(x0 + 1, y0 + 1, z0) * u) * v) * (1 - w) + ((at(x0, y0, z0 + 1) * (1 - u) + at(x0 + 1, y0, z0 + 1) * u) * (1 - v) + (at(x0, y0 + 1, z0 + 1) * (1 - u) + at(x0 + 1, y0 + 1, z0 + 1) * u) * v) * w; };
+  for (let a = 0; a < Na; a++) { const y = Math.min(fy - 1, a * sy / F.sy); for (let b = 0; b < Nb; b++) { const z = Math.min(fz - 1, b * sz / F.sz); const row = ((a + pa) * B + b + pb) * C + pc;
+      for (let c = 0; c < Nc; c++) { const v = smp(Math.min(fx - 1, c * sx / F.sx), y, z); X[row + c] = (Math.min(AI.norm.hi, Math.max(AI.norm.lo, v)) - AI.norm.mean) / AI.norm.std; } }
+    if (a % 16 === 0) { progress('Готовлю снимок для нейросети…', 0.05 + 0.05 * a / Na); await sleep(); } }
+  if (F !== V) F.vol = null;
+  const sess = await aiSession(f => progress('Загружаю нейросеть (62 МБ, один раз)…', 0.1 + 0.05 * f));
+  // windows
+  const st = (n, p) => { if (n <= p) return [0]; const k = Math.ceil((n - p) / (p * (mode.step || 1))) + 1; return [...Array(k)].map((_, i) => Math.round(i * (n - p) / (k - 1))); };
+  const SA = st(A, ps[0]), SB = st(B, ps[1]), SC = st(C, ps[2]); const wins = []; for (const a of SA) for (const b of SB) for (const c of SC) wins.push([a, b, c]);
+  const g1 = n => Float32Array.from({ length: n }, (_, i) => Math.exp(-0.5 * ((i - (n - 1) / 2) / (n / 8)) ** 2));
+  const ga = g1(ps[0]), gb = g1(ps[1]), gc = g1(ps[2]);
+  const lab = new Uint8Array(A * B * C), bw = new Float32Array(A * B * C); const P = new Float32Array(ps[0] * ps[1] * ps[2]); const thrBone = (300 - AI.norm.mean) / AI.norm.std;
+  const t0 = performance.now(); let done = 0, ran = 0;
+  for (const [a0, b0, c0] of wins) {
+    let mx = -9; for (let a = 0; a < ps[0]; a++) for (let b = 0; b < ps[1]; b++) { const src = ((a0 + a) * B + b0 + b) * C + c0, dst = (a * ps[1] + b) * ps[2]; for (let c = 0; c < ps[2]; c++) { const v = X[src + c]; P[dst + c] = v; if (v > mx) mx = v; } }
+    done++;
+    if (mx < thrBone) continue; // nothing dense in this window (air / soft tissue only)
+    const out = await sess.run({ x: new AI.ort.Tensor('float32', P, [1, 1, ps[0], ps[1], ps[2]]) }); const y = out.y.data, n = P.length; ran++;
+    for (let a = 0; a < ps[0]; a++) for (let b = 0; b < ps[1]; b++) { const gab = ga[a] * gb[b]; const base = (a * ps[1] + b) * ps[2], dst = ((a0 + a) * B + b0 + b) * C + c0;
+      for (let c = 0; c < ps[2]; c++) { const w = gab * gc[c]; const d = dst + c; if (w <= bw[d]) continue; const i = base + c; let bl = 0, bv = y[i]; for (let l = 1; l < 6; l++) { const v = y[l * n + i]; if (v > bv) { bv = v; bl = l; } } lab[d] = bl; bw[d] = w; } }
+    if (out.y.dispose) out.y.dispose();
+    const el = (performance.now() - t0) / 1000, left = el / done * (wins.length - done);
+    progress(`Нейросеть: участок ${done} из ${wins.length} (${AI.ep === 'webgpu' ? 'видеокарта' : 'процессор'}), осталось ~${left > 90 ? Math.round(left / 60) + ' мин' : Math.round(left) + ' с'}`, 0.15 + 0.75 * done / wins.length); await sleep();
+  }
+  // back to the CT axes: index (i = column x, j = row y, k = slice z)
+  const out = new Uint8Array(Nc * Na * Nb);
+  for (let b = 0; b < Nb; b++) for (let a = 0; a < Na; a++) { const src = ((a + pa) * B + b + pb) * C + pc, dst = (b * Na + a) * Nc; for (let c = 0; c < Nc; c++) out[dst + c] = lab[src + c]; }
+  const Am = [0, 1, 2].map(r => [F.ex[r] * sx, F.ey[r] * sy, F.ez[r] * sz, F.origin[r]]);
+  return { lab: out, nx: Nc, ny: Na, nz: Nb, A: Am, windows: wins.length, ran, secs: (performance.now() - t0) / 1000, space: 'LPS' };
+}
+function labelBoxes(Nf) {
+  const { lab, nx, ny, nz } = Nf, B = {};
+  for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) { const row = (k * ny + j) * nx; for (let i = 0; i < nx; i++) { const L = lab[row + i]; if (!L) continue; let b = B[L]; if (!b) b = B[L] = { lo: [i, j, k], hi: [i, j, k], n: 0 }; b.n++;
+    if (i < b.lo[0]) b.lo[0] = i; if (i > b.hi[0]) b.hi[0] = i; if (j < b.lo[1]) b.lo[1] = j; if (j > b.hi[1]) b.hi[1] = j; if (k < b.lo[2]) b.lo[2] = k; if (k > b.hi[2]) b.hi[2] = k; } }
+  return B;
+}
+async function surfaceNets(V, iso, step, progress) {
+  const { vol, nx: NX, ny: NY, nz: NZ } = V; const nx = Math.floor((NX - 1) / step) + 1, ny = Math.floor((NY - 1) / step) + 1, nz = Math.floor((NZ - 1) / step) + 1;
+  const val = (x, y, z) => vol[((z * step) * NY + y * step) * NX + x * step];
+  const P = [], I = []; const vid = new Int32Array(2 * nx * ny).fill(-1); const g = new Float32Array(8);
+  const C = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]];
+  const E = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+  const sx = V.sx * step, sy = V.sy * step, sz = V.sz * step, o = V.origin, ex = V.ex, ey = V.ey, ez = V.ez;
+  for (let z = 0; z < nz - 1; z++) {
+    const cur = (z & 1) * nx * ny, prev = ((z + 1) & 1) * nx * ny; vid.fill(-1, cur, cur + nx * ny);
+    for (let y = 0; y < ny - 1; y++) for (let x = 0; x < nx - 1; x++) {
+      let m = 0; for (let c = 0; c < 8; c++) { const v = val(x + C[c][0], y + C[c][1], z + C[c][2]) - iso; g[c] = v; if (v > 0) m |= 1 << c; }
+      if (m === 0 || m === 255) continue;
+      let ax = 0, ay = 0, az = 0, k = 0;
+      for (const [a, b] of E) { if ((g[a] > 0) === (g[b] > 0)) continue; const t = g[a] / (g[a] - g[b]); ax += C[a][0] + (C[b][0] - C[a][0]) * t; ay += C[a][1] + (C[b][1] - C[a][1]) * t; az += C[a][2] + (C[b][2] - C[a][2]) * t; k++; }
+      const lx = (x + ax / k) * sx, ly = (y + ay / k) * sy, lz = (z + az / k) * sz;
+      const id = P.length / 3; P.push(o[0] + ex[0] * lx + ey[0] * ly + ez[0] * lz, o[1] + ex[1] * lx + ey[1] * ly + ez[1] * lz, o[2] + ex[2] * lx + ey[2] * ly + ez[2] * lz); vid[cur + y * nx + x] = id;
+      // quads on the three edges leaving corner 0
+      const inside = g[0] > 0;
+      for (let i = 0; i < 3; i++) {
+        const ci = i === 0 ? 1 : i === 1 ? 2 : 4; if ((g[ci] > 0) === inside) continue;
+        const j = (i + 1) % 3, kk = (i + 2) % 3; const cc = [x, y, z]; if (cc[j] < 1 || cc[kk] < 1) continue;
+        const at = (dj, dk) => { const q = [x, y, z]; q[j] -= dj; q[kk] -= dk; return vid[(q[2] === z ? cur : prev) + q[1] * nx + q[0]]; };
+        const a = at(0, 0), b = at(1, 0), c = at(1, 1), d = at(0, 1); if (a < 0 || b < 0 || c < 0 || d < 0) continue;
+        if (inside) I.push(a, b, c, a, c, d); else I.push(a, c, b, a, d, c);
+      }
+    }
+    if (z % 8 === 0) { progress && progress(z / nz); await sleep(); }
+  }
+  // the (ex,ey,ez) frame may be left-handed: then flip the winding
+  const lh = dot(cross(ex, ey), ez) < 0; if (lh) for (let t = 0; t < I.length; t += 3) { const tmp = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = tmp; }
+  const g2 = { pos: new Float32Array(P), idx: Uint32Array.from(I) }; g2.nrm = computeNormals(g2.pos, g2.idx); return g2;
+}
+async function labelMesh(Nf, L, s, lo, hi, progress, opt = {}) {
+  const { nx: NX, ny: NY } = Nf; const lab = opt.lab || Nf.lab; const bx = Math.floor((hi[0] - lo[0]) / s) + 1, by = Math.floor((hi[1] - lo[1]) / s) + 1, bz = Math.floor((hi[2] - lo[2]) / s) + 1;
+  const X = bx + 2, Y = by + 2, Z = bz + 2, vol = new Float32Array(X * Y * Z), w = opt.pool === 'max' ? 1 : 1 / (s * s * s);
+  for (let z = 0; z < bz; z++) { for (let y = 0; y < by; y++) for (let x = 0; x < bx; x++) { let c = 0;
+      for (let dz = 0; dz < s; dz++) { const K = lo[2] + z * s + dz; if (K > hi[2]) break; for (let dy = 0; dy < s; dy++) { const J = lo[1] + y * s + dy; if (J > hi[1]) break; const row = (K * NY + J) * NX; for (let dx = 0; dx < s; dx++) { const I = lo[0] + x * s + dx; if (I > hi[0]) break; if (lab[row + I] === L) c++; } } }
+      if (c) vol[((z + 1) * Y + y + 1) * X + x + 1] = opt.pool === 'max' ? 1 : c * w; }
+    if (z % 16 === 0) { progress && progress(0.5 * z / bz); await sleep(); } }
+  const doClip = () => { if (!opt.clip) return; const A = Nf.A; const vs = s * Math.hypot(A[0][0], A[1][0], A[2][0]); /* soft cut → the crest lies between voxels, no steps */ for (let z = 1; z < Z - 1; z++) for (let y = 1; y < Y - 1; y++) for (let x = 1; x < X - 1; x++) { const i = (z * Y + y) * X + x; if (!vol[i]) continue;
+      const g = [lo[0] + (x - 1) * s + (s - 1) / 2, lo[1] + (y - 1) * s + (s - 1) / 2, lo[2] + (z - 1) * s + (s - 1) / 2]; const w = [0, 1, 2].map(r => A[r][0] * g[0] + A[r][1] * g[1] + A[r][2] * g[2] + A[r][3]); const d = opt.clip(w); if (d !== null) vol[i] = Math.min(vol[i], Math.max(0, Math.min(1, 0.5 + d / vs))); } };
+  if (opt.close) { // morphological closing (dilate, then erode) → thin cortical plates and small gaps stay closed
+    const N6 = [1, -1, X, -X, X * Y, -X * Y]; let m = new Uint8Array(vol.length); for (let i = 0; i < vol.length; i++) m[i] = vol[i] >= 0.5 ? 1 : 0;
+    const morph = (src, dil) => { const o = new Uint8Array(src.length); for (let z = 1; z < Z - 1; z++) for (let y = 1; y < Y - 1; y++) for (let x = 1; x < X - 1; x++) { const i = (z * Y + y) * X + x; let v = src[i]; if (dil) { if (!v) for (const d of N6) if (src[i + d]) { v = 1; break; } } else if (v) for (const d of N6) if (!src[i + d]) { v = 0; break; } o[i] = v; } return o; };
+    for (let r = 0; r < opt.close; r++) m = morph(m, true); for (let r = 0; r < opt.close; r++) m = morph(m, false);
+    for (let i = 0; i < vol.length; i++) if (m[i]) vol[i] = Math.max(vol[i], 1); }
+  doClip();
+  for (let bp = 0; bp < (opt.blur || 1); bp++) { const tmp = new Float32Array(vol.length); // light 3-tap smoothing on each axis → no voxel steps
+    for (const [st, n2] of [[1, X], [X, Y], [X * Y, Z]]) { for (let i = 0; i < vol.length; i++) { const c = Math.floor(i / st) % n2; tmp[i] = (vol[i] * 2 + (c > 0 ? vol[i - st] : 0) + (c < n2 - 1 ? vol[i + st] : 0)) / 4; } vol.set(tmp); } }
+  const A = Nf.A, col = c => [A[0][c], A[1][c], A[2][c]], sp = [0, 1, 2].map(c => Math.hypot(...col(c)));
+  const o0 = [0, 1, 2].map(c => lo[c] - s + (s - 1) / 2), origin = [0, 1, 2].map(r => A[r][0] * o0[0] + A[r][1] * o0[1] + A[r][2] * o0[2] + A[r][3]);
+  return surfaceNets({ vol, nx: X, ny: Y, nz: Z, sx: sp[0] * s, sy: sp[1] * s, sz: sp[2] * s, origin, ex: norm(col(0)), ey: norm(col(1)), ez: norm(col(2)) }, 0.5, 1, f => progress && progress(0.5 + 0.5 * f));
+}
+function bigComponents(g, minFaces) {
+  const nv = g.pos.length / 3, par = new Int32Array(nv).map((_, i) => i); const fnd = x => { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; };
+  for (let t = 0; t < g.idx.length; t += 3) { const a = fnd(g.idx[t]), b = fnd(g.idx[t + 1]), c = fnd(g.idx[t + 2]); par[b] = a; par[fnd(c)] = a; }
+  const cnt = new Map(); for (let t = 0; t < g.idx.length; t += 3) { const r = fnd(g.idx[t]); cnt.set(r, (cnt.get(r) || 0) + 1); }
+  const map = new Int32Array(nv).fill(-1), P = [], I = [], comp = [];
+  for (let t = 0; t < g.idx.length; t += 3) { const r = fnd(g.idx[t]); if (cnt.get(r) < minFaces) continue; for (let e = 0; e < 3; e++) { const v = g.idx[t + e]; if (map[v] < 0) { map[v] = P.length / 3; P.push(g.pos[v * 3], g.pos[v * 3 + 1], g.pos[v * 3 + 2]); } I.push(map[v]); } comp.push(r); }
+  const o = { pos: new Float32Array(P), idx: Uint32Array.from(I) }; o.nrm = computeNormals(o.pos, o.idx); o.faceComp = Int32Array.from(comp); return o;
+}
+/* ============================================================
+   Наложение КЛКТ до/после лечения по основанию черепа
+   © Екатерина Скоробогатько · @katya_skorobogatko
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const fmt = (v, d = 1) => (v === null || v === undefined || !isFinite(v)) ? '—' : v.toFixed(d).replace('.', ',').replace('-', '−');
+function busy(on, t, f) { $('#busy').classList.toggle('hidden', !on); if (t) $('#busyT').textContent = t; if (f !== undefined) $('#busyP').style.width = Math.round(Math.max(0, Math.min(1, f)) * 100) + '%'; }
+let toastTm = 0; function toast(t, ms = 5000) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toastTm); toastTm = setTimeout(() => e.style.display = 'none', ms); }
+
+const S = {
+  A: null, B: null,           // {name, V, seg, segSrc, mesh:{skull,mand,tu,tl}, zT}
+  segFile: { A: null, B: null },
+  reg: null,                  // {c, t0, p (6), pAuto, ncc, cal:[a,b], q}
+  T: M4.ident(), Ti: M4.ident(),
+  show: { A: true, B: true, map: true, parts: { skull: true, mand: true, tu: true, tl: true, skin: false } },
+  alphaA: 0.35, range: 3, meas: [], measMode: 0, measA: null,
+  P: null, slMode: 'fuse', blend: 0.5, win: 2400, showZone: true
+};
+const PARTS = [['skull', 1, 'череп/ВЧ'], ['mand', 2, 'НЧ'], ['tu', 3, 'зубы ВЧ'], ['tl', 4, 'зубы НЧ'], ['skin', 0, 'лицо']];
+
+/* ---------------- help buttons, tabs ---------------- */
+document.querySelectorAll('.q[data-h]').forEach(b => b.onclick = () => $('#' + b.dataset.h).classList.toggle('show'));
+document.querySelectorAll('#tabs .btn').forEach(b => b.onclick = () => { document.querySelectorAll('#tabs .btn').forEach(x => x.classList.toggle('on', x === b));
+  const sl = b.dataset.tab === 'sl'; $('#view3d').style.display = sl ? 'none' : ''; $('#viewSl').style.display = sl ? 'block' : 'none'; if (sl) drawSlices(); else requestDraw(); });
+
+/* ---------------- NIfTI with Hounsfield units ---------------- */
+function niftiHeader(u8) {
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  let le = true; if (dv.getInt32(0, true) !== 348) { if (dv.getInt32(0, false) === 348) le = false; else throw new Error('это не файл NIfTI'); }
+  const dim = [...Array(8)].map((_, i) => dv.getInt16(40 + i * 2, le)); const nx = dim[1], ny = dim[2], nz = Math.max(1, dim[3]);
+  const dt = dv.getInt16(70, le); const pix = [...Array(8)].map((_, i) => dv.getFloat32(76 + i * 4, le));
+  const off = Math.round(dv.getFloat32(108, le)) || 352; const sl = dv.getFloat32(112, le) || 1, ic = dv.getFloat32(116, le) || 0;
+  const qform = dv.getInt16(252, le), sform = dv.getInt16(254, le); let A;
+  if (sform > 0) A = [0, 1, 2].map(r => [0, 1, 2, 3].map(c => dv.getFloat32(280 + r * 16 + c * 4, le)));
+  else if (qform > 0) {
+    const b = dv.getFloat32(256, le), c = dv.getFloat32(260, le), d = dv.getFloat32(264, le), q = [268, 272, 276].map(o => dv.getFloat32(o, le));
+    const a = Math.sqrt(Math.max(0, 1 - b * b - c * c - d * d)), qf = pix[0] < 0 ? -1 : 1;
+    const R = [[a * a + b * b - c * c - d * d, 2 * (b * c - a * d), 2 * (b * d + a * c)], [2 * (b * c + a * d), a * a + c * c - b * b - d * d, 2 * (c * d - a * b)], [2 * (b * d - a * c), 2 * (c * d + a * b), a * a + d * d - c * c - b * b]];
+    A = [0, 1, 2].map(r => [R[r][0] * pix[1], R[r][1] * pix[2], R[r][2] * pix[3] * qf, q[r]]);
+  } else A = [[pix[1], 0, 0, 0], [0, pix[2], 0, 0], [0, 0, pix[3], 0]];
+  A[0] = A[0].map(v => -v); A[1] = A[1].map(v => -v); // NIfTI is RAS, DICOM is LPS → work in LPS
+  const rd = { 2: i => dv.getUint8(off + i), 256: i => dv.getInt8(off + i), 4: i => dv.getInt16(off + i * 2, le), 512: i => dv.getUint16(off + i * 2, le),
+    8: i => dv.getInt32(off + i * 4, le), 768: i => dv.getUint32(off + i * 4, le), 16: i => dv.getFloat32(off + i * 4, le), 64: i => dv.getFloat64(off + i * 8, le) }[dt];
+  if (!rd) throw new Error('неизвестный тип данных NIfTI: ' + dt);
+  return { nx, ny, nz, A, rd, sl, ic, dt, off, u8 };
+}
+async function gunzipMaybe(file) { let u8 = new Uint8Array(await file.arrayBuffer()); if (u8[0] === 0x1f && u8[1] === 0x8b) u8 = new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer()); return u8; }
+async function readNiftiCT(file, progress) {
+  const h = niftiHeader(await gunzipMaybe(file)); const N = h.nx * h.ny * h.nz; const vol = new Int16Array(N);
+  if (h.dt === 4 && h.sl === 1 && h.ic === 0 && (h.off % 2 === 0) && (h.u8.byteOffset % 2 === 0)) vol.set(new Int16Array(h.u8.buffer, h.u8.byteOffset + h.off, N));
+  else for (let i = 0; i < N; i++) { vol[i] = Math.max(-32000, Math.min(32000, Math.round(h.rd(i) * h.sl + h.ic))); if (i % 4e6 === 0) { progress && progress(i / N); await sleep(); } }
+  const col = c => [h.A[0][c], h.A[1][c], h.A[2][c]], sp = [0, 1, 2].map(c => Math.hypot(...col(c)));
+  return { vol, nx: h.nx, ny: h.ny, nz: h.nz, sx: sp[0], sy: sp[1], sz: sp[2], origin: [h.A[0][3], h.A[1][3], h.A[2][3]], ex: norm(col(0)), ey: norm(col(1)), ez: norm(col(2)), n: h.nz, f: 1 };
+}
+async function readNiftiSeg(file) {
+  const h = niftiHeader(await gunzipMaybe(file)); const N = h.nx * h.ny * h.nz; const lab = new Uint8Array(N);
+  if (h.dt === 2 && h.sl === 1 && h.ic === 0) lab.set(h.u8.subarray(h.off, h.off + N)); else for (let i = 0; i < N; i++) lab[i] = Math.max(0, Math.min(255, Math.round(h.rd(i) * h.sl + h.ic)));
+  return { lab, nx: h.nx, ny: h.ny, nz: h.nz, A: h.A };
+}
+
+/* ---------------- geometry helpers ---------------- */
+function inv3x4(A) { // world = A·[i,j,k,1] → returns B with ijk = B·[x,y,z,1]
+  const m = [[A[0][0], A[0][1], A[0][2]], [A[1][0], A[1][1], A[1][2]], [A[2][0], A[2][1], A[2][2]]];
+  const det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const i = [[(m[1][1] * m[2][2] - m[1][2] * m[2][1]) / det, (m[0][2] * m[2][1] - m[0][1] * m[2][2]) / det, (m[0][1] * m[1][2] - m[0][2] * m[1][1]) / det],
+    [(m[1][2] * m[2][0] - m[1][0] * m[2][2]) / det, (m[0][0] * m[2][2] - m[0][2] * m[2][0]) / det, (m[0][2] * m[1][0] - m[0][0] * m[1][2]) / det],
+    [(m[1][0] * m[2][1] - m[1][1] * m[2][0]) / det, (m[0][1] * m[2][0] - m[0][0] * m[2][1]) / det, (m[0][0] * m[1][1] - m[0][1] * m[1][0]) / det]];
+  return i.map(r => [r[0], r[1], r[2], -(r[0] * A[0][3] + r[1] * A[1][3] + r[2] * A[2][3])]);
+}
+function volAffine(V) { return [0, 1, 2].map(r => [V.ex[r] * V.sx, V.ey[r] * V.sy, V.ez[r] * V.sz, V.origin[r]]); }
+function rotM(rx, ry, rz) { // degrees → row-major 3×3, R = Rz·Ry·Rx
+  const a = rx * Math.PI / 180, b = ry * Math.PI / 180, c = rz * Math.PI / 180; const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), cc = Math.cos(c), sc = Math.sin(c);
+  return [cc * cb, cc * sb * sa - sc * ca, cc * sb * ca + sc * sa, sc * cb, sc * sb * sa + cc * ca, sc * sb * ca - cc * sa, -sb, cb * sa, cb * ca]; }
+function paramT(p, c, t0) { const R = rotM(p[0], p[1], p[2]); const Rc = [R[0] * c[0] + R[1] * c[1] + R[2] * c[2], R[3] * c[0] + R[4] * c[1] + R[5] * c[2], R[6] * c[0] + R[7] * c[1] + R[8] * c[2]];
+  return M4.fromR(R, [0, 1, 2].map(i => c[i] + t0[i] + p[3 + i] - Rc[i])); }
+function percentile(arr, q) { if (!arr.length) return NaN; const a = Float64Array.from(arr).sort(); return a[Math.min(a.length - 1, Math.max(0, Math.round(q * (a.length - 1))))]; }
+
+/* ---------------- loading ---------------- */
+const pick = { slot: 'A', kind: 'dir' };
+document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { pick.slot = b.dataset.open; pick.kind = b.dataset.kind;
+  ({ dir: '#inDir', files: '#inFiles', zip: '#inZip', nii: '#inNii', seg: '#inSeg' })[pick.kind] && $(({ dir: '#inDir', files: '#inFiles', zip: '#inZip', nii: '#inNii', seg: '#inSeg' })[pick.kind]).click(); });
+const junk = n => /\.(jpg|jpeg|png|bmp|txt|xml|html?|exe|dll|ini|pdf|stl|inf|lnk|bat|ico)$/i.test(n);
+$('#inDir').onchange = () => { const f = [...$('#inDir').files].filter(x => !junk(x.name)); $('#inDir').value = ''; if (f.length) loadCT(pick.slot, { dicom: f, name: (f[0].webkitRelativePath || f[0].name).split('/')[0] }); };
+$('#inFiles').onchange = () => { const f = [...$('#inFiles').files]; $('#inFiles').value = ''; if (!f.length) return; if (f.length === 1 && /\.nii(\.gz)?$/i.test(f[0].name)) loadCT(pick.slot, { nii: f[0], name: f[0].name }); else if (f.length === 1 && /\.zip$/i.test(f[0].name)) loadCT(pick.slot, { zip: f[0], name: f[0].name }); else loadCT(pick.slot, { dicom: f, name: f[0].name + (f.length > 1 ? ' и ещё ' + (f.length - 1) : '') }); };
+$('#inZip').onchange = () => { const f = $('#inZip').files[0]; $('#inZip').value = ''; if (f) loadCT(pick.slot, { zip: f, name: f.name }); };
+$('#inNii').onchange = () => { const f = $('#inNii').files[0]; $('#inNii').value = ''; if (f) loadCT(pick.slot, { nii: f, name: f.name }); };
+$('#inSeg').onchange = async () => { const f = $('#inSeg').files[0]; $('#inSeg').value = ''; if (!f) return; const slot = pick.slot;
+  try { busy(true, 'Читаю сегментацию…', 0.3); const seg = await readNiftiSeg(f); S.segFile[slot] = seg;
+    if (S[slot]) { S[slot].seg = seg; S[slot].segSrc = 'файл ' + f.name; await afterSeg(slot); } else toast('Сегментация принята — теперь откройте сам снимок'); }
+  catch (e) { console.error(e); toast('Сегментация: ' + e.message); } busy(false); };
+['#side', '#main'].forEach(sel => { const el = $(sel); el.addEventListener('dragover', e => e.preventDefault()); el.addEventListener('drop', e => { e.preventDefault(); const f = [...e.dataTransfer.files]; if (!f.length) return; const slot = S.A ? 'B' : 'A';
+  if (f.length === 1 && /\.nii(\.gz)?$/i.test(f[0].name)) loadCT(slot, { nii: f[0], name: f[0].name }); else if (f.length === 1 && /\.zip$/i.test(f[0].name)) loadCT(slot, { zip: f[0], name: f[0].name }); else loadCT(slot, { dicom: f, name: f[0].name }); }); });
+
+async function loadCT(slot, src) {
+  const nm = slot === 'A' ? 'до' : 'после';
+  try {
+    busy(true, `Читаю КЛКТ «${nm}»…`, 0); let V;
+    if (src.nii) V = await readNiftiCT(src.nii, f => busy(true, `Читаю КЛКТ «${nm}»…`, f));
+    else { let ent = src.dicom; if (src.zip) ent = await unzipEntries(src.zip, n => !junk(n), f => busy(true, 'Распаковываю ZIP…', f)); V = await readDicom(ent, f => busy(true, `Читаю срезы КЛКТ «${nm}»…`, f)); }
+    if (S[slot]) freeSlot(slot);
+    const X = S[slot] = { name: src.name, V, seg: null, segSrc: '', mesh: {} };
+    if (S.segFile[slot]) { X.seg = S.segFile[slot]; X.segSrc = 'приложенный файл'; }
+    else { const mode = $('#segMode').value;
+      if (mode !== 'thr') { try { const Nf = await aiSegmentCT(V, { scale: mode === 'precise' ? 1 : 1.5, step: mode === 'precise' ? 0.75 : 1 }, (t, f) => busy(true, `«${nm}»: ` + t, f)); X.seg = Nf; X.segSrc = `нейросеть (${AI.ep === 'webgpu' ? 'видеокарта' : 'процессор'}), ${Math.round(Nf.secs)} с`; }
+        catch (e) { console.error(e); toast('Нейросеть: ' + e.message + ' — ищу кость по плотности'); } }
+      if (!X.seg) { X.seg = thresholdSeg(V); X.segSrc = 'по плотности'; } }
+    await afterSeg(slot);
+  } catch (e) { console.error(e); toast(`КЛКТ «${nm}»: ` + e.message); }
+  busy(false);
+}
+function freeSlot(slot) { const X = S[slot]; if (!X) return; for (const k in X.mesh) freeMesh(X.mesh[k]); S[slot] = null; S.reg = null; S.T = M4.ident(); S.Ti = M4.ident(); }
+function thresholdSeg(V) { // without the network: one "bone" label
+  const N = V.nx * V.ny * V.nz; const h = new Float64Array(64); for (let i = 0; i < N; i += 7) { const v = V.vol[i]; if (v > -300) h[Math.min(63, Math.max(0, Math.floor((v + 300) / 100)))]++; }
+  const thr = 450; const lab = new Uint8Array(N); for (let i = 0; i < N; i++) if (V.vol[i] > thr) lab[i] = 1;
+  return { lab, nx: V.nx, ny: V.ny, nz: V.nz, A: volAffine(V), thr: true };
+}
+async function afterSeg(slot) {
+  const X = S[slot]; const nm = slot === 'A' ? 'до' : 'после'; const Nf = X.seg; Nf.Ainv = inv3x4(Nf.A);
+  // height of the upper root apices (world z, LPS: +z = up) — the stable zone starts above it
+  const zs = { 1: [], 3: [], 4: [] }, p1 = []; const st = Math.max(1, Math.floor(Nf.lab.length / 3e6)); const A = Nf.A;
+  for (let k = 0; k < Nf.nz; k++) for (let j = 0; j < Nf.ny; j++) { const row = (k * Nf.ny + j) * Nf.nx; for (let i = (j + k) % st; i < Nf.nx; i += st) { const L = Nf.lab[row + i]; if (L === 1 || L === 3 || L === 4) { const z = A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]; zs[L].push(z);
+      if (L === 1) p1.push(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], z); } } }
+  if (zs[3].length > 50) X.zT = percentile(zs[3], 0.97);
+  else if (zs[4].length > 50) X.zT = percentile(zs[4], 0.99) + 22;
+  else { const lo = percentile(zs[1], 0.02), hi = percentile(zs[1], 0.98); X.zT = lo + 0.4 * (hi - lo); X.noTeeth = true; }
+  // midline and the front of the skull at the nasion height (≈ 55 mm above the upper root apices) → anterior cranial base box
+  { const xs = []; for (let q = 0; q < p1.length; q += 9) xs.push(p1[q]); X.xMid = percentile(xs, 0.5); const ys = [];
+    for (let q = 0; q < p1.length; q += 3) if (Math.abs(p1[q + 2] - (X.zT + 55)) < 5 && Math.abs(p1[q] - X.xMid) < 10) ys.push(p1[q + 1]);
+    X.yN = ys.length > 20 ? percentile(ys, 0.01) : percentile(p1.filter((_, q) => q % 3 === 1), 0.02); }
+  // surfaces
+  const B = labelBoxes(Nf); const sp = [0, 1, 2].map(c => Math.hypot(Nf.A[0][c], Nf.A[1][c], Nf.A[2][c])); const sb = sp[0] < 0.45 ? 2 : 1;
+  for (const k in X.mesh) freeMesh(X.mesh[k]); X.mesh = {};
+  const jobs = PARTS.filter(([, L]) => B[L]);
+  for (let q = 0; q < jobs.length; q++) { const [key, L, nmP] = jobs[q]; const bone = L <= 2;
+    let g = await labelMesh(Nf, L, bone ? sb : 1, B[L].lo, B[L].hi, f => busy(true, `«${nm}»: строю поверхность (${nmP})…`, (q + f) / jobs.length), bone ? { pool: 'max', close: 1 } : {});
+    g = bigComponents(g, bone ? 1500 : 100); if (!g.idx.length) continue; X.mesh[key] = makeMesh(g); }
+  try { busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95); const stp = Math.max(1, Math.round(1 / X.V.sx)); let g = await surfaceNets(X.V, -350, stp, f => busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95 + 0.05 * f));
+    g = bigComponents(g, 40000); if (g.idx.length) X.mesh.skin = makeMesh(g); } catch (e) { console.warn('skin', e); }
+  $('#info' + slot).textContent = `${X.name} · ${X.V.nx}×${X.V.ny}×${X.V.nz}, ${fmt(X.V.sx, 2)} мм · ${X.segSrc}`; $('#slot' + slot).classList.add('ok');
+  if (X.noTeeth) toast(`«${nm}»: зубы не найдены — нижнюю границу зоны поставьте на срезах вручную`);
+  S.reg = null; updT(); $('#hint').classList.add('hidden');
+  $('#regGo').disabled = !(S.A && S.B); $('#exPng').disabled = $('#exStl').disabled = false; $('#measBtn').disabled = !(S.A && S.B);
+  if (slot === 'A' || !S.P) { S.P = volCenter(S.A || S.B); fitView(); }
+  renderRegInfo(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
+}
+function volCenter(X) { const V = X.V; return [0, 1, 2].map(r => V.origin[r] + V.ex[r] * V.sx * (V.nx - 1) / 2 + V.ey[r] * V.sy * (V.ny - 1) / 2 + V.ez[r] * V.sz * (V.nz - 1) / 2); }
+
+/* ============================================================
+   Registration: voxel-based, normalised cross-correlation of bone in the stable zone
+   ============================================================ */
+const HU_LO = -500, HU_HI = 2200; const clampHU = v => v < HU_LO ? HU_LO : v > HU_HI ? HU_HI : v;
+function mkLevel(V, step) { // block-averaged copy along the volume's own axes
+  const f = [V.sx, V.sy, V.sz].map(s => Math.max(1, Math.round(step / s))); const nx = Math.floor(V.nx / f[0]), ny = Math.floor(V.ny / f[1]), nz = Math.floor(V.nz / f[2]);
+  const d = new Float32Array(nx * ny * nz), w = 1 / (f[0] * f[1] * f[2]); const src = V.vol;
+  for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { let s = 0;
+    for (let c = 0; c < f[2]; c++) for (let b = 0; b < f[1]; b++) { const row = ((k * f[2] + c) * V.ny + j * f[1] + b) * V.nx + i * f[0]; for (let a = 0; a < f[0]; a++) s += clampHU(src[row + a]); }
+    d[(k * ny + j) * nx + i] = s * w; }
+  const sx = V.sx * f[0], sy = V.sy * f[1], sz = V.sz * f[2]; const o = [0, 1, 2].map(r => V.origin[r] + V.ex[r] * V.sx * (f[0] - 1) / 2 + V.ey[r] * V.sy * (f[1] - 1) / 2 + V.ez[r] * V.sz * (f[2] - 1) / 2);
+  return { d, nx, ny, nz, sx, sy, sz, origin: o, ex: V.ex, ey: V.ey, ez: V.ez, native: false };
+}
+function nativeLevel(V) { return { d: V.vol, nx: V.nx, ny: V.ny, nz: V.nz, sx: V.sx, sy: V.sy, sz: V.sz, origin: V.origin, ex: V.ex, ey: V.ey, ez: V.ez, native: true }; }
+function idxAffine(L) { // world → continuous index, as 3×4 rows
+  return [[L.ex[0] / L.sx, L.ex[1] / L.sx, L.ex[2] / L.sx, -dot(L.ex, L.origin) / L.sx], [L.ey[0] / L.sy, L.ey[1] / L.sy, L.ey[2] / L.sy, -dot(L.ey, L.origin) / L.sy], [L.ez[0] / L.sz, L.ez[1] / L.sz, L.ez[2] / L.sz, -dot(L.ez, L.origin) / L.sz]]; }
+function sampleL(L, x, y, z) { // trilinear, NaN outside
+  if (x < 0 || y < 0 || z < 0 || x > L.nx - 1 || y > L.ny - 1 || z > L.nz - 1) return NaN;
+  const x0 = Math.min(L.nx - 2, x | 0), y0 = Math.min(L.ny - 2, y | 0), z0 = Math.min(L.nz - 2, z | 0); const u = x - x0, v = y - y0, w = z - z0; const d = L.d, NX = L.nx, P = NX * L.ny; const i = (z0 * L.ny + y0) * NX + x0;
+  let a = d[i], b = d[i + 1], c = d[i + NX], e = d[i + NX + 1], f = d[i + P], g = d[i + P + 1], h = d[i + P + NX], k = d[i + P + NX + 1];
+  if (L.native) { a = clampHU(a); b = clampHU(b); c = clampHU(c); e = clampHU(e); f = clampHU(f); g = clampHU(g); h = clampHU(h); k = clampHU(k); }
+  return ((a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + e * u) * v) * (1 - w) + ((f * (1 - u) + g * u) * (1 - v) + (h * (1 - u) + k * u) * v) * w;
+}
+function roiLimit() { return parseFloat(String($('#roiLim').value).replace(',', '.')) || 0; }
+function roiModeV() { return $('#roiMode').value; }
+// the stable zone of one scan: 'acb' — anterior cranial base box (frontal bone above nasion, cribriform plate, orbital roofs, planum, sella), 'skull' — all bone above a level
+function zoneFn(X, lim, mode) { lim = lim === undefined ? roiLimit() : lim; mode = mode || roiModeV();
+  if (mode === 'acb') { const z0 = X.zT + lim, z1 = z0 + 45, y0 = X.yN - 4, y1 = X.yN + 85, x0 = X.xMid - 42, x1 = X.xMid + 42; const f = (x, y, z) => z >= z0 && z <= z1 && y >= y0 && y <= y1 && x >= x0 && x <= x1; f.box = { z0, z1, y0, y1, x0, x1 }; return f; }
+  const z0 = X.zT + lim; const f = (x, y, z) => z >= z0; f.box = { z0 }; return f; }
+function labelAt(Nf, w) { const B = Nf.Ainv; const i = Math.round(B[0][0] * w[0] + B[0][1] * w[1] + B[0][2] * w[2] + B[0][3]), j = Math.round(B[1][0] * w[0] + B[1][1] * w[1] + B[1][2] * w[2] + B[1][3]), k = Math.round(B[2][0] * w[0] + B[2][1] * w[1] + B[2][2] * w[2] + B[2][3]);
+  if (i < 0 || j < 0 || k < 0 || i >= Nf.nx || j >= Nf.ny || k >= Nf.nz) return 0; return Nf.lab[(k * Nf.ny + j) * Nf.nx + i]; }
+// zone mask on a level grid: bone of the skull label above the limit (max-pooled from the label grid), dilated by one voxel
+function roiMask(X, L, zf) {
+  const Nf = X.seg, M = new Uint8Array(L.nx * L.ny * L.nz), K = idxAffine(L), A = Nf.A;
+  for (let k = 0; k < Nf.nz; k++) for (let j = 0; j < Nf.ny; j++) { const row = (k * Nf.ny + j) * Nf.nx; for (let i = 0; i < Nf.nx; i++) { if (Nf.lab[row + i] !== 1) continue;
+    const w0 = A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], w1 = A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], w2 = A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]; if (!zf(w0, w1, w2)) continue;
+    const x = Math.round(K[0][0] * w0 + K[0][1] * w1 + K[0][2] * w2 + K[0][3]), y = Math.round(K[1][0] * w0 + K[1][1] * w1 + K[1][2] * w2 + K[1][3]), z = Math.round(K[2][0] * w0 + K[2][1] * w1 + K[2][2] * w2 + K[2][3]);
+    if (x >= 0 && y >= 0 && z >= 0 && x < L.nx && y < L.ny && z < L.nz) M[(z * L.ny + y) * L.nx + x] = 1; } }
+  const D = new Uint8Array(M.length), NX = L.nx, P = NX * L.ny;
+  for (let z = 1; z < L.nz - 1; z++) for (let y = 1; y < L.ny - 1; y++) for (let x = 1; x < L.nx - 1; x++) { const i = (z * L.ny + y) * NX + x; if (M[i] || M[i - 1] || M[i + 1] || M[i - NX] || M[i + NX] || M[i - P] || M[i + P]) D[i] = 1; }
+  return D;
+}
+// sample points: zone voxels with a strong edge (the bone contours carry the alignment)
+function roiPoints(L, mask, maxN, seed) {
+  const NX = L.nx, P = NX * L.ny, d = L.d; const cand = [], gm = [];
+  for (let z = 1; z < L.nz - 1; z++) for (let y = 1; y < L.ny - 1; y++) for (let x = 1; x < L.nx - 1; x++) { const i = (z * L.ny + y) * NX + x; if (!mask[i]) continue;
+    const g = Math.hypot((d[i + 1] - d[i - 1]) / L.sx, (d[i + NX] - d[i - NX]) / L.sy, (d[i + P] - d[i - P]) / L.sz); cand.push(i); gm.push(g); }
+  if (!cand.length) return { pts: new Float32Array(0), n: 0 };
+  const thr = percentile(gm.filter((_, q) => q % 7 === 0), 0.45); const keep = []; for (let q = 0; q < cand.length; q++) if (gm[q] >= thr) keep.push(cand[q]);
+  let rnd = seed || 12345; const rand = () => (rnd = (rnd * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  const sel = keep.length > maxN ? keep.filter(() => rand() < maxN / keep.length) : keep; const pts = new Float32Array(sel.length * 3);
+  sel.forEach((i, q) => { const x = i % NX, y = Math.floor(i / NX) % L.ny, z = Math.floor(i / P); for (let r = 0; r < 3; r++) pts[q * 3 + r] = L.origin[r] + L.ex[r] * L.sx * x + L.ey[r] * L.sy * y + L.ez[r] * L.sz * z; });
+  return { pts, n: sel.length };
+}
+function aValues(L, pts) { const K = idxAffine(L), n = pts.length / 3, a = new Float32Array(n); for (let q = 0; q < n; q++) { const x = pts[q * 3], y = pts[q * 3 + 1], z = pts[q * 3 + 2]; a[q] = sampleL(L, K[0][0] * x + K[0][1] * y + K[0][2] * z + K[0][3], K[1][0] * x + K[1][1] * y + K[1][2] * z + K[1][3], K[2][0] * x + K[2][1] * y + K[2][2] * z + K[2][3]); } return a; }
+function nccCost(LB, pts, av, T) { // −NCC between A at the points and B at T(points)
+  const K = idxAffine(LB); // compose K ∘ T
+  const C = [0, 1, 2].map(r => [0, 1, 2].map(c => K[r][0] * T[c * 4] + K[r][1] * T[c * 4 + 1] + K[r][2] * T[c * 4 + 2]).concat([K[r][0] * T[12] + K[r][1] * T[13] + K[r][2] * T[14] + K[r][3]]));
+  const n = av.length; let N = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+  for (let q = 0; q < n; q++) { const a = av[q]; if (a !== a) continue; const x = pts[q * 3], y = pts[q * 3 + 1], z = pts[q * 3 + 2];
+    const b = sampleL(LB, C[0][0] * x + C[0][1] * y + C[0][2] * z + C[0][3], C[1][0] * x + C[1][1] * y + C[1][2] * z + C[1][3], C[2][0] * x + C[2][1] * y + C[2][2] * z + C[2][3]); if (b !== b) continue;
+    N++; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b; }
+  if (N < n * 0.25 || N < 50) return { c: 1, N };
+  const va = saa - sa * sa / N, vb = sbb - sb * sb / N; if (va <= 0 || vb <= 0) return { c: 1, N };
+  return { c: -(sab - sa * sb / N) / Math.sqrt(va * vb), N, cal: [(sab - sa * sb / N) / va, (sb - (sab - sa * sb / N) / va * sa) / N] };
+}
+async function optimize(LB, pts, av, p, c, t0, step, minStep, maxIt = 400) {
+  p = p.slice(); let best = nccCost(LB, pts, av, paramT(p, c, t0)).c; let st = step.slice(); let it = 0;
+  while (it < maxIt) { let imp = false;
+    for (let d = 0; d < 6; d++) { for (const sg of [1, -1]) { const q = p.slice(); q[d] += sg * st[d]; const cc = nccCost(LB, pts, av, paramT(q, c, t0)).c; it++;
+        if (cc < best - 1e-7) { best = cc; p = q; imp = true; // keep going the same way
+          for (let r = 0; r < 6; r++) { const q2 = p.slice(); q2[d] += sg * st[d]; const c2 = nccCost(LB, pts, av, paramT(q2, c, t0)).c; it++; if (c2 < best - 1e-7) { best = c2; p = q2; } else break; }
+          break; } } }
+    if (!imp) { st = st.map(v => v / 2); if (st.every((v, i) => v < minStep[i])) break; }
+    if (it % 60 < 13) await sleep(); }
+  return { p, c: best };
+}
+async function register(fine) {
+  const A = S.A, B = S.B; if (!A || !B) return; const lim = roiLimit(); const t00 = performance.now();
+  try {
+    busy(true, 'Готовлю снимки к совмещению…', 0.02); await sleep();
+    const zA = zoneFn(A, lim), zB = zoneFn(B, lim);
+    const lev = [4, 2, 1].map(s => ({ s, A: mkLevel(A.V, s), B: mkLevel(B.V, s) }));
+    const NA = nativeLevel(A.V), NB = nativeLevel(B.V);
+    busy(true, 'Ищу зону основания черепа…', 0.08); await sleep();
+    for (const l of lev) { l.mA = roiMask(A, l.A, zA); await sleep(); }
+    const mB = roiMask(B, lev[1].B, zB);
+    const ptsOf = (l, maxN) => { const r = roiPoints(l.A, l.mA, maxN); return { pts: r.pts, av: aValues(l.A, r.pts) }; };
+    const P4 = ptsOf(lev[0], 6000), P2 = ptsOf(lev[1], 25000), P1 = ptsOf(lev[2], 50000);
+    if (P2.pts.length < 300) throw new Error('в зоне совмещения почти нет кости — опустите нижнюю границу зоны или проверьте, что на снимке есть основание черепа');
+    // centre of the zone in A and B
+    const cen = (pts) => { const n = pts.length / 3, c = [0, 0, 0]; for (let q = 0; q < n; q++) for (let r = 0; r < 3; r++) c[r] += pts[q * 3 + r] / n; return c; };
+    const cA = cen(P2.pts); const rB = roiPoints(lev[1].B, mB, 25000); const cB = rB.n > 100 ? cen(rB.pts) : volCenter(B);
+    let c = cA, t0 = [0, 1, 2].map(i => cB[i] - cA[i]); let p = [0, 0, 0, 0, 0, 0];
+    if (fine && S.reg) { c = S.reg.c; t0 = S.reg.t0; p = S.reg.p.slice(); }
+    else {
+      // 1) coarse search of the head rotation, translation only for each
+      const cands = []; const R = [-14, -7, 0, 7, 14]; let k = 0;
+      for (const rx of R) for (const ry of R) for (const rz of R) { const r = await optimize(lev[0].B, P4.pts, P4.av, [rx, ry, rz, 0, 0, 0], c, t0, [0, 0, 0, 4, 4, 4].map((v, i) => i < 3 ? 1e-9 : v), [1, 1, 1, 1, 1, 1], 120); cands.push(r); k++;
+        if (k % 5 === 0) { busy(true, 'Совмещение: ищу положение головы…', 0.12 + 0.25 * k / 125); await sleep(); } }
+      cands.sort((a, b) => a.c - b.c);
+      // 2) full 6-parameter search for the best few
+      let best = null; for (let q = 0; q < 4; q++) { const r = await optimize(lev[0].B, P4.pts, P4.av, cands[q].p, c, t0, [3, 3, 3, 3, 3, 3], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]); if (!best || r.c < best.c) best = r; busy(true, 'Совмещение: уточняю (4 мм)…', 0.4 + 0.08 * q); }
+      p = best.p;
+      busy(true, 'Совмещение: уточняю (2 мм)…', 0.55); p = (await optimize(lev[1].B, P2.pts, P2.av, p, c, t0, [1.5, 1.5, 1.5, 1.5, 1.5, 1.5], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2])).p;
+    }
+    busy(true, 'Совмещение: уточняю (1 мм)…', 0.7); p = (await optimize(lev[2].B, P1.pts, P1.av, p, c, t0, [0.6, 0.6, 0.6, 0.6, 0.6, 0.6], [0.05, 0.05, 0.05, 0.05, 0.05, 0.05])).p;
+    // 3) full resolution: the same points, values straight from the original voxels
+    busy(true, 'Совмещение: полное разрешение…', 0.85); await sleep();
+    const jit = new Float32Array(P1.pts.length * 2); let rnd = 777; const rand = () => (rnd = (rnd * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff - 0.5;
+    for (let q = 0; q < P1.pts.length; q++) { jit[q] = P1.pts[q]; jit[P1.pts.length + q] = P1.pts[q] + rand() * 0.8; }
+    const avN = aValues(NA, jit); const fin = await optimize(NB, jit, avN, p, c, t0, [0.25, 0.25, 0.25, 0.25, 0.25, 0.25], [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]); p = fin.p;
+    const res = nccCost(NB, jit, avN, paramT(p, c, t0));
+    S.reg = { c, t0, p, pAuto: p.slice(), ncc: -res.c, cal: res.cal || [1, 0], lim, mode: roiModeV(), secs: (performance.now() - t00) / 1000, nPts: jit.length / 3 };
+    updT(); busy(true, 'Считаю карту расстояний…', 0.93); await sleep(); computeMaps(); renderRegInfo(); renderNudge();
+    $('#regFine').disabled = false; $('#exPly').disabled = $('#exMat').disabled = $('#exRep').disabled = false;
+  } catch (e) { console.error(e); toast('Совмещение: ' + e.message); }
+  busy(false); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
+}
+function updT() { S.T = S.reg ? paramT(S.reg.p, S.reg.c, S.reg.t0) : M4.ident(); S.Ti = M4.invRigid(S.T); }
+$('#regGo').onclick = () => register(false);
+$('#regFine').onclick = () => register(true);
+$('#roiMode').onchange = () => { $('#roiLim').value = $('#roiMode').value === 'acb' ? 40 : 20; if ($('#viewSl').style.display === 'block') drawSlices(); };
+$('#roiLim').onchange = () => { if ($('#viewSl').style.display === 'block') drawSlices(); };
+function renderRegInfo() {
+  const r = S.reg, el = $('#regInfo'); if (!r) { el.innerHTML = S.A && S.B ? '<div class="sub">Оба снимка загружены — нажмите «Совместить» (1–3 минуты).</div>' : ''; return; }
+  const q = r.q; const cls = q === undefined ? '' : q <= 0.4 ? 'ok' : q <= 0.7 ? 'warn' : 'bad';
+  const mv = rotM(r.p[0], r.p[1], r.p[2]); const ang = Math.acos(Math.max(-1, Math.min(1, (mv[0] + mv[4] + mv[8] - 1) / 2))) * 180 / Math.PI;
+  const tr = M4.pt(S.T, r.c).map((v, i) => v - r.c[i]); const sh = Math.hypot(...tr);
+  el.innerHTML = `<div>Совпадение костей в зоне: <b class="${cls}">${q === undefined ? '—' : fmt(q, 2) + ' мм'}</b> <span class="sub">(медиана расхождения поверхностей; хорошо — до 0,4 мм, это точность построения поверхностей)</span></div>
+    <div class="sub">Корреляция плотности ${fmt(r.ncc, 3)} · ${r.nPts.toLocaleString('ru')} точек · ${r.mode === 'acb' ? 'передний отдел основания черепа' : 'череп выше нёба'}, от ${fmt(r.lim, 0)} мм над корнями · ${fmt(r.secs, 0)} с</div>
+    <div class="sub">Голова на втором снимке была повёрнута на ${fmt(ang, 1)}° и сдвинута на ${fmt(sh, 1)} мм — это убрано.</div>`;
+}
+
+/* ---------------- manual adjustment ---------------- */
+const NUD = [['Наклон вперёд/назад', 0, '°', 0.25], ['Наклон вбок', 1, '°', 0.25], ['Поворот', 2, '°', 0.25], ['Вправо/влево', 3, ' мм', 0.2], ['Вперёд/назад', 4, ' мм', 0.2], ['Вверх/вниз', 5, ' мм', 0.2]];
+function renderNudge() { const el = $('#nud'); if (!S.reg) { el.innerHTML = ''; return; }
+  el.innerHTML = NUD.map(([n, i, u, st]) => `<span>${n}</span><span class="v">${fmt(S.reg.p[i] - S.reg.pAuto[i], 2)}${u}</span><button class="btn sm" data-nd="${i}" data-s="${-st}">−</button><button class="btn sm" data-nd="${i}" data-s="${st}">+</button>`).join('');
+  el.querySelectorAll('[data-nd]').forEach(b => b.onclick = () => { S.reg.p[+b.dataset.nd] += +b.dataset.s; updT(); renderNudge(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); }); }
+// rotation 0 = about x (left-right axis) = nodding; 1 = about y; 2 = about z
+$('#nudMap').onclick = () => { if (!S.reg) return; busy(true, 'Считаю карту расстояний…', 0.5); setTimeout(() => { computeMaps(); renderRegInfo(); busy(false); requestDraw(); }, 30); };
+$('#nudReset').onclick = () => { if (!S.reg) return; S.reg.p = S.reg.pAuto.slice(); updT(); computeMaps(); renderNudge(); renderRegInfo(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); };
+
+/* ============================================================
+   Distance map: each "after" vertex → nearest "before" vertex of the same structure
+   ============================================================ */
+function buildHash(pos, cell) { const H = new Map(); const n = pos.length / 3; for (let v = 0; v < n; v++) { const k = Math.floor(pos[v * 3] / cell) + ',' + Math.floor(pos[v * 3 + 1] / cell) + ',' + Math.floor(pos[v * 3 + 2] / cell); let a = H.get(k); if (!a) H.set(k, a = []); a.push(v); } return H; }
+function nearest(H, pos, cell, p, maxR) { const cx = Math.floor(p[0] / cell), cy = Math.floor(p[1] / cell), cz = Math.floor(p[2] / cell); let best = -1, bd = maxR * maxR;
+  const R = Math.ceil(maxR / cell); for (let r = 0; r <= R; r++) { for (let dx = -r; dx <= r; dx++) for (let dy = -r; dy <= r; dy++) for (let dz = -r; dz <= r; dz++) { if (Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz)) !== r) continue; const a = H.get((cx + dx) + ',' + (cy + dy) + ',' + (cz + dz)); if (!a) continue;
+      for (const v of a) { const ex = pos[v * 3] - p[0], ey = pos[v * 3 + 1] - p[1], ez = pos[v * 3 + 2] - p[2]; const d = ex * ex + ey * ey + ez * ez; if (d < bd) { bd = d; best = v; } } }
+    if (best >= 0 && Math.sqrt(bd) <= r * cell) break; }
+  return best; }
+function computeMaps() {
+  if (!S.A || !S.B) return; const cell = 1.5, maxR = Math.max(8, S.range * 2.5); const zf = S.reg ? zoneFn(S.A, S.reg.lim, S.reg.mode) : zoneFn(S.A); const qd = [];
+  for (const [key] of PARTS) { const ma = S.A.mesh[key], mb = S.B.mesh[key]; if (!mb) continue; mb.dist = null; if (!ma) continue;
+    if (!ma.hash) ma.hash = buildHash(ma.g.pos, cell);
+    const P = mb.g.pos, n = P.length / 3, D = new Float32Array(n), T = S.Ti;
+    for (let v = 0; v < n; v++) { const p = M4.pt(T, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); const w = nearest(ma.hash, ma.g.pos, cell, p, maxR);
+      if (w < 0) { D[v] = NaN; continue; } const ex = p[0] - ma.g.pos[w * 3], ey = p[1] - ma.g.pos[w * 3 + 1], ez = p[2] - ma.g.pos[w * 3 + 2]; const d = Math.hypot(ex, ey, ez);
+      const s = ex * ma.g.nrm[w * 3] + ey * ma.g.nrm[w * 3 + 1] + ez * ma.g.nrm[w * 3 + 2]; D[v] = s < 0 ? -d : d;
+      if (key === 'skull' && (v % 3 === 0) && zf(p[0], p[1], p[2])) qd.push(d); }
+    mb.dist = D; colorize(mb); }
+  if (S.reg) S.reg.q = qd.length > 200 ? percentile(qd, 0.5) : undefined;
+}
+function mapColor(t) { // t in [-1,1]: blue → cyan → green → yellow → red
+  const st = [[-1, [0.13, 0.25, 0.85]], [-0.5, [0.1, 0.72, 0.95]], [0, [0.3, 0.82, 0.38]], [0.5, [0.98, 0.85, 0.15]], [1, [0.9, 0.1, 0.25]]];
+  t = Math.max(-1, Math.min(1, t)); for (let i = 1; i < st.length; i++) if (t <= st[i][0]) { const [a, ca] = st[i - 1], [b, cb] = st[i]; const u = (t - a) / (b - a); return ca.map((v, k) => v + (cb[k] - v) * u); } return st[4][1]; }
+function colorize(m) { if (!m.dist) return; const n = m.dist.length, c = new Float32Array(n * 3); const dead = 0.12; // ±12 % of the range shown as "no change"
+  for (let v = 0; v < n; v++) { const d = m.dist[v]; let col; if (d !== d) col = [0.75, 0.74, 0.8]; else { let t = d / S.range; if (Math.abs(t) < dead) t = 0; else t = Math.sign(t) * (Math.abs(t) - dead) / (1 - dead); col = mapColor(t); } c[v * 3] = col[0]; c[v * 3 + 1] = col[1]; c[v * 3 + 2] = col[2]; }
+  m.col = c; if (m.cbo) { gl.bindBuffer(gl.ARRAY_BUFFER, m.cbo); gl.bufferData(gl.ARRAY_BUFFER, c, gl.STATIC_DRAW); } else { m.cbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.cbo); gl.bufferData(gl.ARRAY_BUFFER, c, gl.STATIC_DRAW); } }
+function renderLegend() { const st = []; for (let i = 0; i <= 20; i++) { const t = -1 + i / 10; const c = mapColor(Math.abs(t) < 0.12 ? 0 : Math.sign(t) * (Math.abs(t) - 0.12) / 0.88); st.push(`rgb(${c.map(v => Math.round(v * 255)).join(',')}) ${i * 5}%`); }
+  $('#legBar').style.background = `linear-gradient(90deg,${st.join(',')})`; $('#legLo').textContent = '−' + fmt(S.range, 1); $('#legHi').textContent = '+' + fmt(S.range, 1) + ' мм'; }
+$('#mapRange').onchange = () => { S.range = Math.max(0.5, parseFloat(String($('#mapRange').value).replace(',', '.')) || 3); renderLegend(); if (S.B) for (const k in S.B.mesh) colorize(S.B.mesh[k]); requestDraw(); };
+
+/* ============================================================
+   WebGL
+   ============================================================ */
+const canvas = $('#gl'); const gl = canvas.getContext('webgl2', { antialias: true, preserveDrawingBuffer: true });
+const VS = `#version 300 es
+in vec3 aPos; in vec3 aNrm; in vec3 aCol; uniform mat4 uMVP, uMV; uniform float uPt; out vec3 vN; out vec3 vC;
+void main(){ gl_Position = uMVP * vec4(aPos,1.0); vN = mat3(uMV) * aNrm; vC = aCol; gl_PointSize = uPt; }`;
+const FS = `#version 300 es
+precision highp float; in vec3 vN; in vec3 vC; uniform vec4 uCol; uniform int uVC; uniform int uFlat; out vec4 o;
+void main(){ vec3 c = uVC==1 ? vC : uCol.rgb; if(uFlat==1){ o = vec4(c,uCol.a); return; }
+  vec3 n = normalize(vN); if(!gl_FrontFacing) n = -n; float l = 0.32 + 0.62*max(n.z,0.0) + 0.12*max(dot(n,normalize(vec3(-0.4,0.6,0.7))),0.0);
+  float s = pow(max(n.z,0.0), 40.0)*0.12; o = vec4(c*l + s, uCol.a); }`;
+function mkProg() { const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+  const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS)); gl.bindAttribLocation(p, 0, 'aPos'); gl.bindAttribLocation(p, 1, 'aNrm'); gl.bindAttribLocation(p, 2, 'aCol'); gl.linkProgram(p); return p; }
+const prog = mkProg(); const U = {}; for (const n of ['uMVP', 'uMV', 'uPt', 'uCol', 'uVC', 'uFlat']) U[n] = gl.getUniformLocation(prog, n);
+function makeMesh(g) { const m = { g, n: g.idx.length }; m.vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.vbo); gl.bufferData(gl.ARRAY_BUFFER, g.pos, gl.STATIC_DRAW);
+  m.nbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.nbo); gl.bufferData(gl.ARRAY_BUFFER, g.nrm, gl.STATIC_DRAW);
+  m.ibo = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.ibo); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, g.idx, gl.STATIC_DRAW); return m; }
+function freeMesh(m) { if (!m) return; for (const b of ['vbo', 'nbo', 'ibo', 'cbo']) if (m[b]) gl.deleteBuffer(m[b]); }
+const cam = { th: 0, ph: 0.05, dist: 400, target: [0, 0, 0], halfH: 80 };
+function eyeDir() { const c = Math.cos(cam.ph); return [c * Math.sin(cam.th), -c * Math.cos(cam.th), Math.sin(cam.ph)]; }
+function viewM() { const e = eyeDir(), f = e.map(v => -v); const up = [-Math.sin(cam.ph) * Math.sin(cam.th), Math.sin(cam.ph) * Math.cos(cam.th), Math.cos(cam.ph)];
+  const s = norm(cross(f, up)), u = cross(s, f); const eye = cam.target.map((v, k) => v + e[k] * cam.dist);
+  return new Float32Array([s[0], u[0], -f[0], 0, s[1], u[1], -f[1], 0, s[2], u[2], -f[2], 0, -dot(s, eye), -dot(u, eye), dot(f, eye), 1]); }
+function projM() { const a = canvas.width / Math.max(1, canvas.height), h = cam.halfH, w = h * a, n = 1, f = cam.dist * 2 + 800; return new Float32Array([1 / w, 0, 0, 0, 0, 1 / h, 0, 0, 0, 0, -2 / (f - n), 0, 0, 0, -(f + n) / (f - n), 1]); }
+function fitView() { const X = S.A || S.B; if (!X) return; const V = X.V; cam.target = volCenter(X); cam.halfH = Math.max(V.nx * V.sx, V.nz * V.sz) * 0.55; requestDraw(); }
+function resize() { const r = canvas.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d)); if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; } }
+let needDraw = false; function requestDraw() { if (!needDraw) { needDraw = true; requestAnimationFrame(draw); } }
+function drawMesh(m, M, col, alpha, useVC) {
+  const MV = M4.mul(VM, M), MVP = M4.mul(PM, MV); gl.uniformMatrix4fv(U.uMVP, false, MVP); gl.uniformMatrix4fv(U.uMV, false, MV); gl.uniform4f(U.uCol, col[0], col[1], col[2], alpha); gl.uniform1i(U.uVC, useVC && m.cbo ? 1 : 0); gl.uniform1i(U.uFlat, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, m.vbo); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, m.nbo); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+  if (useVC && m.cbo) { gl.bindBuffer(gl.ARRAY_BUFFER, m.cbo); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0); } else { gl.disableVertexAttribArray(2); gl.vertexAttrib3f(2, 1, 1, 1); }
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.ibo); gl.drawElements(gl.TRIANGLES, m.n, gl.UNSIGNED_INT, 0); }
+const lineBuf = gl.createBuffer();
+function drawPrims(pts, mode, col, size) { if (!pts.length) return; gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pts), gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0); gl.disableVertexAttribArray(1); gl.vertexAttrib3f(1, 0, 0, 1); gl.disableVertexAttribArray(2);
+  const MVP = M4.mul(PM, VM); gl.uniformMatrix4fv(U.uMVP, false, MVP); gl.uniformMatrix4fv(U.uMV, false, VM); gl.uniform4f(U.uCol, col[0], col[1], col[2], 1); gl.uniform1i(U.uVC, 0); gl.uniform1i(U.uFlat, 1); gl.uniform1f(U.uPt, size || 1);
+  gl.drawArrays(mode, 0, pts.length / 3); }
+const COL_A = [0.79, 0.77, 0.92], COL_B = [0.93, 0.45, 0.6]; const COL_T = [0.97, 0.96, 0.92];
+let VM, PM;
+function draw() {
+  needDraw = false; resize(); gl.viewport(0, 0, canvas.width, canvas.height); if (S.snapBg) gl.clearColor(0.957, 0.965, 0.98, 1); else gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.useProgram(prog);
+  VM = viewM(); PM = projM(); const I = M4.ident();
+  const showB = S.B && S.show.B, showA = S.A && S.show.A; const aA = showB ? S.alphaA : 1;
+  if (showB) for (const [k] of PARTS) { const m = S.B.mesh[k]; if (!m || !S.show.parts[k]) continue; const map = S.show.map && S.reg && m.dist; drawMesh(m, S.Ti, k === 'tu' || k === 'tl' ? (map ? COL_B : [0.98, 0.78, 0.84]) : COL_B, k === 'skin' ? 0.55 : 1, map); }
+  if (showA) { if (aA < 1) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }
+    if (showB) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(2, 8); } /* where both surfaces coincide, "after" wins — no speckles */
+    for (const [k] of PARTS) { const m = S.A.mesh[k]; if (!m || !S.show.parts[k]) continue; drawMesh(m, I, k === 'tu' || k === 'tl' ? COL_T : k === 'skin' ? [0.93, 0.84, 0.78] : COL_A, k === 'skin' ? Math.min(aA, 0.35) : aA, false); }
+    gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.POLYGON_OFFSET_FILL); }
+  // measurements
+  gl.disable(gl.DEPTH_TEST); const lp = [], pa = [], pb = [];
+  for (const m of S.meas) { lp.push(...m.a, ...m.b); pa.push(...m.a); pb.push(...m.b); } if (S.measA) pa.push(...S.measA);
+  drawPrims(lp, gl.LINES, [0.21, 0.14, 0.58]); drawPrims(pa, gl.POINTS, [0.21, 0.14, 0.58], 10 * Math.min(2, devicePixelRatio || 1)); drawPrims(pb, gl.POINTS, [0.9, 0.08, 0.35], 10 * Math.min(2, devicePixelRatio || 1));
+  gl.enable(gl.DEPTH_TEST);
+}
+// orbit / pan / zoom
+let drag = null;
+canvas.addEventListener('pointerdown', e => { if (S.measMode && e.button === 0) { measClick(e); return; } drag = { x: e.clientX, y: e.clientY, b: e.button, sh: e.shiftKey, moved: false }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', e => { if (!drag) { probe(e); return; } const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved = true;
+  if (drag.b === 2 || drag.b === 1 || drag.sh) { const r = canvas.getBoundingClientRect(); const k = cam.halfH * 2 / r.height; const e3 = eyeDir(), f = e3.map(v => -v); const up = [-Math.sin(cam.ph) * Math.sin(cam.th), Math.sin(cam.ph) * Math.cos(cam.th), Math.cos(cam.ph)]; const s = norm(cross(f, up)), u = cross(s, f);
+    cam.target = cam.target.map((v, i) => v - s[i] * dx * k + u[i] * dy * k); }
+  else { cam.th -= dx * 0.008; cam.ph = Math.max(-1.55, Math.min(1.55, cam.ph + dy * 0.008)); }
+  requestDraw(); });
+canvas.addEventListener('pointerup', () => { drag = null; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => { e.preventDefault(); cam.halfH = Math.max(5, Math.min(400, cam.halfH * Math.exp(e.deltaY * 0.0012))); requestDraw(); }, { passive: false });
+document.querySelectorAll('#views [data-v]').forEach(b => b.onclick = () => { const v = b.dataset.v; const D = { front: [0, 0.03], right: [-Math.PI / 2, 0.03], left: [Math.PI / 2, 0.03], top: [0, 1.55], bottom: [0, -1.55] }[v]; cam.th = D[0]; cam.ph = D[1]; requestDraw(); });
+window.addEventListener('resize', () => { requestDraw(); });
+
+/* ---------------- picking: nearest visible vertex under the cursor ---------------- */
+function pickAt(e, which) { // which: 'A' | 'B'
+  const r = canvas.getBoundingClientRect(); const mx = (e.clientX - r.left) / r.width * 2 - 1, my = 1 - (e.clientY - r.top) / r.height * 2; const tol = 6 / r.width * 2, tolY = 6 / r.height * 2;
+  const X = S[which]; if (!X) return null; const M = which === 'B' ? S.Ti : M4.ident(); const MVP = M4.mul(PM || projM(), M4.mul(VM || viewM(), M)); let best = null;
+  for (const [k] of PARTS) { const m = X.mesh[k]; if (!m || !S.show.parts[k]) continue; const P = m.g.pos, n = P.length / 3;
+    for (let v = 0; v < n; v++) { const x = P[v * 3], y = P[v * 3 + 1], z = P[v * 3 + 2]; const cx = MVP[0] * x + MVP[4] * y + MVP[8] * z + MVP[12]; if (Math.abs(cx - mx) > tol) continue; const cy = MVP[1] * x + MVP[5] * y + MVP[9] * z + MVP[13]; if (Math.abs(cy - my) > tolY) continue;
+      const cz = MVP[2] * x + MVP[6] * y + MVP[10] * z + MVP[14]; if (!best || cz < best.z) best = { z: cz, k, v, m }; } }
+  if (!best) return null; const P = best.m.g.pos, v = best.v; const p = M4.pt(M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); return { p, part: best.k, d: best.m.dist ? best.m.dist[v] : null };
+}
+let probeTm = 0;
+function probe(e) { const el = $('#probe'); if (!S.reg || !S.show.B || S.measMode) { el.style.display = 'none'; return; } const now = performance.now(); if (now - probeTm < 50) return; probeTm = now;
+  const h = pickAt(e, 'B'); if (!h || h.d === null || h.d !== h.d) { el.style.display = 'none'; return; } const r = canvas.getBoundingClientRect();
+  el.style.display = 'block'; el.style.left = (e.clientX - r.left + 14) + 'px'; el.style.top = (e.clientY - r.top + 10) + 'px'; el.textContent = `${PARTS.find(p => p[0] === h.part)[2]}: ${h.d > 0 ? '+' : ''}${fmt(h.d, 2)} мм`; }
+
+/* ---------------- measuring a displacement ---------------- */
+$('#measBtn').onclick = () => { S.measMode = S.measMode ? 0 : 1; S.measA = null; $('#measBtn').classList.toggle('on', !!S.measMode); $('#measBtn').textContent = S.measMode ? 'Щёлкните точку на «до»…' : '📏 Измерить сдвиг'; requestDraw(); };
+function measClick(e) {
+  if (S.measMode === 1) { const h = pickAt(e, 'A'); if (!h) { toast('Не попали в «до» — щёлкните по сиреневой поверхности'); return; } S.measA = h.p; S.measMode = 2; $('#measBtn').textContent = 'Теперь ту же точку на «после»…';
+    if (S.show.A) toast('Можно снять галочку «до», чтобы точно попасть в «после»', 3500); requestDraw(); return; }
+  const h = pickAt(e, 'B'); if (!h) { toast('Не попали в «после» — щёлкните по цветной поверхности'); return; }
+  S.meas.push({ a: S.measA, b: h.p, part: h.part }); S.measA = null; S.measMode = 0; $('#measBtn').classList.remove('on'); $('#measBtn').textContent = '📏 Измерить сдвиг'; renderMeas(); requestDraw(); }
+function dirText(d) { // LPS: x+ = left, y+ = back, z+ = up
+  const t = (v, p, n) => Math.abs(v) < 0.05 ? '0' : `${fmt(Math.abs(v), 1)} ${v > 0 ? p : n}`;
+  return [t(-d[0], 'вправо', 'влево'), t(-d[1], 'вперёд', 'назад'), t(d[2], 'вверх', 'вниз')]; }
+function renderMeas() { const el = $('#measList'); if (!S.meas.length) { el.innerHTML = ''; $('#exCsv').disabled = true; return; } $('#exCsv').disabled = false;
+  el.innerHTML = `<table class="ms"><tr><th>№</th><th>вправо/влево</th><th>вперёд/назад</th><th>вверх/вниз</th><th>всего</th><th></th></tr>` +
+    S.meas.map((m, i) => { const d = [0, 1, 2].map(k => m.b[k] - m.a[k]); const t = dirText(d); return `<tr><td>${i + 1} <span class="sub">${PARTS.find(p => p[0] === m.part)[2]}</span></td><td>${t[0]}</td><td>${t[1]}</td><td>${t[2]}</td><td><b>${fmt(Math.hypot(...d), 1)}</b></td><td><button data-del="${i}">✕</button></td></tr>`; }).join('') + '</table><div class="sub" style="margin-top:4px">Направления — по осям снимка «до» (пациент смотрит вперёд).</div>';
+  el.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { S.meas.splice(+b.dataset.del, 1); renderMeas(); requestDraw(); }); }
+
+/* ---------------- visibility controls ---------------- */
+$('#shA').onchange = () => { S.show.A = $('#shA').checked; requestDraw(); };
+$('#shB').onchange = () => { S.show.B = $('#shB').checked; requestDraw(); };
+$('#shMap').onchange = () => { S.show.map = $('#shMap').checked; requestDraw(); };
+document.querySelectorAll('[data-part]').forEach(c => c.onchange = () => { S.show.parts[c.dataset.part] = c.checked; requestDraw(); });
+$('#alphaA').oninput = () => { S.alphaA = +$('#alphaA').value; requestDraw(); };
+
+/* ============================================================
+   Slices: before (magenta) and after (green) through the same point
+   ============================================================ */
+const SLV = [['#slAx', [1, 0, 0], [0, 1, 0], 2], ['#slCo', [1, 0, 0], [0, 0, -1], 1], ['#slSa', [0, -1, 0], [0, 0, -1], 0]]; // screen right, screen down, normal axis
+function slField() { const X = S.A || S.B; const V = X.V; return Math.max(V.nx * V.sx, V.ny * V.sy, V.nz * V.sz) * 1.02; }
+function worldToPix(cv, w) { const [, R, D] = SLV.find(s => s[0] === cv); const F = slField(), c = volCenter(S.A || S.B); const W = $(cv).width;
+  const u = dot(R, w.map((v, i) => v - c[i])) / F + 0.5, v = dot(D, w.map((v, i) => v - c[i])) / F + 0.5; return [u * W, v * W]; }
+function drawSlices() {
+  if (!S.A && !S.B) return; const X = S.A || S.B; const F = slField(), c = volCenter(X); if (!S.P) S.P = c.slice();
+  const LA = S.A ? nativeLevel(S.A.V) : null, LB = S.B ? nativeLevel(S.B.V) : null; const KA = LA && idxAffine(LA), KB = LB && idxAffine(LB); const T = S.T;
+  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 700 - S.win / 2, hi = 700 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255));
+  const zf = S.A ? zoneFn(S.A) : null; const showZ = S.A && S.A.seg;
+  for (const [cv, R, D, ax] of SLV) { const can = $(cv), W = can.width, ctx = can.getContext('2d'); const img = ctx.createImageData(W, W); const px = img.data;
+    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const u = (x + 0.5) / W - 0.5, v = (y + 0.5) / W - 0.5; const w = [0, 1, 2].map(i => c[i] + R[i] * u * F + D[i] * v * F); w[ax] = S.P[ax];
+      let a = NaN, b = NaN;
+      if (LA) a = sampleL(LA, KA[0][0] * w[0] + KA[0][1] * w[1] + KA[0][2] * w[2] + KA[0][3], KA[1][0] * w[0] + KA[1][1] * w[1] + KA[1][2] * w[2] + KA[1][3], KA[2][0] * w[0] + KA[2][1] * w[1] + KA[2][2] * w[2] + KA[2][3]);
+      if (LB) { const q = M4.pt(T, w); b = sampleL(LB, KB[0][0] * q[0] + KB[0][1] * q[1] + KB[0][2] * q[2] + KB[0][3], KB[1][0] * q[0] + KB[1][1] * q[1] + KB[1][2] * q[2] + KB[1][3], KB[2][0] * q[0] + KB[2][1] * q[1] + KB[2][2] * q[2] + KB[2][3]); if (b === b) b = (b - cal[1]) / cal[0]; }
+      const ga = g(a), gb = g(b); const o = (y * W + x) * 4; let r, gg, bb;
+      if (S.slMode === 'fuse') { r = ga; gg = gb; bb = ga; }
+      else if (S.slMode === 'blend') { const m = ga * (1 - S.blend) + gb * S.blend; r = gg = bb = m; }
+      else { const ch = ((x >> 5) + (y >> 5)) & 1; r = gg = bb = ch ? gb : ga; }
+      if (showZ && S.showZone && zf(w[0], w[1], w[2]) && labelAt(S.A.seg, w) === 1) { r = r * 0.45 + 140; gg *= 0.45; bb *= 0.45; } /* the zone used for the superimposition — red */
+      px[o] = r; px[o + 1] = gg; px[o + 2] = bb; px[o + 3] = 255; }
+    ctx.putImageData(img, 0, 0);
+    // crosshair
+    const pp = worldToPix(cv, S.P); ctx.strokeStyle = 'rgba(13,180,231,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pp[0], 0); ctx.lineTo(pp[0], W); ctx.moveTo(0, pp[1]); ctx.lineTo(W, pp[1]); ctx.stroke();
+    // zone limit (horizontal line at height zLim) on the coronal and sagittal views
+    if (zf && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zf.box.z0])[1]; ctx.strokeStyle = '#E5155A'; ctx.setLineDash([8, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#E5155A'; ctx.font = 'bold 12px system-ui'; ctx.fillText('зона совмещения ↑', 8, yy - 6);
+      if (zf.box.y0 !== undefined) { const b = zf.box; const c1 = worldToPix(cv, [b.x0, b.y0, b.z1]), c2 = worldToPix(cv, [b.x1, b.y1, b.z0]); ctx.strokeStyle = 'rgba(229,21,90,.8)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.strokeRect(Math.min(c1[0], c2[0]), Math.min(c1[1], c2[1]), Math.abs(c2[0] - c1[0]), Math.abs(c2[1] - c1[1])); ctx.setLineDash([]); } }
+    ctx.fillStyle = '#bbb'; ctx.font = '11px system-ui'; if (ax === 2) { ctx.fillText('спереди', W / 2 - 22, 14); ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14, W / 2); } else if (ax === 1) { ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14, W / 2); } else { ctx.fillText('спереди →', W - 70, W - 8); }
+  }
+}
+let slDrag = null;
+for (const [cv, R, D, ax] of SLV) { const can = $(cv);
+  const toW = e => { const r = can.getBoundingClientRect(); const u = (e.clientX - r.left) / r.width - 0.5, v = (e.clientY - r.top) / r.height - 0.5; const F = slField(), c = volCenter(S.A || S.B); const w = [0, 1, 2].map(i => c[i] + R[i] * u * F + D[i] * v * F); w[ax] = S.P[ax]; return w; };
+  can.addEventListener('pointerdown', e => { if (!S.A && !S.B) return; const w = toW(e); const r = can.getBoundingClientRect();
+    if (S.A && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zoneFn(S.A).box.z0])[1] / can.width * r.height; if (Math.abs(e.clientY - r.top - yy) < 7) { slDrag = { cv, toW }; can.setPointerCapture(e.pointerId); return; } }
+    S.P = w; drawSlices(); });
+  can.addEventListener('pointermove', e => { if (!slDrag || slDrag.cv !== cv) return; const w = toW(e); $('#roiLim').value = Math.round(w[2] - S.A.zT); drawSlices(); });
+  can.addEventListener('pointerup', () => { slDrag = null; });
+  can.addEventListener('wheel', e => { e.preventDefault(); if (!S.P) return; const n = [0, 0, 0]; n[ax] = 1; const st = (S.A || S.B).V.sx * (e.shiftKey ? 5 : 1); S.P[ax] += Math.sign(e.deltaY) * st * (ax === 2 ? -1 : 1); drawSlices(); }, { passive: false });
+}
+$('#slMode').onchange = () => { S.slMode = $('#slMode').value; $('#blendBox').style.display = S.slMode === 'blend' ? '' : 'none'; drawSlices(); };
+$('#slBlend').oninput = () => { S.blend = +$('#slBlend').value; drawSlices(); };
+$('#slWin').oninput = () => { S.win = +$('#slWin').value; drawSlices(); };
+$('#slZone').onchange = () => { S.showZone = $('#slZone').checked; drawSlices(); };
+$('#blendBox').style.display = 'none';
+
+/* ============================================================
+   Export
+   ============================================================ */
+function saveBlob(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+function baseName() { const n = (S.A && S.A.name || 'КЛКТ').replace(/\.(nii(\.gz)?|zip)$/i, '').replace(/[\\/:*?"<>|]+/g, '_'); return n; }
+function meshesOf(slot, M) { const out = []; const X = S[slot]; if (!X) return out; for (const [k] of PARTS) { const m = X.mesh[k]; if (!m || !S.show.parts[k]) continue; out.push({ m, M }); } return out; }
+function stlBlob(list) { let nt = 0; for (const { m } of list) nt += m.g.idx.length / 3; const buf = new ArrayBuffer(84 + nt * 50), dv = new DataView(buf); const hdr = 'CBCT superimposition (c) E. Skorobogatko @katya_skorobogatko'; for (let i = 0; i < 80; i++) dv.setUint8(i, i < hdr.length ? hdr.charCodeAt(i) : 32); dv.setUint32(80, nt, true); let o = 84;
+  for (const { m, M } of list) { const P = m.g.pos, I = m.g.idx; for (let t = 0; t < I.length; t += 3) { const p = [I[t], I[t + 1], I[t + 2]].map(v => M4.pt(M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]])); const n = norm(cross(sub3(p[1], p[0]), sub3(p[2], p[0])));
+      for (let k = 0; k < 3; k++) dv.setFloat32(o + k * 4, n[k] || 0, true); for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) dv.setFloat32(o + 12 + j * 12 + k * 4, p[j][k], true); o += 50; } }
+  return new Blob([buf], { type: 'model/stl' }); }
+$('#exPng').onclick = () => { S.snapBg = true; draw(); canvas.toBlob(b => saveBlob(b, baseName() + '_наложение.png')); S.snapBg = false; requestDraw(); };
+$('#exStl').onclick = () => { if (S.A) saveBlob(stlBlob(meshesOf('A', M4.ident())), baseName() + '_до.stl'); if (S.B) setTimeout(() => saveBlob(stlBlob(meshesOf('B', S.Ti)), baseName() + '_после_совмещено.stl'), 400); };
+$('#exPly').onclick = () => { const list = meshesOf('B', S.Ti); let nv = 0, nf = 0; for (const { m } of list) { nv += m.g.pos.length / 3; nf += m.g.idx.length / 3; }
+  const head = `ply\nformat binary_little_endian 1.0\ncomment CBCT superimposition (c) E. Skorobogatko @katya_skorobogatko\nelement vertex ${nv}\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nproperty float distance_mm\nelement face ${nf}\nproperty list uchar int vertex_indices\nend_header\n`;
+  const hb = new TextEncoder().encode(head); const buf = new ArrayBuffer(hb.length + nv * 19 + nf * 13); new Uint8Array(buf).set(hb); const dv = new DataView(buf); let o = hb.length, base = 0; const fo0 = hb.length + nv * 19; let fo = fo0;
+  for (const { m, M } of list) { const P = m.g.pos, n = P.length / 3; for (let v = 0; v < n; v++) { const p = M4.pt(M, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); for (let k = 0; k < 3; k++) dv.setFloat32(o + k * 4, p[k], true);
+      const c = m.col ? [m.col[v * 3], m.col[v * 3 + 1], m.col[v * 3 + 2]] : COL_B; for (let k = 0; k < 3; k++) dv.setUint8(o + 12 + k, Math.round(c[k] * 255)); dv.setFloat32(o + 15, m.dist ? m.dist[v] : NaN, true); o += 19; }
+    const I = m.g.idx; for (let t = 0; t < I.length; t += 3) { dv.setUint8(fo, 3); dv.setInt32(fo + 1, I[t] + base, true); dv.setInt32(fo + 5, I[t + 1] + base, true); dv.setInt32(fo + 9, I[t + 2] + base, true); fo += 13; } base += n; }
+  saveBlob(new Blob([buf]), baseName() + '_после_карта.ply'); };
+$('#exCsv').onclick = () => { const rows = [['№', 'структура', 'вправо(+)/влево(−), мм', 'вперёд(+)/назад(−), мм', 'вверх(+)/вниз(−), мм', 'всего, мм', 'до: x', 'до: y', 'до: z', 'после: x', 'после: y', 'после: z']];
+  S.meas.forEach((m, i) => { const d = [0, 1, 2].map(k => m.b[k] - m.a[k]); rows.push([i + 1, PARTS.find(p => p[0] === m.part)[2], fmt(-d[0], 2), fmt(-d[1], 2), fmt(d[2], 2), fmt(Math.hypot(...d), 2), ...m.a.map(v => fmt(v, 2)), ...m.b.map(v => fmt(v, 2))]); });
+  rows.push([]); rows.push(['© Екатерина Скоробогатько · @katya_skorobogatko']);
+  saveBlob(new Blob(['﻿' + rows.map(r => r.join(';')).join('\r\n')], { type: 'text/csv' }), baseName() + '_измерения.csv'); };
+$('#exMat').onclick = () => { const r = S.reg; const m = Array.from(S.T); const rows = [0, 1, 2, 3].map(i => [m[i], m[4 + i], m[8 + i], m[12 + i]]); const mi = Array.from(S.Ti); const rowsI = [0, 1, 2, 3].map(i => [mi[i], mi[4 + i], mi[8 + i], mi[12 + i]]);
+  const txt = JSON.stringify({ note: 'Мировые координаты DICOM (LPS, мм). T: точка снимка «до» → та же точка снимка «после». T_inv: «после» → «до» (её применяют, чтобы перенести «после» на «до»).', T: rows, T_inv: rowsI, rotation_deg: r.p.slice(0, 3), translation_mm: r.p.slice(3), center: r.c, t0: r.t0, zone_limit_mm: r.lim, ncc: r.ncc, median_surface_mm: r.q, author: '© Екатерина Скоробогатько · @katya_skorobogatko' }, null, 1);
+  saveBlob(new Blob([txt], { type: 'application/json' }), baseName() + '_матрица.json'); };
+
+function snapViews() { const keep = { th: cam.th, ph: cam.ph, target: cam.target.slice(), halfH: cam.halfH }; const out = []; S.snapBg = true;
+  for (const [nm, th, ph] of [['Спереди', 0, 0.03], ['Справа', -Math.PI / 2, 0.03], ['Слева', Math.PI / 2, 0.03], ['Снизу', 0, -1.55]]) { cam.th = th; cam.ph = ph; fitView(); draw(); out.push([nm, canvas.toDataURL('image/jpeg', 0.9)]); }
+  S.snapBg = false; Object.assign(cam, keep); requestDraw(); return out; }
+$('#exRep').onclick = () => { if (!S.reg) return; const imgs = snapViews(); const r = S.reg; const date = new Date().toLocaleDateString('ru');
+  const leg = $('#legBar').style.background;
+  const meas = S.meas.length ? `<h2>Измерения</h2><table><tr><th>№</th><th>Структура</th><th>Вправо/влево</th><th>Вперёд/назад</th><th>Вверх/вниз</th><th>Всего, мм</th></tr>${S.meas.map((m, i) => { const d = [0, 1, 2].map(k => m.b[k] - m.a[k]); const t = dirText(d); return `<tr><td>${i + 1}</td><td>${PARTS.find(p => p[0] === m.part)[2]}</td><td>${t[0]}</td><td>${t[1]}</td><td>${t[2]}</td><td><b>${fmt(Math.hypot(...d), 1)}</b></td></tr>`; }).join('')}</table>` : '';
+  const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Наложение КЛКТ — ${baseName()}</title><style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#231B4B;margin:24px;max-width:1000px}h1{font-size:22px;margin:0 0 4px;color:#362395}h2{font-size:15px;color:#362395;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em}.sub{color:#736C93;font-size:13px}.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g figure{margin:0;border:1px solid #DCDAE7;border-radius:12px;overflow:hidden;background:#F4F6FA}.g img{width:100%;display:block}.g figcaption{font-size:12px;font-weight:700;padding:4px 8px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid #DCDAE7;padding:5px;text-align:left}.bar{height:12px;border-radius:6px;background:${leg}}.lab{display:flex;justify-content:space-between;font-size:11px;color:#736C93}.foot{margin-top:24px;font-size:12px;color:#736C93}@media print{button{display:none}body{margin:10mm}}</style></head><body>
+<button onclick="print()" style="float:right;padding:8px 14px;border-radius:10px;border:0;background:#E5155A;color:#fff;font-weight:700">Печать / PDF</button>
+<h1>Наложение КЛКТ до и после лечения</h1><div class="sub">${S.A.name} → ${S.B.name} · ${date}</div>
+<h2>Совмещение</h2><div>По ${r.mode === 'acb' ? 'переднему отделу основания черепа (лобная кость над назионом, решётчатая пластинка, крыши орбит, клиновидная кость, турецкое седло)' : 'стабильным костям черепа выше нёба'} (зона от ${fmt(r.lim, 0)} мм над верхушками корней), по плотности вокселей. Совпадение костей в зоне — <b>${r.q === undefined ? '—' : fmt(r.q, 2) + ' мм'}</b> (медиана), корреляция ${fmt(r.ncc, 3)}.</div>
+<h2>Карта расстояний «после» относительно «до»</h2><div style="max-width:420px"><div class="bar"></div><div class="lab"><span>−${fmt(S.range, 1)} мм (внутрь)</span><span>0</span><span>+${fmt(S.range, 1)} мм (наружу)</span></div></div>
+<div class="g" style="margin-top:10px">${imgs.map(([n, u]) => `<figure><img src="${u}"><figcaption>${n}</figcaption></figure>`).join('')}</div>
+${meas}<div class="foot">Сиреневым — до лечения, цветом — после. Направления — по осям снимка «до».<br>© Екатерина Скоробогатько · @katya_skorobogatko · orthoskorobogatko.ru</div></body></html>`;
+  const blob = new Blob([html], { type: 'text/html' }); const w = window.open(URL.createObjectURL(blob), '_blank'); if (!w) saveBlob(blob, baseName() + '_отчёт.html'); };
+
+renderLegend(); renderRegInfo(); requestDraw();
+window.__S = S;
+</script>
+</body>
+</html>
