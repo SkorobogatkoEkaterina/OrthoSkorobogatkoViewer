@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 1.3</title>
+<title>Наложение КЛКТ · 1.4</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -105,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.3</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.4</small></div>
   </div>
 
   <div class="sec" id="secA">
@@ -792,7 +792,7 @@ function numberTeeth(X, list, part) { if (!list.length) return; const cy = list.
     sideL.forEach(t => t.ang = Math.atan2(Math.abs(t.c[0] - xm), -(t.c[1] - cy) + 25)); sideL.sort((a, b) => a.ang - b.ang);
     const q = part === 'tu' ? (side < 0 ? 1 : 2) : (side < 0 ? 4 : 3); sideL.forEach((t, i) => t.fdi = q * 10 + Math.min(9, i + 1)); } }
 const TOOTH_PAL = [[0.98, 0.72, 0.72], [0.99, 0.84, 0.6], [0.98, 0.95, 0.62], [0.72, 0.92, 0.66], [0.6, 0.9, 0.88], [0.62, 0.78, 0.98], [0.78, 0.7, 0.98], [0.96, 0.7, 0.92]];
-function toothColor(t, slot) { if (S.tSel === t) return [0.9, 0.08, 0.35]; if (t.sel) return [0.42, 0.32, 0.88]; const c = TOOTH_PAL[((t.fdi % 10) - 1 + 8) % 8]; return slot === 'B' ? c.map(v => v * 0.92) : c; }
+function toothColor(t, slot) { if (S.tSel === t) return [0.9, 0.08, 0.35]; if (t.sel) return [0.42, 0.32, 0.88]; const q = Math.floor(t.fdi / 10), c = TOOTH_PAL[((t.fdi % 10) - 1 + (q === 2 || q === 4 ? 4 : 0) + 8) % 8]; /* neighbours across the midline get different colours */ return slot === 'B' ? c.map(v => v * 0.92) : c; }
 
 /* Taubin smoothing (λ/μ): removes the voxel terraces without shrinking the bone */
 function taubin(g, iters, lam = 0.5, mu = -0.53) {
@@ -867,12 +867,12 @@ async function afterSeg(slot) {
   const jobs = PARTS.filter(([, L]) => B[L]); let bl = null;
   if (B[3] || B[4]) { try { bl = await boneLabel(X, f => busy(true, `«${nm}»: восстанавливаю кость вокруг корней…`, f)); } catch (e) { console.warn('boneLabel', e); } }
   for (let q = 0; q < jobs.length; q++) { const [key, L, nmP] = jobs[q]; const bone = L <= 2;
-    let g = await labelMesh(Nf, L, bone ? sb : 1, B[L].lo, B[L].hi, f => busy(true, `«${nm}»: строю поверхность (${nmP})…`, (q + f) / jobs.length), bone ? { pool: 'max', close: 2, blur: 2, lab: bl || undefined } : { blur: 1 });
-    g = bigComponents(g, bone ? 1500 : 100); if (!g.idx.length) continue; busy(true, `«${nm}»: сглаживаю поверхность (${nmP})…`, (q + 0.95) / jobs.length); await sleep(); taubin(g, bone ? 14 : 8); X.mesh[key] = makeMesh(g); }
+    let g = await labelMesh(Nf, L, bone ? sb : 1, B[L].lo, B[L].hi, f => busy(true, `«${nm}»: строю поверхность (${nmP})…`, (q + f) / jobs.length), bone ? { pool: 'max', close: 2, blur: 3, lab: bl || undefined } : { blur: 1 });
+    g = bigComponents(g, bone ? 1500 : 100); if (!g.idx.length) continue; busy(true, `«${nm}»: сглаживаю поверхность (${nmP})…`, (q + 0.95) / jobs.length); await sleep(); taubin(g, bone ? 26 : 12); X.mesh[key] = makeMesh(g); }
   for (const t of X.teeth || []) freeMesh(t.m); X.teeth = [];
   for (const [part, L] of [['tu', 3], ['tl', 4]]) { if (!B[L]) continue; busy(true, `«${nm}»: разделяю зубы ${part === 'tu' ? 'верхней' : 'нижней'} челюсти…`, 0.9); await sleep();
     try { const T = splitTeeth(Nf, L, B[L]); mergeFragments(Nf, T); const list = [];
-      for (let i = 1; i <= T.n; i++) { if (!T.box[i]) continue; let g = bigComponents(await labelMesh(Nf, i, 1, T.box[i].lo, T.box[i].hi, null, { lab: T.lab, blur: 1 }), 60); if (g.idx.length < 300) continue; taubin(g, 8);
+      for (let i = 1; i <= T.n; i++) { if (!T.box[i]) continue; let g = bigComponents(await labelMesh(Nf, i, 1, T.box[i].lo, T.box[i].hi, null, { lab: T.lab, blur: 2 }), 60); if (g.idx.length < 300) continue; taubin(g, 16);
         const n = g.pos.length / 3, c = [0, 0, 0]; for (let v = 0; v < n; v++) for (let q = 0; q < 3; q++) c[q] += g.pos[v * 3 + q] / n; list.push({ part, g, c, i }); }
       numberTeeth(X, list, part); for (const t of list) X.teeth.push({ part, fdi: t.fdi, c: t.c, m: makeMesh(t.g), M: M4.ident(), sel: false, li: t.i, src: T.lab }); }
     catch (e) { console.warn('split', e); } }
