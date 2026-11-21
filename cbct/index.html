@@ -133,6 +133,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <option value="fast">Нейросеть · быстрее</option>
       <option value="thr">Без нейросети · по плотности</option>
     </select>
+    <div class="sub" id="gpuInfo" style="margin-top:6px">Проверяю видеокарту…</div>
   </div>
 
   <div class="sec" id="secR">
@@ -376,6 +377,7 @@ async function aiSession(progress) {
   if (!AI.sess) throw new Error('браузер не смог запустить нейросеть');
   return AI.sess;
 }
+const fmtS = v => v.toFixed(1).replace('.', ',');
 async function aiSegmentCT(V, mode, progress) {
   const scale = mode.scale || 1.5; const ps = AI.patch;
   let F = V; if (V.f > 1) { // the network wants full resolution: re-read the slices around the whole field
@@ -410,7 +412,7 @@ async function aiSegmentCT(V, mode, progress) {
       for (let c = 0; c < ps[2]; c++) { const w = gab * gc[c]; const d = dst + c; if (w <= bw[d]) continue; const i = base + c; let bl = 0, bv = y[i]; for (let l = 1; l < 6; l++) { const v = y[l * n + i]; if (v > bv) { bv = v; bl = l; } } lab[d] = bl; bw[d] = w; } }
     if (out.y.dispose) out.y.dispose();
     const el = (performance.now() - t0) / 1000, left = el / done * (wins.length - done);
-    progress(`Нейросеть: участок ${done} из ${wins.length} (${AI.ep === 'webgpu' ? 'видеокарта' + (AI.gpu ? ' ' + AI.gpu : '') : 'процессор'}), осталось ~${left > 90 ? Math.round(left / 60) + ' мин' : Math.round(left) + ' с'}`, 0.15 + 0.75 * done / wins.length); await sleep();
+    progress(`Нейросеть: участок ${done} из ${wins.length} (${AI.ep === 'webgpu' ? 'видеокарта ' + (AI.gpu || 'без названия') : 'процессор'}), ${ran > 1 ? fmtS(el / done) + ' с/участок, ' : ''}осталось ~${left > 90 ? Math.round(left / 60) + ' мин' : Math.round(left) + ' с'}`, 0.15 + 0.75 * done / wins.length); await sleep();
   }
   // back to the CT axes: index (i = column x, j = row y, k = slice z)
   const out = new Uint8Array(Nc * Na * Nb);
@@ -1004,6 +1006,14 @@ $('#exRep').onclick = () => { if (!S.reg) return; const imgs = snapViews(); cons
 ${meas}<div class="foot">Сиреневым — до лечения, цветом — после. Направления — по осям снимка «до».<br>© Екатерина Скоробогатько · @katya_skorobogatko · orthoskorobogatko.ru</div></body></html>`;
   const blob = new Blob([html], { type: 'text/html' }); const w = window.open(URL.createObjectURL(blob), '_blank'); if (!w) saveBlob(blob, baseName() + '_отчёт.html'); };
 
+async function gpuCheck() { const el = $('#gpuInfo');
+  if (!navigator.gpu) { el.innerHTML = '<span class="bad">Браузер не даёт доступ к видеокарте (WebGPU)</span> — нейросеть пойдёт на процессоре, это в 10–30 раз дольше. Откройте программу в свежем Chrome или Edge.'; return; }
+  try { const ad = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }); if (!ad) { el.innerHTML = '<span class="bad">Видеокарта недоступна браузеру</span>'; return; }
+    const inf = ad.info || (ad.requestAdapterInfo ? await ad.requestAdapterInfo() : {}); const nm = [inf.vendor, inf.architecture, inf.description].filter(Boolean).join(' ').trim() || 'название не сообщается';
+    const weak = /intel|integrated|uhd|iris|swiftshader|microsoft|basic/i.test(nm) || ad.isFallbackAdapter; const big = /nvidia|amd|radeon/i.test(nm);
+    el.innerHTML = `Видеокарта для нейросети: <b class="${weak ? 'bad' : big ? 'ok' : ''}">${nm}</b>` + (weak ? '<br>Это встроенная видеокарта. Назначьте браузеру мощную: Параметры Windows → Система → Дисплей → Графика → браузер → «Высокая производительность», затем перезапустите браузер.' : ''); }
+  catch (e) { el.textContent = 'Видеокарта: ' + e.message; } }
+gpuCheck();
 renderLegend(); renderRegInfo(); requestDraw();
 window.__S = S;
 </script>
