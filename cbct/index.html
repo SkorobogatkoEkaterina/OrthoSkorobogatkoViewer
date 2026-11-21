@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 1.2</title>
+<title>Наложение КЛКТ · 1.3</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -105,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.2</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.3</small></div>
   </div>
 
   <div class="sec" id="secA">
@@ -175,14 +175,14 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="fld"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
     <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
     <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
-    <label class="ck"><input type="checkbox" id="cutOn"> 2D-срез в 3D</label>
+    <label class="ck"><input type="checkbox" id="cutOn"> Срез модели плоскостью</label>
     <div id="cutBox" class="hidden">
       <select class="s" id="cutPre"><option value="sag">Сагиттальный</option><option value="cor">Корональный</option><option value="ax">Аксиальный</option></select>
       <div class="fld"><span>Положение <span class="sub" id="cutOffV">0 мм</span></span><input id="cutOff" type="range" min="-90" max="90" step="1" value="0"></div>
       <div class="fld"><span>Наклон 1 <span class="sub" id="cutA1V">0°</span></span><input id="cutA1" type="range" min="-90" max="90" step="1" value="0"></div>
       <div class="fld"><span>Наклон 2 <span class="sub" id="cutA2V">0°</span></span><input id="cutA2" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip"> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
-      <div class="sub" style="margin-top:4px">Alt + мышь — вращать срез, Alt + колесо — двигать. После совмещения срез показывает «до» сиреневым и «после» зелёным.</div>
+      <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip" checked> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutImg"> снимок на срезе</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
+      <div class="sub" style="margin-top:4px">Модели разрезаются плоскостью, контуры среза: тёмный — «до», цветной — «после» (цвет карты). Alt + мышь — вращать срез, Alt + колесо — двигать. «Снимок на срезе» добавляет сам КЛКТ в плоскости: «до» сиреневым, «после» зелёным.</div>
     </div>
     <div class="fld"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
     <div class="legend" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
@@ -1061,6 +1061,7 @@ function computeMaps() {
       const s = ex * ma.g.nrm[w * 3] + ey * ma.g.nrm[w * 3 + 1] + ez * ma.g.nrm[w * 3 + 2]; D[v] = s < 0 ? -d : d;
       if (key === 'skull' && (v % 3 === 0) && zf(p[0], p[1], p[2])) qd.push(d); }
     mb.dist = D; colorize(mb); }
+  if (S.cut) S.cut.lines = null;
   if (S.reg) S.reg.q = qd.length > 200 ? percentile(qd, 0.5) : undefined;
 }
 function mapColor(t) { // t in [-1,1]: blue → cyan → green → yellow → red
@@ -1118,9 +1119,9 @@ const COL_A = [0.79, 0.77, 0.92], COL_B = [0.93, 0.45, 0.6]; const COL_T = [0.97
 let VM, PM;
 function draw() {
   needDraw = false; resize(); gl.viewport(0, 0, canvas.width, canvas.height); if (S.snapBg) gl.clearColor(0.957, 0.965, 0.98, 1); else gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.useProgram(prog);
-  VM = viewM(); PM = projM(); const I = M4.ident();
+  VM = viewM(); PM = projM(); const I = M4.ident(); prepCut();
   const showB = S.B && S.show.B, showA = S.A && S.show.A; const bA = S.boneAlpha; const isT = k => k === 'tu' || k === 'tl'; const isBone = k => k === 'skull' || k === 'mand';
-  const colA = k => isT(k) ? COL_T : k === 'skin' ? [0.93, 0.84, 0.78] : k === 'mand' ? [0.70, 0.80, 0.97] : [0.95, 0.95, 0.97];
+  const colA = k => S.reg && showB ? (k === 'skin' ? [0.86, 0.84, 0.83] : [0.84, 0.84, 0.86]) : isT(k) ? COL_T : k === 'skin' ? [0.93, 0.84, 0.78] : k === 'mand' ? [0.70, 0.80, 0.97] : [0.95, 0.95, 0.97];
   const colB = (k, map) => map ? COL_B : isT(k) ? [0.98, 0.80, 0.85] : k === 'mand' ? [0.93, 0.52, 0.66] : COL_B;
   const part = k => k === 'skin' ? 0.45 : isBone(k) ? bA : 1; const alB = k => S.opB * part(k), alA = k => S.opA * part(k);
   const pass = transp => { // opaque surfaces first, then the see-through ones (no depth writes) so the inner ones stay visible
@@ -1152,7 +1153,7 @@ document.querySelectorAll('#views [data-v]').forEach(b => b.onclick = () => { co
 window.addEventListener('resize', () => { requestDraw(); });
 
 /* ---------------- 2D slice inside the 3D view: any plane, rotatable, optional cut of the models ---------------- */
-S.cut = { on: false, pre: 'sag', off: 0, a1: 0, a2: 0, clip: false, flip: false, dirty: true };
+S.cut = { on: false, pre: 'sag', off: 0, a1: 0, a2: 0, clip: true, flip: false, img: false, dirty: true };
 function rot3(R, v) { return [R[0] * v[0] + R[1] * v[1] + R[2] * v[2], R[3] * v[0] + R[4] * v[1] + R[5] * v[2], R[6] * v[0] + R[7] * v[1] + R[8] * v[2]]; }
 function cutPlane() { const X = S.A || S.B; if (!X) return null; const C = S.cut; let n, u, v;
   if (C.pre === 'ax') { n = [0, 0, 1]; u = [1, 0, 0]; v = [0, 1, 0]; } else if (C.pre === 'cor') { n = [0, 1, 0]; u = [1, 0, 0]; v = [0, 0, 1]; } else { n = [1, 0, 0]; u = [0, 1, 0]; v = [0, 0, 1]; }
@@ -1174,15 +1175,38 @@ function cutTexture(p) { const N = 384, img = new Uint8Array(N * N * 4); const L
     const o = (j * N + i) * 4; const ga = g(va), gb = g(vb); if (fuse) { img[o] = ga; img[o + 1] = gb; img[o + 2] = ga; } else { const v = LA ? ga : gb; img[o] = img[o + 1] = img[o + 2] = v; }
     const air = !((va === va && va > -350) || (vb === vb && vb > -350)); img[o + 3] = air ? 0 : 255; }
   gl.bindTexture(gl.TEXTURE_2D, qTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, img); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
-function drawCut() { const C = S.cut; if (!C.on) { C.pl = null; return; } if (C.dirty || !C.pl) { C.pl = cutPlane(); if (!C.pl) return; cutTexture(C.pl); C.dirty = false; } const p = C.pl, h = p.F / 2;
+function prepCut() { const C = S.cut; if (!C.on) { C.pl = null; return; } if (C.dirty || !C.pl) { C.pl = cutPlane(); if (!C.pl) return; if (C.img) cutTexture(C.pl); C.lines = null; C.dirty = false; } }
+function drawCut() { const C = S.cut; if (!C.on || !C.pl) return; drawContours(); if (!C.img) return; const p = C.pl, h = p.F / 2;
   const P = (a, b) => [0, 1, 2].map(k => p.c[k] + p.u[k] * a * h * 2 + p.v[k] * b * h * 2); const q = [P(-0.5, -0.5), P(0.5, -0.5), P(0.5, 0.5), P(-0.5, -0.5), P(0.5, 0.5), P(-0.5, 0.5)].flat();
   gl.useProgram(qprog); gl.bindBuffer(gl.ARRAY_BUFFER, qBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(q), gl.DYNAMIC_DRAW); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, qUV); gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0); gl.disableVertexAttribArray(1); gl.disableVertexAttribArray(2);
   gl.uniformMatrix4fv(gl.getUniformLocation(qprog, 'uMVP'), false, M4.mul(PM, VM)); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, qTex); gl.uniform1i(gl.getUniformLocation(qprog, 'uTex'), 0);
   gl.drawArrays(gl.TRIANGLES, 0, 6); gl.disableVertexAttribArray(3); gl.useProgram(prog); }
-function cutUI() { const C = S.cut; C.on = $('#cutOn').checked; $('#cutBox').classList.toggle('hidden', !C.on); C.pre = $('#cutPre').value; C.off = +$('#cutOff').value; C.a1 = +$('#cutA1').value; C.a2 = +$('#cutA2').value; C.clip = $('#cutClip').checked; C.flip = $('#cutFlip').checked;
+/* outline of every surface where the plane cuts it: grey-violet for «before», the map colours for «after» */
+function sectionOf(it, p) { const M = it.M, P = it.m.g.pos, I = it.m.g.idx, n = P.length / 3;
+  const nl = [M[0] * p.n[0] + M[1] * p.n[1] + M[2] * p.n[2], M[4] * p.n[0] + M[5] * p.n[1] + M[6] * p.n[2], M[8] * p.n[0] + M[9] * p.n[1] + M[10] * p.n[2]]; const dl = dot(p.n, p.c) - (p.n[0] * M[12] + p.n[1] * M[13] + p.n[2] * M[14]);
+  const sd = new Float32Array(n); for (let v = 0; v < n; v++) sd[v] = nl[0] * P[v * 3] + nl[1] * P[v * 3 + 1] + nl[2] * P[v * 3 + 2] - dl; const pos = [], col = []; const C = it.m.col;
+  for (let t = 0; t < I.length; t += 3) { const a = I[t], b = I[t + 1], c = I[t + 2]; const sa = sd[a], sb = sd[b], sc = sd[c]; if ((sa > 0) === (sb > 0) && (sb > 0) === (sc > 0)) continue; const pts = [];
+    for (const [u, w, su, sw] of [[a, b, sa, sb], [b, c, sb, sc], [c, a, sc, sa]]) { if ((su > 0) === (sw > 0)) continue; const f = su / (su - sw); pts.push([0, 1, 2].map(k => P[u * 3 + k] + (P[w * 3 + k] - P[u * 3 + k]) * f)); if (C) col.push(...[0, 1, 2].map(k => C[u * 3 + k] + (C[w * 3 + k] - C[u * 3 + k]) * f)); }
+    if (pts.length === 2) for (const q of pts) pos.push(...M4.pt(M, q)); else if (C) col.length -= pts.length * 3; }
+  return { pos, col: C ? col : null }; }
+const ribV = gl.createBuffer(), ribC = gl.createBuffer(), ribN = gl.createBuffer();
+// each section segment becomes a thin ribbon lying in the plane (≈0.7 mm wide) — a bold, readable outline like in 3D Slicer
+function ribbon(L, n, wmm) { const P = L.pos, m = P.length / 6, V = new Float32Array(m * 18), Cc = new Float32Array(m * 18); const base = L.sl === 'A' ? [0.28, 0.25, 0.48] : [0.9, 0.08, 0.35];
+  for (let q = 0; q < m; q++) { const a = [P[q * 6], P[q * 6 + 1], P[q * 6 + 2]], b = [P[q * 6 + 3], P[q * 6 + 4], P[q * 6 + 5]]; const d = sub3(b, a); let w = cross(n, d); const l = Math.hypot(...w) || 1; w = w.map(v => v / l * wmm / 2);
+    const A1 = a.map((v, i) => v - w[i]), A2 = a.map((v, i) => v + w[i]), B1 = b.map((v, i) => v - w[i]), B2 = b.map((v, i) => v + w[i]); [A1, B1, B2, A1, B2, A2].forEach((p, k) => V.set(p, q * 18 + k * 3));
+    const ca = L.col && L.map ? [L.col[q * 6], L.col[q * 6 + 1], L.col[q * 6 + 2]].map(v => v * 0.85) : base, cb = L.col && L.map ? [L.col[q * 6 + 3], L.col[q * 6 + 4], L.col[q * 6 + 5]].map(v => v * 0.85) : base;
+    [ca, cb, cb, ca, cb, ca].forEach((c, k) => Cc.set(c, q * 18 + k * 3)); }
+  return { V, Cc }; }
+function drawContours() { const C = S.cut; if (!C.pl) return; if (!C.lines) { C.lines = []; for (const sl of ['A', 'B']) { if (!S[sl] || !(sl === 'A' ? S.show.A : S.show.B)) continue; for (const it of items(sl)) { const r = sectionOf(it, C.pl); if (r.pos.length) { const L = { sl, ...r, map: !!(sl === 'B' && S.show.map && S.reg && it.m.dist) }; Object.assign(L, ribbon(L, C.pl.n, 0.7)); C.lines.push(L); } } } }
+  const off = C.pl.n.map(v => v * 0.05 * (dot(C.pl.n, eyeDir()) >= 0 ? 1 : -1)); const M = M4.fromR([1, 0, 0, 0, 1, 0, 0, 0, 1], off);
+  for (const L of C.lines) { gl.bindBuffer(gl.ARRAY_BUFFER, ribV); gl.bufferData(gl.ARRAY_BUFFER, L.V, gl.DYNAMIC_DRAW); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0); gl.disableVertexAttribArray(1); gl.vertexAttrib3f(1, 0, 0, 1);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ribC); gl.bufferData(gl.ARRAY_BUFFER, L.Cc, gl.DYNAMIC_DRAW); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
+    gl.uniformMatrix4fv(U.uMVP, false, M4.mul(PM, M4.mul(VM, M))); gl.uniformMatrix4fv(U.uMV, false, VM); gl.uniformMatrix4fv(U.uMw, false, M4.ident()); gl.uniform1i(U.uClipOn, 0); gl.uniform4f(U.uCol, 1, 1, 1, 1); gl.uniform1i(U.uVC, 1); gl.uniform1i(U.uFlat, 1);
+    gl.drawArrays(gl.TRIANGLES, 0, L.V.length / 3); gl.disableVertexAttribArray(2); } }
+function cutUI() { const C = S.cut; C.on = $('#cutOn').checked; $('#cutBox').classList.toggle('hidden', !C.on); C.pre = $('#cutPre').value; C.off = +$('#cutOff').value; C.a1 = +$('#cutA1').value; C.a2 = +$('#cutA2').value; C.clip = $('#cutClip').checked; C.flip = $('#cutFlip').checked; C.img = $('#cutImg').checked;
   $('#cutOffV').textContent = fmt(C.off, 0) + ' мм'; $('#cutA1V').textContent = fmt(C.a1, 0) + '°'; $('#cutA2V').textContent = fmt(C.a2, 0) + '°'; C.dirty = true; requestDraw(); }
-['#cutOn', '#cutPre', '#cutClip', '#cutFlip'].forEach(id => $(id).onchange = () => { if (id === '#cutPre') { $('#cutOff').value = 0; $('#cutA1').value = 0; $('#cutA2').value = 0; } cutUI(); });
+['#cutOn', '#cutPre', '#cutClip', '#cutFlip', '#cutImg'].forEach(id => $(id).onchange = () => { if (id === '#cutPre') { $('#cutOff').value = 0; $('#cutA1').value = 0; $('#cutA2').value = 0; } cutUI(); });
 ['#cutOff', '#cutA1', '#cutA2'].forEach(id => $(id).oninput = cutUI);
 canvas.addEventListener('pointerdown', e => { if (!S.cut.on || !e.altKey) return; e.stopImmediatePropagation(); S.cutDrag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); }, true);
 canvas.addEventListener('pointermove', e => { if (!S.cutDrag) return; e.stopImmediatePropagation(); const dx = e.clientX - S.cutDrag.x, dy = e.clientY - S.cutDrag.y; S.cutDrag.x = e.clientX; S.cutDrag.y = e.clientY;
@@ -1220,10 +1244,10 @@ function renderMeas() { const el = $('#measList'); if (!S.meas.length) { el.inne
   el.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { S.meas.splice(+b.dataset.del, 1); renderMeas(); requestDraw(); }); }
 
 /* ---------------- visibility controls ---------------- */
-$('#shA').onchange = () => { S.show.A = $('#shA').checked; requestDraw(); };
-$('#shB').onchange = () => { S.show.B = $('#shB').checked; requestDraw(); };
-$('#shMap').onchange = () => { S.show.map = $('#shMap').checked; requestDraw(); };
-document.querySelectorAll('[data-part]').forEach(c => c.onchange = () => { S.show.parts[c.dataset.part] = c.checked; requestDraw(); });
+$('#shA').onchange = () => { S.show.A = $('#shA').checked; S.cut.lines = null; requestDraw(); };
+$('#shB').onchange = () => { S.show.B = $('#shB').checked; S.cut.lines = null; requestDraw(); };
+$('#shMap').onchange = () => { S.show.map = $('#shMap').checked; S.cut.lines = null; requestDraw(); };
+document.querySelectorAll('[data-part]').forEach(c => c.onchange = () => { S.show.parts[c.dataset.part] = c.checked; S.cut.lines = null; requestDraw(); });
 $('#opA').oninput = () => { S.opA = +$('#opA').value; requestDraw(); };
 $('#opB').oninput = () => { S.opB = +$('#opB').value; requestDraw(); };
 $('#boneA').oninput = () => { S.boneAlpha = +$('#boneA').value; requestDraw(); };
@@ -1364,7 +1388,7 @@ function slotDir(d) { if (S.tSlot !== 'B') return d; const T = S.T; return [T[0]
 function moveTooth(t, dA, axA, ang) { // dA: shift in the A frame (mm); axA/ang: rotation about the tooth centre
   if (dA) { const d = slotDir(dA); t.M = M4.mul(M4.fromR([1, 0, 0, 0, 1, 0, 0, 0, 1], d), t.M); }
   if (axA && ang) { const c = M4.pt(t.M, t.c); const R = rodrigues(slotDir(axA), ang); const Rc = [R[0] * c[0] + R[1] * c[1] + R[2] * c[2], R[3] * c[0] + R[4] * c[1] + R[5] * c[2], R[6] * c[0] + R[7] * c[1] + R[8] * c[2]]; t.M = M4.mul(M4.fromR(R, [c[0] - Rc[0], c[1] - Rc[1], c[2] - Rc[2]]), t.M); }
-  t.moved = true; if (t.m.dist) t.m.stale = true; renderToothMove(); requestDraw(); }
+  t.moved = true; S.cut.lines = null; if (t.m.dist) t.m.stale = true; renderToothMove(); requestDraw(); }
 const TNUD = [['Вправо/влево', [-1, 0, 0], null, 0.25, ' мм'], ['Вперёд/назад', [0, -1, 0], null, 0.25, ' мм'], ['Вверх/вниз', [0, 0, 1], null, 0.25, ' мм'], ['Наклон вперёд/назад', null, [1, 0, 0], 2, '°'], ['Наклон вбок', null, [0, 1, 0], 2, '°'], ['Поворот', null, [0, 0, 1], 2, '°']];
 function renderToothMove() { $('#tMoveBox').classList.toggle('hidden', !S.moveMode); const t = S.tSel; if (!S.moveMode) return;
   if (!t) { $('#tMoveInfo').textContent = 'Щёлкните зуб на модели («' + slotName() + '»).'; $('#tNud').innerHTML = ''; return; }
