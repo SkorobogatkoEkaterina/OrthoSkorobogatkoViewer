@@ -565,6 +565,35 @@ function paramT(p, c, t0) { const R = rotM(p[0], p[1], p[2]); const Rc = [R[0] *
   return M4.fromR(R, [0, 1, 2].map(i => c[i] + t0[i] + p[3 + i] - Rc[i])); }
 function percentile(arr, q) { if (!arr.length) return NaN; const a = Float64Array.from(arr).sort(); return a[Math.min(a.length - 1, Math.max(0, Math.round(q * (a.length - 1))))]; }
 
+/* Bone around the roots: the network often leaves the thin cortical plate over the roots and the alveolar crest out of the bone label.
+   1) voxels next to bone/teeth that are dense on the CT itself are added to the bone (thin plates come back);
+   2) a root voxel surrounded by bone on most sides lies inside its socket → it is filled as bone, so the outer bone surface covers the roots up to the crest. */
+async function boneLabel(X, progress) {
+  const Nf = X.seg, V = X.V, lab = Nf.lab, NX = Nf.nx, NY = Nf.ny, NZ = Nf.nz, A = Nf.A; const out = lab.slice(); const B = labelBoxes(Nf);
+  const sp = [0, 1, 2].map(c => Math.hypot(A[0][c], A[1][c], A[2][c])); const K = idxAffine(nativeLevel(V));
+  const hu = (i, j, k) => { const w0 = A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], w1 = A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], w2 = A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3];
+    const x = Math.round(K[0][0] * w0 + K[0][1] * w1 + K[0][2] * w2 + K[0][3]), y = Math.round(K[1][0] * w0 + K[1][1] * w1 + K[1][2] * w2 + K[1][3]), z = Math.round(K[2][0] * w0 + K[2][1] * w1 + K[2][2] * w2 + K[2][3]);
+    if (x < 0 || y < 0 || z < 0 || x >= V.nx || y >= V.ny || z >= V.nz) return -1000; return V.vol[(z * V.ny + y) * V.nx + x]; };
+  for (const [L, Lt] of [[1, 3], [2, 4]]) { if (!B[L] || !B[Lt]) continue; const tb = B[Lt]; const m = [0, 1, 2].map(c => Math.round(4 / sp[c]));
+    const lo = tb.lo.map((v, c) => Math.max(1, v - m[c])), hi = tb.hi.map((v, c) => Math.min([NX, NY, NZ][c] - 2, v + m[c]));
+    // dense-voxel threshold between soft tissue and this jaw's bone
+    const hb = [], hs = []; for (let k = lo[2]; k <= hi[2]; k += 2) for (let j = lo[1]; j <= hi[1]; j += 2) for (let i = lo[0]; i <= hi[0]; i += 2) { const l = lab[(k * NY + j) * NX + i]; if (l === L) hb.push(hu(i, j, k)); else if (l === 0) { const h = hu(i, j, k); if (h > -400) hs.push(h); } }
+    if (hb.length < 100 || hs.length < 100) continue; const mB = percentile(hb, 0.5), mS = percentile(hs, 0.5); const thr = mS + 0.55 * (mB - mS);
+    // 1) thin plates: dense, unlabelled, within 2 mm of this jaw's bone (not of the crowns: enamel blurs into its neighbours)
+    const r = [0, 1, 2].map(c => Math.max(1, Math.round(2 / sp[c])));
+    for (let k = lo[2]; k <= hi[2]; k++) { for (let j = lo[1]; j <= hi[1]; j++) for (let i = lo[0]; i <= hi[0]; i++) { const id = (k * NY + j) * NX + i; if (lab[id] !== 0) continue; if (hu(i, j, k) < thr) continue;
+        let near = false; for (let dk = -r[2]; dk <= r[2] && !near; dk += r[2]) for (let dj = -r[1]; dj <= r[1] && !near; dj += r[1]) for (let di = -r[0]; di <= r[0] && !near; di += r[0]) { const kk = k + dk, jj = j + dj, ii = i + di; if (kk < 0 || jj < 0 || ii < 0 || kk >= NZ || jj >= NY || ii >= NX) continue; const l = lab[(kk * NY + jj) * NX + ii]; if (l === L) near = true; }
+        if (near) out[id] = L; }
+      if ((k & 15) === 0) { progress && progress(0.5 * (k - lo[2]) / (hi[2] - lo[2] + 1)); await sleep(); } }
+    // 2) sockets: root voxels with bone in at least 5 of 8 horizontal directions within 3 mm
+    const R = [0, 1].map(c => Math.max(2, Math.round(3 / sp[c]))); const dirs = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]; const fill = [];
+    for (let k = tb.lo[2]; k <= tb.hi[2]; k++) { for (let j = tb.lo[1]; j <= tb.hi[1]; j++) for (let i = tb.lo[0]; i <= tb.hi[0]; i++) { const id = (k * NY + j) * NX + i; if (lab[id] !== Lt) continue; let hit = 0;
+        for (const [dx, dy] of dirs) { const n = Math.max(R[0], R[1]); for (let s = 1; s <= n; s++) { const ii = i + Math.round(dx * s * R[0] / n), jj = j + Math.round(dy * s * R[1] / n); if (ii < 0 || jj < 0 || ii >= NX || jj >= NY) break; const l = out[(k * NY + jj) * NX + ii]; if (l === L) { hit++; break; } if (l !== Lt) break; } }
+        if (hit >= 5) fill.push(id); }
+      if ((k & 15) === 0) { progress && progress(0.5 + 0.5 * (k - tb.lo[2]) / (tb.hi[2] - tb.lo[2] + 1)); await sleep(); } }
+    for (const id of fill) out[id] = L; }
+  return out; }
+
 /* Taubin smoothing (λ/μ): removes the voxel terraces without shrinking the bone */
 function taubin(g, iters, lam = 0.5, mu = -0.53) {
   const P = g.pos, I = g.idx, n = P.length / 3; const deg = new Uint32Array(n + 1);
@@ -634,9 +663,10 @@ async function afterSeg(slot) {
   // surfaces
   const B = labelBoxes(Nf); const sp = [0, 1, 2].map(c => Math.hypot(Nf.A[0][c], Nf.A[1][c], Nf.A[2][c])); const sb = sp[0] < 0.45 ? 2 : 1;
   for (const k in X.mesh) freeMesh(X.mesh[k]); X.mesh = {};
-  const jobs = PARTS.filter(([, L]) => B[L]);
+  const jobs = PARTS.filter(([, L]) => B[L]); let bl = null;
+  if (B[3] || B[4]) { try { bl = await boneLabel(X, f => busy(true, `«${nm}»: восстанавливаю кость вокруг корней…`, f)); } catch (e) { console.warn('boneLabel', e); } }
   for (let q = 0; q < jobs.length; q++) { const [key, L, nmP] = jobs[q]; const bone = L <= 2;
-    let g = await labelMesh(Nf, L, bone ? sb : 1, B[L].lo, B[L].hi, f => busy(true, `«${nm}»: строю поверхность (${nmP})…`, (q + f) / jobs.length), bone ? { pool: 'max', close: 2, blur: 2 } : { blur: 1 });
+    let g = await labelMesh(Nf, L, bone ? sb : 1, B[L].lo, B[L].hi, f => busy(true, `«${nm}»: строю поверхность (${nmP})…`, (q + f) / jobs.length), bone ? { pool: 'max', close: 2, blur: 2, lab: bl || undefined } : { blur: 1 });
     g = bigComponents(g, bone ? 1500 : 100); if (!g.idx.length) continue; busy(true, `«${nm}»: сглаживаю поверхность (${nmP})…`, (q + 0.95) / jobs.length); await sleep(); taubin(g, bone ? 14 : 8); X.mesh[key] = makeMesh(g); }
   try { busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95); const stp = Math.max(1, Math.round(1 / X.V.sx)); let g = await surfaceNets(X.V, -350, stp, f => busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95 + 0.05 * f));
     g = bigComponents(g, 40000); if (g.idx.length) { taubin(g, 6); X.mesh.skin = makeMesh(g); } } catch (e) { console.warn('skin', e); }
