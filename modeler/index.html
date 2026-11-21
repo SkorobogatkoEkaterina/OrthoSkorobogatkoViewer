@@ -2309,6 +2309,9 @@ async function aiSession(progress) {
   const bufs = []; let tot = 0;
   for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
   const model = new Uint8Array(tot); let o = 0; for (const b of bufs) { model.set(b, o); o += b.length; }
+  if (navigator.gpu && !AI.forceCPU) { try { /* laptops with two GPUs: ask for the powerful one (NVIDIA/AMD), not the built-in Intel one */
+      const ad = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }); if (ad) { ort.env.webgpu.adapter = ad; ort.env.webgpu.powerPreference = 'high-performance';
+        const inf = ad.info || (ad.requestAdapterInfo ? await ad.requestAdapterInfo() : {}); AI.gpu = [inf.vendor, inf.architecture, inf.description].filter(Boolean).join(' ').trim(); AI.gpuWeak = /intel|integrated|uhd|iris|swiftshader|microsoft basic/i.test(AI.gpu) || !!ad.isFallbackAdapter; } } catch (e) { console.warn('GPU adapter', e); } }
   const eps = (navigator.gpu && !AI.forceCPU) ? ['webgpu', 'wasm'] : ['wasm'];
   for (const ep of eps) { try { AI.sess = await ort.InferenceSession.create(model, { executionProviders: [ep], graphOptimizationLevel: 'all' }); AI.ep = ep; break; } catch (e) { console.warn('AI ' + ep, e); } }
   if (!AI.sess) throw new Error('браузер не смог запустить нейросеть');
@@ -2353,7 +2356,7 @@ async function aiSegmentCT(V, mode, progress) {
       for (let c = 0; c < ps[2]; c++) { const w = gab * gc[c]; const d = dst + c; if (w <= bw[d]) continue; const i = base + c; let bl = 0, bv = y[i]; for (let l = 1; l < 6; l++) { const v = y[l * n + i]; if (v > bv) { bv = v; bl = l; } } lab[d] = bl; bw[d] = w; } }
     if (out.y.dispose) out.y.dispose();
     const el = (performance.now() - t0) / 1000, left = el / done * (wins.length - done);
-    progress(`Нейросеть: участок ${done} из ${wins.length} (${AI.ep === 'webgpu' ? 'видеокарта' : 'процессор'}), осталось ~${left > 90 ? Math.round(left / 60) + ' мин' : Math.round(left) + ' с'}`, 0.15 + 0.75 * done / wins.length); await sleep();
+    progress(`Нейросеть: участок ${done} из ${wins.length} (${AI.ep === 'webgpu' ? 'видеокарта' + (AI.gpu ? ' ' + AI.gpu : '') : 'процессор'}), осталось ~${left > 90 ? Math.round(left / 60) + ' мин' : Math.round(left) + ' с'}`, 0.15 + 0.75 * done / wins.length); await sleep();
   }
   // back to the CT axes: index (i = column x, j = row y, k = slice z)
   const out = new Uint8Array(Nc * Na * Nb);
