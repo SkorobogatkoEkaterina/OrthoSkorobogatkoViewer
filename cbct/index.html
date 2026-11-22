@@ -105,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.1</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.2</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -183,6 +183,9 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     </div>
     <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
     <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
+      <div class="fld"><span>Яркость</span><input id="volBri" type="range" min="-0.4" max="0.4" step="0.02" value="0"></div>
+      <div class="fld"><span>Контраст</span><input id="volCon" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
+      <div class="fld"><span>Объём (тени)</span><input id="volShade" type="range" min="0" max="1" step="0.05" value="0.75"></div>
       <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
     <div class="fld"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
     <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
@@ -262,7 +265,9 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       </select>
       <span id="blendBox">до <input id="slBlend" type="range" min="0" max="1" step="0.02" value="0.5"> после</span>
       <label class="ck" style="margin:0"><input type="checkbox" id="slZone" checked> зона совмещения</label>
-      <span>окно <input id="slWin" type="range" min="400" max="4000" step="50" value="2400"></span>
+      <span>контраст <input id="slWin" type="range" min="400" max="4000" step="50" value="2600"></span>
+      <span>яркость <input id="slLev" type="range" min="-800" max="800" step="20" value="0"></span>
+      <span>чёткость <input id="slSharp" type="range" min="0" max="2" step="0.1" value="0.8"></span>
       <span class="sub">Щелчок — переместить перекрестье; колесо — листать; розовую линию зоны можно тянуть.</span>
     </div>
     <div id="slGrid">
@@ -695,7 +700,7 @@ const S = {
   T: M4.ident(), Ti: M4.ident(),
   show: { A: true, B: true, map: true, parts: { skull: true, mand: true, tu: true, tl: true, skin: false } },
   opA: 1, opB: 1, boneAlpha: 1, range: 3, toothCol: true, tSlot: 'A', tSel: null, moveMode: false, meas: [], measMode: 0, measA: null,
-  P: null, slMode: 'fuse', blend: 0.5, win: 2400, showZone: true
+  P: null, slMode: 'fuse', blend: 0.5, win: 1800, lev: 0, sharp: 0.8, showZone: true
 };
 const PARTS = [['skull', 1, 'череп/ВЧ'], ['mand', 2, 'НЧ'], ['tu', 3, 'зубы ВЧ'], ['tl', 4, 'зубы НЧ'], ['skin', 0, 'лицо']];
 // everything drawn for one scan: bone parts and, when the teeth are split, each tooth with its own move
@@ -1179,7 +1184,7 @@ async function register(fine) {
     const res = nccCost(NB, jit, avN, paramT(p, c, t0, useSc ? sc : 1), wt);
     S.reg = { c, t0, p, pAuto: p.slice(), sc, useSc, ncc: -res.c, cal: res.cal || [1, 0], lim, mode: roiModeV(), secs: (performance.now() - t00) / 1000, nPts: jit.length / 3 };
     updT(); busy(true, 'Считаю карту расстояний…', 0.93); await sleep(); computeMaps(); renderRegInfo(); renderNudge();
-    if (!S.opSet && S.mode !== 'fast') { S.opSet = true; S.opA = 0.4; $('#opA').value = 0.4; }
+    if (!S.opSet && S.mode !== 'fast') { S.opSet = true; S.opA = 0.4; $('#opA').value = Math.pow(0.4, 1 / 1.3).toFixed(2); }
     $('#regFine').disabled = false; $('#exPly').disabled = $('#exMat').disabled = $('#exRep').disabled = false;
   } catch (e) { console.error(e); toast('Совмещение: ' + e.message); }
   busy(false); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
@@ -1265,15 +1270,16 @@ const VS = `#version 300 es
 in vec3 aPos; in vec3 aNrm; in vec3 aCol; uniform mat4 uMVP, uMV, uMw; uniform float uPt; out vec3 vN; out vec3 vC; out vec3 vW;
 void main(){ gl_Position = uMVP * vec4(aPos,1.0); vN = mat3(uMV) * aNrm; vC = aCol; vW = (uMw * vec4(aPos,1.0)).xyz; gl_PointSize = uPt; }`;
 const FS = `#version 300 es
-precision highp float; in vec3 vN; in vec3 vC; in vec3 vW; uniform vec4 uCol; uniform int uVC; uniform int uFlat; uniform vec4 uClip; uniform int uClipOn; out vec4 o;
+precision highp float; in vec3 vN; in vec3 vC; in vec3 vW; uniform vec4 uCol; uniform int uVC; uniform int uFlat; uniform vec4 uClip; uniform int uClipOn; uniform int uCull; out vec4 o;
 void main(){ if (uClipOn==1 && dot(uClip.xyz, vW) > uClip.w) discard; vec3 c = uVC==1 ? vC : uCol.rgb; if(uFlat==1){ o = vec4(c,uCol.a); return; }
   vec3 n = normalize(vN); if(!gl_FrontFacing) n = -n; float l = 0.32 + 0.62*max(n.z,0.0) + 0.12*max(dot(n,normalize(vec3(-0.4,0.6,0.7))),0.0);
   float s = pow(max(n.z,0.0), 40.0)*0.12; float a = uCol.a;
-  if (a < 0.99) { float rim = pow(1.0 - abs(n.z), 2.0); a = clamp(a * (0.6 + 1.4 * rim), 0.0, 1.0); c = mix(c * vec3(0.9, 0.91, 0.97), c * vec3(0.55, 0.6, 0.85), rim); } /* glass look: the outline stays visible */
+  if (a < 0.99 && uCull == 1 && !gl_FrontFacing) discard; /* see-through surfaces: only the side facing the viewer, no glow */
+  if (a < 0.99) c *= mix(0.78, 1.0, a); /* a little darker the more transparent — the shape stays readable on the light background */
   o = vec4(c*l + s, a); }`;
 function mkProg() { const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
   const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS)); gl.bindAttribLocation(p, 0, 'aPos'); gl.bindAttribLocation(p, 1, 'aNrm'); gl.bindAttribLocation(p, 2, 'aCol'); gl.linkProgram(p); return p; }
-const prog = mkProg(); const U = {}; for (const n of ['uMVP', 'uMV', 'uMw', 'uPt', 'uCol', 'uVC', 'uFlat', 'uClip', 'uClipOn']) U[n] = gl.getUniformLocation(prog, n);
+const prog = mkProg(); const U = {}; for (const n of ['uMVP', 'uMV', 'uMw', 'uPt', 'uCol', 'uVC', 'uFlat', 'uClip', 'uClipOn', 'uCull']) U[n] = gl.getUniformLocation(prog, n);
 function makeMesh(g) { const m = { g, n: g.idx.length }; m.vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.vbo); gl.bufferData(gl.ARRAY_BUFFER, g.pos, gl.STATIC_DRAW);
   m.nbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.nbo); gl.bufferData(gl.ARRAY_BUFFER, g.nrm, gl.STATIC_DRAW);
   m.ibo = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.ibo); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, g.idx, gl.STATIC_DRAW); return m; }
@@ -1308,7 +1314,7 @@ function draw() {
   const colB = (k, map) => map ? COL_B : isT(k) ? [0.98, 0.80, 0.85] : k === 'mand' ? [0.93, 0.52, 0.66] : COL_B;
   const part = k => S.jv ? (k === 'skull' ? 0.28 : k === 'mand' ? 1 : 0) : k === 'skin' ? 0.45 : isBone(k) ? bA : 1; /* joint view: see-through fossa, solid condyle, no teeth */ const alB = k => S.jv ? part(k) : S.opB * part(k), alA = k => S.jv ? part(k) : (showB && S.reg && isT(k) ? Math.min(S.opA, 0.35) : S.opA) * part(k); /* «before» teeth stay a light ghost over the coloured «after» teeth */
   const pass = transp => { // opaque surfaces first, then the see-through ones (no depth writes) so the inner ones stay visible
-    if (transp) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }
+    if (transp) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); } gl.uniform1i(U.uCull, transp && !S.cut.on ? 1 : 0);
     if (showB) for (const it of items('B')) { const k = it.k, m = it.m; if ((alB(k) < 0.99) !== transp) continue; const jm = S.joint.on && k === 'mand' && m.jcbo; const map = !!(S.show.map && S.reg && m.dist) && !jm; drawMesh(m, it.M, it.t && !map && S.toothCol ? toothColor(it.t, 'B') : colB(k, map), alB(k), map || !!jm, jm || null); }
     if (showA) { if (showB) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(2, 8); } /* where both coincide, "after" wins */
       for (const it of items('A')) { const k = it.k; if ((alA(k) < 0.99) !== transp) continue; const jm = S.joint.on && k === 'mand' && it.m.jcbo; drawMesh(it.m, it.M, it.t && S.toothCol && !showB ? toothColor(it.t, 'A') : colA(k), alA(k), !!jm, jm || null); }
@@ -1353,13 +1359,14 @@ const QFS = `#version 300 es
 precision highp float; in vec2 vUV; uniform sampler2D uTex; out vec4 o; void main(){ vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; o = vec4(t.rgb, 1.0); }`;
 const qprog = (() => { const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; }; const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, QVS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, QFS)); gl.bindAttribLocation(p, 0, 'aPos'); gl.bindAttribLocation(p, 3, 'aUV'); gl.linkProgram(p); return p; })();
 const qBuf = gl.createBuffer(), qUV = gl.createBuffer(), qTex = gl.createTexture(); gl.bindBuffer(gl.ARRAY_BUFFER, qUV); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]), gl.STATIC_DRAW);
-function cutTexture(p) { const N = 384, img = new Uint8Array(N * N * 4); const LA = S.A ? nativeLevel(S.A.V) : null, LB = S.B ? nativeLevel(S.B.V) : null; const KA = LA && idxAffine(LA), KB = LB && idxAffine(LB); const T = S.T;
-  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 450 - S.win / 2, hi = 450 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255)); const fuse = !!(S.reg && LB && S.show.B);
+function cutTexture(p) { const spm = Math.min(...[S.A, S.B].filter(Boolean).map(X => Math.min(X.V.sx, X.V.sy, X.V.sz))); const N = Math.max(384, Math.min(1024, Math.round(p.F / (spm * 0.75)))), img = new Uint8Array(N * N * 4); const LA = S.A ? nativeLevel(S.A.V) : null, LB = S.B ? nativeLevel(S.B.V) : null; const KA = LA && idxAffine(LA), KB = LB && idxAffine(LB); const T = S.T;
+  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 450 + S.lev - S.win / 2, hi = 450 + S.lev + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255)); const fuse = !!(S.reg && LB && S.show.B);
   const smp = (L, K, w) => sampleL(L, K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3], K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3], K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]);
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = (i + 0.5) / N - 0.5, b = (j + 0.5) / N - 0.5; const w = [0, 1, 2].map(k => p.c[k] + p.u[k] * a * p.F + p.v[k] * b * p.F);
     const va = LA ? smp(LA, KA, w) : NaN; let vb = NaN; if (fuse) { vb = smp(LB, KB, M4.pt(T, w)); if (vb === vb) vb = (vb - cal[1]) / cal[0]; } else if (!LA && LB) vb = smp(LB, KB, w);
     const o = (j * N + i) * 4; const ga = g(va), gb = g(vb); if (fuse) { img[o] = ga; img[o + 1] = gb; img[o + 2] = ga; } else { const v = LA ? ga : gb; img[o] = img[o + 1] = img[o + 2] = v; }
     const air = !((va === va && va > -350) || (vb === vb && vb > -350)); img[o + 3] = air ? 0 : 255; }
+  if (S.sharp > 0) sharpen(img, N, N, S.sharp);
   gl.bindTexture(gl.TEXTURE_2D, qTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, img); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); }
 function prepCut() { const C = S.cut; if (!C.on) { C.pl = null; return; } if (C.dirty || !C.pl) { C.pl = cutPlane(); if (!C.pl) return; if (C.img) cutTexture(C.pl); C.lines = null; C.dirty = false; } }
 function drawCut() { const C = S.cut; if (!C.on || !C.pl) return; drawContours(); if (!C.img) return; const p = C.pl, h = p.F / 2;
@@ -1434,9 +1441,9 @@ $('#shA').onchange = () => { S.show.A = $('#shA').checked; S.cut.lines = null; r
 $('#shB').onchange = () => { S.show.B = $('#shB').checked; S.cut.lines = null; requestDraw(); };
 $('#shMap').onchange = () => { S.show.map = $('#shMap').checked; S.cut.lines = null; requestDraw(); };
 document.querySelectorAll('[data-part]').forEach(c => c.onchange = () => { S.show.parts[c.dataset.part] = c.checked; S.cut.lines = null; requestDraw(); });
-$('#opA').oninput = () => { S.opA = +$('#opA').value; requestDraw(); };
-$('#opB').oninput = () => { S.opB = +$('#opB').value; requestDraw(); };
-$('#boneA').oninput = () => { S.boneAlpha = +$('#boneA').value; requestDraw(); };
+$('#opA').oninput = () => { S.opA = Math.pow(+$('#opA').value, 1.3); requestDraw(); };
+$('#opB').oninput = () => { S.opB = Math.pow(+$('#opB').value, 1.3); requestDraw(); };
+$('#boneA').oninput = () => { S.boneAlpha = Math.pow(+$('#boneA').value, 1.3); requestDraw(); };
 
 /* ============================================================
    Slices: before (magenta) and after (green) through the same point
@@ -1445,32 +1452,35 @@ const SLV = [['#slAx', [1, 0, 0], [0, 1, 0], 2], ['#slCo', [1, 0, 0], [0, 0, -1]
 function slField() { const X = S.A || S.B; const V = X.V; return Math.max(V.nx * V.sx, V.ny * V.sy, V.nz * V.sz) * 1.02; }
 function worldToPix(cv, w) { const [, R, D] = SLV.find(s => s[0] === cv); const F = slField(), c = volCenter(S.A || S.B); const W = $(cv).width;
   const u = dot(R, w.map((v, i) => v - c[i])) / F + 0.5, v = dot(D, w.map((v, i) => v - c[i])) / F + 0.5; return [u * W, v * W]; }
-function drawSlices() {
+// unsharp mask: image + k·(image − blur) — crisper bone edges without changing the density scale
+function sharpen(px, W, H, k) { const src = px.slice(); for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const o = (y * W + x) * 4; for (let c = 0; c < 3; c++) { let b = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) b += src[o + (dy * W + dx) * 4 + c] * (dx === 0 && dy === 0 ? 4 : dx === 0 || dy === 0 ? 2 : 1); b /= 16; px[o + c] = Math.max(0, Math.min(255, src[o + c] + k * (src[o + c] - b))); } } }
+function sizeSlices() { const d = Math.min(2, devicePixelRatio || 1); for (const [cv] of SLV) { const can = $(cv); const w = Math.max(200, Math.min(1100, Math.round(can.getBoundingClientRect().width * d))); if (w && can.width !== w) { can.width = w; can.height = w; } } }
+function drawSlices() { sizeSlices();
   if (!S.A && !S.B) return; const X = S.A || S.B; const F = slField(), c = volCenter(X); if (!S.P) S.P = c.slice();
   const LA = S.A ? nativeLevel(S.A.V) : null, LB = S.B ? nativeLevel(S.B.V) : null; const KA = LA && idxAffine(LA), KB = LB && idxAffine(LB); const T = S.T;
-  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 450 - S.win / 2, hi = 450 + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255));
+  const cal = S.reg && S.reg.cal ? S.reg.cal : [1, 0]; const lo = 450 + S.lev - S.win / 2, hi = 450 + S.lev + S.win / 2; const g = v => v !== v ? 0 : Math.max(0, Math.min(255, (v - lo) / (hi - lo) * 255));
   const zf = S.A ? zoneFn(S.A) : null; const showZ = S.A && S.A.seg;
-  for (const [cv, R, D, ax] of SLV) { const can = $(cv), W = can.width, ctx = can.getContext('2d'); const img = ctx.createImageData(W, W); const px = img.data;
+  for (const [cv, R, D, ax] of SLV) { const can = $(cv), W = can.width, cq = W / 13, ctx = can.getContext('2d'); const img = ctx.createImageData(W, W); const px = img.data;
     for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const u = (x + 0.5) / W - 0.5, v = (y + 0.5) / W - 0.5; const w = [0, 1, 2].map(i => c[i] + R[i] * u * F + D[i] * v * F); w[ax] = S.P[ax];
       let a = NaN, b = NaN;
       if (LA) a = sampleL(LA, KA[0][0] * w[0] + KA[0][1] * w[1] + KA[0][2] * w[2] + KA[0][3], KA[1][0] * w[0] + KA[1][1] * w[1] + KA[1][2] * w[2] + KA[1][3], KA[2][0] * w[0] + KA[2][1] * w[1] + KA[2][2] * w[2] + KA[2][3]);
       if (LB) { const q = M4.pt(T, w); b = sampleL(LB, KB[0][0] * q[0] + KB[0][1] * q[1] + KB[0][2] * q[2] + KB[0][3], KB[1][0] * q[0] + KB[1][1] * q[1] + KB[1][2] * q[2] + KB[1][3], KB[2][0] * q[0] + KB[2][1] * q[1] + KB[2][2] * q[2] + KB[2][3]); if (b === b) b = (b - cal[1]) / cal[0]; }
       const ga = g(a), gb = g(b); const o = (y * W + x) * 4; let r, gg, bb;
-      if (S.ptMode === 1) { r = gg = bb = ga; } else if (S.ptMode === 2) { r = gg = bb = gb; }
+      if (S.ptMode === 1 || !LB) { r = gg = bb = ga; } else if (!LA) { r = gg = bb = gb; } else if (S.ptMode === 2) { r = gg = bb = gb; }
       else if (S.slMode === 'fuse') { r = ga; gg = gb; bb = ga; }
       else if (S.slMode === 'blend') { const m = ga * (1 - S.blend) + gb * S.blend; r = gg = bb = m; }
-      else { const ch = ((x >> 5) + (y >> 5)) & 1; r = gg = bb = ch ? gb : ga; }
+      else { const ch = ((x / cq | 0) + (y / cq | 0)) & 1; r = gg = bb = ch ? gb : ga; }
       if (showZ && S.showZone && zf(w[0], w[1], w[2]) && labelAt(S.A.seg, w) === 1) { r = r * 0.45 + 140; gg *= 0.45; bb *= 0.45; } /* the zone used for the superimposition — red */
       px[o] = r; px[o + 1] = gg; px[o + 2] = bb; px[o + 3] = 255; }
-    ctx.putImageData(img, 0, 0);
+    if (S.sharp > 0) sharpen(px, W, W, S.sharp); ctx.putImageData(img, 0, 0);
     // crosshair
-    const pp = worldToPix(cv, S.P); ctx.strokeStyle = 'rgba(13,180,231,.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pp[0], 0); ctx.lineTo(pp[0], W); ctx.moveTo(0, pp[1]); ctx.lineTo(W, pp[1]); ctx.stroke();
+    const pp = worldToPix(cv, S.P); ctx.strokeStyle = 'rgba(13,180,231,.55)'; ctx.lineWidth = W / 420; ctx.beginPath(); ctx.moveTo(pp[0], 0); ctx.lineTo(pp[0], W); ctx.moveTo(0, pp[1]); ctx.lineTo(W, pp[1]); ctx.stroke();
     // zone limit (horizontal line at height zLim) on the coronal and sagittal views
-    if (zf && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zf.box.z0])[1]; ctx.strokeStyle = '#E5155A'; ctx.setLineDash([8, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = '#E5155A'; ctx.font = 'bold 12px system-ui'; ctx.fillText('зона совмещения ↑', 8, yy - 6);
-      for (const b of zf.boxes) { const c1 = worldToPix(cv, [b.x0, b.y0, b.z1]), c2 = worldToPix(cv, [b.x1, b.y1, b.z0]); ctx.strokeStyle = 'rgba(229,21,90,.8)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.strokeRect(Math.min(c1[0], c2[0]), Math.min(c1[1], c2[1]), Math.abs(c2[0] - c1[0]), Math.abs(c2[1] - c1[1])); ctx.setLineDash([]); } }
+    if (zf && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zf.box.z0])[1]; ctx.strokeStyle = '#E5155A'; ctx.setLineDash([8, 5]); ctx.lineWidth = 2 * W / 420; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#E5155A'; ctx.font = `bold ${Math.round(12 * W / 420)}px system-ui`; ctx.fillText('зона совмещения ↑', 8, yy - 6);
+      for (const b of zf.boxes) { const c1 = worldToPix(cv, [b.x0, b.y0, b.z1]), c2 = worldToPix(cv, [b.x1, b.y1, b.z0]); ctx.strokeStyle = 'rgba(229,21,90,.8)'; ctx.lineWidth = 1.5 * W / 420; ctx.setLineDash([4, 4]); ctx.strokeRect(Math.min(c1[0], c2[0]), Math.min(c1[1], c2[1]), Math.abs(c2[0] - c1[0]), Math.abs(c2[1] - c1[1])); ctx.setLineDash([]); } }
     if (typeof distOnSlice === 'function') distOnSlice(cv, ctx, ax);
-    ctx.fillStyle = '#bbb'; ctx.font = '11px system-ui'; if (ax === 2) { ctx.fillText('спереди', W / 2 - 22, 14); ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14, W / 2); } else if (ax === 1) { ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14, W / 2); } else { ctx.fillText('спереди →', W - 70, W - 8); }
+    ctx.fillStyle = '#bbb'; ctx.font = `${Math.round(11 * W / 420)}px system-ui`; if (ax === 2) { ctx.fillText('спереди', W / 2 - 22 * W / 420, 14 * W / 420); ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14 * W / 420, W / 2); } else if (ax === 1) { ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14 * W / 420, W / 2); } else { ctx.fillText('спереди →', W - 70 * W / 420, W - 8); }
   }
 }
 let slDrag = null;
@@ -1487,7 +1497,10 @@ for (const [cv, R, D, ax] of SLV) { const can = $(cv);
 }
 $('#slMode').onchange = () => { S.slMode = $('#slMode').value; $('#blendBox').style.display = S.slMode === 'blend' ? '' : 'none'; drawSlices(); };
 $('#slBlend').oninput = () => { S.blend = +$('#slBlend').value; drawSlices(); };
-$('#slWin').oninput = () => { S.win = +$('#slWin').value; S.cut.dirty = true; drawSlices(); requestDraw(); };
+$('#slWin').oninput = () => { S.win = 4400 - $('#slWin').value; S.cut.dirty = true; drawSlices(); requestDraw(); };
+$('#slLev').oninput = () => { S.lev = -$('#slLev').value; S.cut.dirty = true; drawSlices(); requestDraw(); };
+$('#slSharp').oninput = () => { S.sharp = +$('#slSharp').value; S.cut.dirty = true; drawSlices(); requestDraw(); };
+window.addEventListener('resize', () => { if ($('#viewSl').style.display === 'block') drawSlices(); });
 $('#slZone').onchange = () => { S.showZone = $('#slZone').checked; drawSlices(); };
 $('#blendBox').style.display = 'none';
 
@@ -1630,12 +1643,12 @@ window.__S = S;
    Quick mode (no segmentation): volume rendering of both scans, superimposition by points and/or by density.
    ============================================================ */
 S.mode = 'precise';
-S.vol = { on: false, thr: 450, texA: null, texB: null };
+S.vol = { on: false, thr: 450, bri: 0, con: 1, shade: 0.75, texA: null, texB: null };
 S.pts = []; S.ptMode = 0; S.ptA = null;
 
 /* ---------- 3D textures ---------- */
 function volTexture(X) {
-  const V = X.V, ns = V.nrm ? V.nrm[0] : 1, no = V.nrm ? V.nrm[1] : 0; const f = Math.max(1, Math.ceil(Math.max(V.nx, V.ny, V.nz) / 320));
+  const V = X.V, ns = V.nrm ? V.nrm[0] : 1, no = V.nrm ? V.nrm[1] : 0; const f = Math.max(1, Math.ceil(Math.max(V.nx, V.ny, V.nz) / 460));
   const nx = Math.floor(V.nx / f), ny = Math.floor(V.ny / f), nz = Math.floor(V.nz / f); const d = new Uint8Array(nx * ny * nz); const w = 1 / (f * f * f);
   for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { let s = 0;
     for (let c = 0; c < f; c++) for (let b = 0; b < f; b++) { const row = ((k * f + c) * V.ny + j * f + b) * V.nx + i * f; for (let a = 0; a < f; a++) s += V.vol[row + a]; }
@@ -1658,7 +1671,7 @@ const RVS = `#version 300 es
 in vec2 aP; out vec2 vNDC; void main(){ vNDC = aP; gl_Position = vec4(aP, 0.0, 1.0); }`;
 const RFS = `#version 300 es
 precision highp float; precision highp sampler3D;
-uniform sampler3D uA, uB; uniform mat4 uMA, uMB, uInvVP; uniform int uHasA, uHasB; uniform vec3 uLo, uHi, uDir; uniform float uStep, uThr; uniform vec2 uOp; uniform vec3 uColA, uColB; uniform vec4 uClip; uniform int uClipOn;
+uniform sampler3D uA, uB; uniform mat4 uMA, uMB, uInvVP; uniform int uHasA, uHasB; uniform vec3 uLo, uHi, uDir; uniform float uStep, uThr; uniform vec2 uOp; uniform vec3 uColA, uColB; uniform vec4 uClip; uniform int uClipOn; uniform float uBri, uCon, uShade;
 in vec2 vNDC; out vec4 o;
 float sA(vec3 p){ vec3 t = (uMA * vec4(p, 1.0)).xyz; if (any(lessThan(t, vec3(0.0))) || any(greaterThan(t, vec3(1.0)))) return 0.0; return texture(uA, t).r; }
 float sB(vec3 p){ vec3 t = (uMB * vec4(p, 1.0)).xyz; if (any(lessThan(t, vec3(0.0))) || any(greaterThan(t, vec3(1.0)))) return 0.0; return texture(uB, t).r; }
@@ -1669,15 +1682,16 @@ void main(){
   for (int i = 0; i < 2000; i++) { if (t > tb || acc.a > 0.97) break; vec3 p = ro + rd * t; t += uStep;
     if (uClipOn == 1 && dot(uClip.xyz, p) > uClip.w) continue;
     float va = uHasA == 1 ? sA(p) : 0.0, vb = uHasB == 1 ? sB(p) : 0.0;
-    float aa = smoothstep(uThr, uThr + 0.05, va) * uOp.x, ab = smoothstep(uThr, uThr + 0.05, vb) * uOp.y; float s = aa + ab; if (s < 0.002) continue;
+    float aa = smoothstep(uThr, uThr + 0.03, va) * uOp.x, ab = smoothstep(uThr, uThr + 0.03, vb) * uOp.y; float s = aa + ab; if (s < 0.002) continue;
     vec3 g = aa >= ab ? vec3(sA(p + vec3(e,0,0)) - sA(p - vec3(e,0,0)), sA(p + vec3(0,e,0)) - sA(p - vec3(0,e,0)), sA(p + vec3(0,0,e)) - sA(p - vec3(0,0,e)))
                       : vec3(sB(p + vec3(e,0,0)) - sB(p - vec3(e,0,0)), sB(p + vec3(0,e,0)) - sB(p - vec3(0,e,0)), sB(p + vec3(0,0,e)) - sB(p - vec3(0,0,e)));
-    float l = 0.3 + 0.7 * abs(dot(normalize(g + 1e-6), rd)); vec3 c = (uColA * aa + uColB * ab) / s * l; float al = clamp(s, 0.0, 1.0) * 0.75;
+    float nd = abs(dot(normalize(g + 1e-6), rd)); float l = (1.0 - uShade) + uShade * nd; vec3 c = (uColA * aa + uColB * ab) / s * l + vec3(pow(nd, 24.0) * 0.18 * uShade);
+    c = clamp((c - 0.5) * uCon + 0.5 + uBri, 0.0, 1.0); float al = clamp(s, 0.0, 1.0) * 0.9;
     acc.rgb += (1.0 - acc.a) * al * c; acc.a += (1.0 - acc.a) * al; }
   if (acc.a < 0.01) discard; o = acc; }`;
 const rprog = (() => { const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(x)); return x; };
   const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, RVS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, RFS)); gl.bindAttribLocation(p, 0, 'aP'); gl.linkProgram(p); return p; })();
-const RU = {}; for (const n of ['uA', 'uB', 'uMA', 'uMB', 'uInvVP', 'uHasA', 'uHasB', 'uLo', 'uHi', 'uDir', 'uStep', 'uThr', 'uOp', 'uColA', 'uColB', 'uClip', 'uClipOn']) RU[n] = gl.getUniformLocation(rprog, n);
+const RU = {}; for (const n of ['uA', 'uB', 'uMA', 'uMB', 'uInvVP', 'uHasA', 'uHasB', 'uLo', 'uHi', 'uDir', 'uStep', 'uThr', 'uOp', 'uColA', 'uColB', 'uClip', 'uClipOn', 'uBri', 'uCon', 'uShade']) RU[n] = gl.getUniformLocation(rprog, n);
 const fsTri = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, fsTri); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
 function inv4g(m) { const a = m, inv = new Float32Array(16); // general 4×4 inverse (column-major)
   inv[0] = a[5] * a[10] * a[15] - a[5] * a[11] * a[14] - a[9] * a[6] * a[15] + a[9] * a[7] * a[14] + a[13] * a[6] * a[11] - a[13] * a[7] * a[10];
@@ -1712,6 +1726,7 @@ function drawVolume() {
   const reg = !!(S.reg && hasA && hasB); gl.uniform2f(RU.uOp, hasA ? S.opA : 0, hasB ? S.opB : 0);
   gl.uniform3fv(RU.uColA, [0.96, 0.93, 0.86]); gl.uniform3fv(RU.uColB, reg || !hasA ? [0.2, 0.82, 0.82] : [0.2, 0.82, 0.82]);
   const C = S.cut; if (C.on && C.clip && C.pl) { const p = C.pl, sg = (dot(p.n, eyeDir()) >= 0 ? 1 : -1) * (C.flip ? -1 : 1); gl.uniform1i(RU.uClipOn, 1); gl.uniform4f(RU.uClip, p.n[0] * sg, p.n[1] * sg, p.n[2] * sg, sg * dot(p.n, p.c)); } else gl.uniform1i(RU.uClipOn, 0);
+  gl.uniform1f(RU.uBri, S.vol.bri); gl.uniform1f(RU.uCon, S.vol.con); gl.uniform1f(RU.uShade, S.vol.shade);
   gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.useProgram(prog); }
 
 /* ---------- picking on the volume: first voxel denser than the threshold along the ray ---------- */
@@ -1767,6 +1782,9 @@ function applyMode() { const fast = S.mode === 'fast'; document.querySelectorAll
   S.vol.on = fast || $('#volOn').checked; $('#volOn').checked = S.vol.on; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); }
 document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (S.mode === b.dataset.mode) return; if ((S.A || S.B) && !confirm('Режим меняется для новых снимков. Уже загруженные останутся как есть. Продолжить?')) return; S.mode = b.dataset.mode; applyMode(); });
 $('#volOn').onchange = () => { S.vol.on = $('#volOn').checked; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); };
+$('#volBri').oninput = () => { S.vol.bri = +$('#volBri').value; requestDraw(); };
+$('#volCon').oninput = () => { S.vol.con = +$('#volCon').value; requestDraw(); };
+$('#volShade').oninput = () => { S.vol.shade = +$('#volShade').value; requestDraw(); };
 $('#volThr').oninput = () => { S.vol.thr = +$('#volThr').value; $('#volThrV').textContent = S.vol.thr; requestDraw(); };
 applyMode();
 
@@ -1797,10 +1815,10 @@ function placeDistLabels() { const r = canvas.getBoundingClientRect(); const MVP
   for (const [i, d] of S.dist.entries()) { const m = d.a.map((v, k) => (v + d.b[k]) / 2); const x = MVP[0] * m[0] + MVP[4] * m[1] + MVP[8] * m[2] + MVP[12], y = MVP[1] * m[0] + MVP[5] * m[1] + MVP[9] * m[2] + MVP[13];
     html += `<div style="position:absolute;left:${(x + 1) / 2 * r.width + 8}px;top:${(1 - y) / 2 * r.height - 22}px;background:rgba(35,27,75,.9);color:#fff;font-size:12px;font-weight:700;padding:2px 7px;border-radius:7px;white-space:nowrap">${i + 1}: ${fmt(Math.hypot(...sub3(d.b, d.a)), 2)} мм</div>`; }
   distLay.innerHTML = html; }
-function distOnSlice(cv, ctx, ax) { const all = S.dist.slice(); for (const [i, d] of all.entries()) { const mid = d.a.map((v, k) => (v + d.b[k]) / 2); if (Math.abs(mid[ax] - S.P[ax]) > 3) continue;
-    const pa = worldToPix(cv, d.a), pb = worldToPix(cv, d.b); ctx.strokeStyle = '#FFD84A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
-    ctx.fillStyle = '#FFD84A'; for (const p of [pa, pb]) { ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, 7); ctx.fill(); } ctx.font = 'bold 12px system-ui'; ctx.fillText(`${i + 1}: ${fmt(Math.hypot(...sub3(d.b, d.a)), 2)} мм`, (pa[0] + pb[0]) / 2 + 6, (pa[1] + pb[1]) / 2 - 6); }
-  if (S.distA && Math.abs(S.distA[ax] - S.P[ax]) < 3) { const p = worldToPix(cv, S.distA); ctx.fillStyle = '#FFD84A'; ctx.beginPath(); ctx.arc(p[0], p[1], 4, 0, 7); ctx.fill(); } }
+function distOnSlice(cv, ctx, ax) { const Z = $(cv).width / 420; const all = S.dist.slice(); for (const [i, d] of all.entries()) { const mid = d.a.map((v, k) => (v + d.b[k]) / 2); if (Math.abs(mid[ax] - S.P[ax]) > 3) continue;
+    const pa = worldToPix(cv, d.a), pb = worldToPix(cv, d.b); ctx.strokeStyle = '#FFD84A'; ctx.lineWidth = 2 * Z; ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
+    ctx.fillStyle = '#FFD84A'; for (const p of [pa, pb]) { ctx.beginPath(); ctx.arc(p[0], p[1], 3.5 * Z, 0, 7); ctx.fill(); } ctx.font = `bold ${Math.round(12 * Z)}px system-ui`; ctx.fillText(`${i + 1}: ${fmt(Math.hypot(...sub3(d.b, d.a)), 2)} мм`, (pa[0] + pb[0]) / 2 + 6, (pa[1] + pb[1]) / 2 - 6); }
+  if (S.distA && Math.abs(S.distA[ax] - S.P[ax]) < 3) { const p = worldToPix(cv, S.distA); ctx.fillStyle = '#FFD84A'; ctx.beginPath(); ctx.arc(p[0], p[1], 4 * Z, 0, 7); ctx.fill(); } }
 
 /* ============================================================
    Joints (precise mode): condyle ↔ fossa — joint space anterior / superior / posterior (Ikeda) before and after, colour map of the space
