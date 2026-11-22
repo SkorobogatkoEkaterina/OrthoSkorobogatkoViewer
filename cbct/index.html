@@ -98,7 +98,6 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 #busy .pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--pink))}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;z-index:60;display:none;max-width:70vw}
 .hidden{display:none!important}
-
 #tb3d{position:absolute;top:12px;right:12px;z-index:6;display:flex;gap:4px;align-items:center;background:#fff;border-radius:14px;padding:4px;box-shadow:var(--shadow)}
 #tb3d .btn{border:0}
 .tg{display:flex;align-items:center;cursor:pointer;margin:0}.tg input{display:none}
@@ -121,7 +120,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.3</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.4</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -135,11 +134,10 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="slot" id="slotA"><span class="dot" style="background:#C9C4E6"></span><span class="k">До</span><span class="f" id="infoA">не загружено</span></div>
     <div class="row">
       <button class="btn sm" data-open="A" data-kind="dir">📁 Папка DICOM</button>
-      <button class="btn sm ghost" data-more>другие форматы ▾</button>
-      <span class="more hidden"><button class="btn sm" data-open="A" data-kind="files">Файлы</button>
+      <button class="btn sm" data-open="A" data-kind="files">Файлы</button>
       <button class="btn sm" data-open="A" data-kind="zip">ZIP</button>
       <button class="btn sm" data-open="A" data-kind="nii">NIfTI</button>
-      <button class="btn sm precOnly" data-open="A" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button></span>
+      <button class="btn sm" data-open="A" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
     </div>
   </div>
 
@@ -149,11 +147,10 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="slot" id="slotB"><span class="dot" style="background:#E5155A"></span><span class="k">После</span><span class="f" id="infoB">не загружено</span></div>
     <div class="row">
       <button class="btn sm" data-open="B" data-kind="dir">📁 Папка DICOM</button>
-      <button class="btn sm ghost" data-more>другие форматы ▾</button>
-      <span class="more hidden"><button class="btn sm" data-open="B" data-kind="files">Файлы</button>
+      <button class="btn sm" data-open="B" data-kind="files">Файлы</button>
       <button class="btn sm" data-open="B" data-kind="zip">ZIP</button>
       <button class="btn sm" data-open="B" data-kind="nii">NIfTI</button>
-      <button class="btn sm precOnly" data-open="B" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button></span>
+      <button class="btn sm" data-open="B" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
     </div>
     <select class="s precOnly" id="segMode" title="Как искать кость и зубы">
       <option value="precise" selected>Нейросеть · точно</option>
@@ -170,22 +167,18 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <button class="choice on" data-roi="acb"><b>По основанию черепа</b><small>рост, положение челюстей и всех зубов</small></button>
       <button class="choice" data-roi="mand"><b>По нижней челюсти</b><small>как сместились нижние зубы внутри челюсти</small></button>
     </div>
-    <button class="btn primary wide" id="regGo" disabled>Совместить</button>
-    <div class="res" id="regInfo"></div>
-    <details id="advR"><summary>Дополнительно: зона, масштаб, по точкам</summary>
-    <div class="fld"><span>Зона</span><select class="s" id="roiMode" style="margin:0">
+    <select class="s" id="roiMode">
       <option value="acb" selected>Передний отдел основания черепа (Cevidanes)</option>
       <option value="mand">Нижняя челюсть (тело и симфиз, по Бьорку)</option>
       <option value="skull">Весь череп выше нёба (больше кости, только взрослые)</option>
-    </select></div>
+    </select>
     <div class="fld"><span id="roiLimLbl">Сдвиг зоны вверх(+)/вниз(−), мм</span><input id="roiLim" type="number" step="1" value="0"></div>
     <label class="ck" title="Разные томографы бывают откалиброваны по-разному (до 1–2 % по размеру). Галочка подгоняет масштаб второго снимка по зоне основания черепа. У растущих пациентов включайте только если снимки сделаны на разных аппаратах."><input type="checkbox" id="useScale"> снимки с разных томографов — подогнать масштаб</label>
+    <div class="row"><button class="btn primary" id="regGo" disabled>Совместить автоматически</button><button class="btn" id="regFine" disabled title="Уточнить по плотности на полном разрешении (после точек — тоже)">Уточнить</button></div>
     <div class="sub" style="margin-top:8px"><b>По точкам</b> — как в Invivo: щёлкните точку на «до», затем ту же анатомическую точку на «после» (в 3D или на срезах). С 3 пар снимки совмещаются сразу; 5–7 пар, разнесённых по черепу (назион, крыши орбит, скуловые дуги, затылок), дают лучший результат. Потом «Уточнить» доведёт по плотности.</div>
     <div class="row"><button class="btn sm" id="ptGo">📍 Ставить точки</button><button class="btn sm" id="ptFit">Совместить по точкам</button><button class="btn sm" id="ptClear">Очистить</button></div>
     <div id="ptList"></div>
-
-    <div class="row"><button class="btn" id="regFine" disabled title="Уточнить по плотности на полном разрешении (после точек — тоже)">Уточнить</button></div>
-    </details>
+    <div class="res" id="regInfo"></div>
     <details id="nudBox"><summary>Ручная доводка</summary>
       <div class="sub" style="margin-top:4px">Сдвиги и повороты снимка «после» относительно «до». После правки нажмите «Пересчитать карту».</div>
       <div class="nud" id="nud"></div>
@@ -197,14 +190,34 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <h3><span class="n">4</span>Результат<button class="q" data-h="hV">?</button></h3>
     <div class="help" id="hV">Сиреневым — «до» (полупрозрачно), «после» окрашен картой расстояний до положения «до»: зелёный — без изменений, жёлтый/красный — кость или зуб сместились наружу (вперёд, вниз, в сторону от исходной поверхности), голубой/синий — внутрь. Наведите мышь на «после», чтобы увидеть число в мм. «Измерить сдвиг»: щёлкните точку на «до», затем ту же точку на «после» — программа покажет сдвиг по осям: вправо/влево, вперёд/назад, вверх/вниз.</div>
     <div class="row">
+      <label class="ck" style="margin:0"><input type="checkbox" id="shA" checked> до</label>
+      <label class="ck" style="margin:0"><input type="checkbox" id="shB" checked> после</label>
       <label class="ck precOnly" style="margin:0"><input type="checkbox" id="shMap" checked> карта расстояний</label>
     </div>
-    <div class="row precOnly">
+    <div class="row">
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skull" checked> череп/ВЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="mand" checked> НЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="tu" checked> зубы ВЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="tl" checked> зубы НЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skin"> лицо</label>
+    </div>
+    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
+    <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
+      <div class="fld"><span>Яркость</span><input id="volBri" type="range" min="-0.4" max="0.4" step="0.02" value="0"></div>
+      <div class="fld"><span>Контраст</span><input id="volCon" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
+      <div class="fld"><span>Объём (тени)</span><input id="volShade" type="range" min="0" max="1" step="0.05" value="0.75"></div>
+      <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
+    <div class="fld"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
+    <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
+    <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
+    <label class="ck"><input type="checkbox" id="cutOn"> Срез модели плоскостью</label>
+    <div id="cutBox" class="hidden">
+      <select class="s" id="cutPre"><option value="sag">Сагиттальный</option><option value="cor">Корональный</option><option value="ax">Аксиальный</option></select>
+      <div class="fld"><span>Положение <span class="sub" id="cutOffV">0 мм</span></span><input id="cutOff" type="range" min="-90" max="90" step="1" value="0"></div>
+      <div class="fld"><span>Наклон 1 <span class="sub" id="cutA1V">0°</span></span><input id="cutA1" type="range" min="-90" max="90" step="1" value="0"></div>
+      <div class="fld"><span>Наклон 2 <span class="sub" id="cutA2V">0°</span></span><input id="cutA2" type="range" min="-90" max="90" step="1" value="0"></div>
+      <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip" checked> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutImg"> снимок на срезе</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
+      <div class="sub" style="margin-top:4px">Модели разрезаются плоскостью, контуры среза: тёмный — «до», цветной — «после» (цвет карты). Alt + мышь — вращать срез, Alt + колесо — двигать. «Снимок на срезе» добавляет сам КЛКТ в плоскости: «до» сиреневым, «после» зелёным.</div>
     </div>
     <div class="fld precOnly"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
     <div class="legend precOnly" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
@@ -258,34 +271,6 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <canvas id="gl"></canvas>
     <div id="hint"><div><b>Загрузите два КЛКТ</b>слева: до лечения и после, затем «Совместить»</div></div>
     <div id="probe"></div>
-    <div id="tb3d">
-      <label class="tg a"><input type="checkbox" id="shA" checked><span>До</span></label>
-      <label class="tg b"><input type="checkbox" id="shB" checked><span>После</span></label>
-      <button class="btn" data-fl="flImg">🎚 Изображение</button>
-      <button class="btn" data-fl="flCut">✂ Разрез</button>
-    </div>
-    <div class="flp hidden" id="flImg"><div class="fh"><b>Изображение</b><button class="x">✕</button></div>
-    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
-    <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
-      <div class="fld"><span>Яркость</span><input id="volBri" type="range" min="-0.4" max="0.4" step="0.02" value="0"></div>
-      <div class="fld"><span>Контраст</span><input id="volCon" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
-      <div class="fld"><span>Объём (тени)</span><input id="volShade" type="range" min="0" max="1" step="0.05" value="0.75"></div>
-      <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
-    <div class="fld precOnly"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
-    <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
-    <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
-    </div>
-    <div class="flp hidden" id="flCut"><div class="fh"><b>Разрез плоскостью</b><button class="x">✕</button></div>
-    <label class="ck"><input type="checkbox" id="cutOn"> Срез модели плоскостью</label>
-    <div id="cutBox" class="hidden">
-      <select class="s" id="cutPre"><option value="sag">Сагиттальный</option><option value="cor">Корональный</option><option value="ax">Аксиальный</option></select>
-      <div class="fld"><span>Положение <span class="sub" id="cutOffV">0 мм</span></span><input id="cutOff" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="fld"><span>Наклон 1 <span class="sub" id="cutA1V">0°</span></span><input id="cutA1" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="fld"><span>Наклон 2 <span class="sub" id="cutA2V">0°</span></span><input id="cutA2" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip" checked> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutImg"> снимок на срезе</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
-      <div class="sub" style="margin-top:4px">Модели разрезаются плоскостью, контуры среза: тёмный — «до», цветной — «после» (цвет карты). Alt + мышь — вращать срез, Alt + колесо — двигать. «Снимок на срезе» добавляет сам КЛКТ в плоскости: «до» сиреневым, «после» зелёным.</div>
-    </div>
-    </div>
     <div id="views">
       <button class="btn" data-v="front">Спереди</button><button class="btn" data-v="right">Справа</button><button class="btn" data-v="left">Слева</button><button class="btn" data-v="top">Сверху</button><button class="btn" data-v="bottom">Снизу</button>
     </div>
