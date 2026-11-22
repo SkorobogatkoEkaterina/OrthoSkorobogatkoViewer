@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 1.6</title>
+<title>Наложение КЛКТ · 2.0</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -105,7 +105,12 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 1.6</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.0</small></div>
+  </div>
+
+  <div class="sec" style="padding:8px 10px">
+    <div class="row" style="margin:0;justify-content:center"><button class="btn sm" data-mode="fast">⚡ Быстро (без сегментации)</button><button class="btn sm on" data-mode="precise">🎯 Точно (с сегментацией)</button></div>
+    <div class="sub" id="modeHelp" style="margin-top:6px"></div>
   </div>
 
   <div class="sec" id="secA">
@@ -132,12 +137,12 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <button class="btn sm" data-open="B" data-kind="nii">NIfTI</button>
       <button class="btn sm" data-open="B" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
     </div>
-    <select class="s" id="segMode" title="Как искать кость и зубы">
+    <select class="s precOnly" id="segMode" title="Как искать кость и зубы">
       <option value="precise" selected>Нейросеть · точно</option>
       <option value="fast">Нейросеть · быстрее</option>
       <option value="thr">Без нейросети · по плотности</option>
     </select>
-    <div class="sub" id="gpuInfo" style="margin-top:6px">Проверяю видеокарту…</div>
+    <div class="sub precOnly" id="gpuInfo" style="margin-top:6px">Проверяю видеокарту…</div>
   </div>
 
   <div class="sec" id="secR">
@@ -149,7 +154,10 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     </select>
     <div class="fld"><span id="roiLimLbl">Сдвиг зоны вверх(+)/вниз(−), мм</span><input id="roiLim" type="number" step="1" value="0"></div>
     <label class="ck" title="Разные томографы бывают откалиброваны по-разному (до 1–2 % по размеру). Галочка подгоняет масштаб второго снимка по зоне основания черепа. У растущих пациентов включайте только если снимки сделаны на разных аппаратах."><input type="checkbox" id="useScale"> снимки с разных томографов — подогнать масштаб</label>
-    <div class="row"><button class="btn primary" id="regGo" disabled>Совместить</button><button class="btn" id="regFine" disabled title="Ещё раз уточнить на полном разрешении">Уточнить</button></div>
+    <div class="row"><button class="btn primary" id="regGo" disabled>Совместить автоматически</button><button class="btn" id="regFine" disabled title="Уточнить по плотности на полном разрешении (после точек — тоже)">Уточнить</button></div>
+    <div class="sub" style="margin-top:8px"><b>По точкам</b> — как в Invivo: щёлкните точку на «до», затем ту же анатомическую точку на «после» (в 3D или на срезах). С 3 пар снимки совмещаются сразу; 5–7 пар, разнесённых по черепу (назион, крыши орбит, скуловые дуги, затылок), дают лучший результат. Потом «Уточнить» доведёт по плотности.</div>
+    <div class="row"><button class="btn sm" id="ptGo">📍 Ставить точки</button><button class="btn sm" id="ptFit">Совместить по точкам</button><button class="btn sm" id="ptClear">Очистить</button></div>
+    <div id="ptList"></div>
     <div class="res" id="regInfo"></div>
     <details id="nudBox"><summary>Ручная доводка</summary>
       <div class="sub" style="margin-top:4px">Сдвиги и повороты снимка «после» относительно «до». После правки нажмите «Пересчитать карту».</div>
@@ -164,7 +172,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="row">
       <label class="ck" style="margin:0"><input type="checkbox" id="shA" checked> до</label>
       <label class="ck" style="margin:0"><input type="checkbox" id="shB" checked> после</label>
-      <label class="ck" style="margin:0"><input type="checkbox" id="shMap" checked> карта расстояний</label>
+      <label class="ck precOnly" style="margin:0"><input type="checkbox" id="shMap" checked> карта расстояний</label>
     </div>
     <div class="row">
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skull" checked> череп/ВЧ</label>
@@ -173,6 +181,9 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <label class="ck" style="margin:0"><input type="checkbox" data-part="tl" checked> зубы НЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skin"> лицо</label>
     </div>
+    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
+    <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
+      <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
     <div class="fld"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
     <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
     <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
@@ -185,13 +196,13 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip" checked> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutImg"> снимок на срезе</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
       <div class="sub" style="margin-top:4px">Модели разрезаются плоскостью, контуры среза: тёмный — «до», цветной — «после» (цвет карты). Alt + мышь — вращать срез, Alt + колесо — двигать. «Снимок на срезе» добавляет сам КЛКТ в плоскости: «до» сиреневым, «после» зелёным.</div>
     </div>
-    <div class="fld"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
-    <div class="legend" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
+    <div class="fld precOnly"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
+    <div class="legend precOnly" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
     <div class="row"><button class="btn" id="measBtn" disabled>📏 Измерить сдвиг</button></div>
     <div id="measList"></div>
   </div>
 
-  <div class="sec" id="secT">
+  <div class="sec precOnly" id="secT">
     <h3><span class="n">5</span>Зубы<button class="q" data-h="hT">?</button></h3>
     <div class="help" id="hT">Каждый зуб выделяется отдельно и получает номер по FDI (номер можно исправить двойным щелчком по нему). Щёлкните номера, чтобы выбрать зубы, и сохраните их одним STL — например, все зубы верхней челюсти в один файл — или каждый зуб отдельным файлом. «Двигать зуб»: щёлкните зуб на модели и тяните мышью — левая кнопка двигает, правая (или Ctrl) поворачивает вокруг центра зуба; точные шаги — кнопками. Сохранённые STL учитывают перемещения.</div>
     <div class="row"><button class="btn sm on" data-ts="A">До</button><button class="btn sm" data-ts="B">После</button><label class="ck" style="margin:0 0 0 6px"><input type="checkbox" id="tCol" checked> цветные зубы</label></div>
@@ -214,7 +225,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <button class="btn sm" id="exCsv" disabled>Измерения CSV</button>
       <button class="btn sm" id="exMat" disabled>Матрица</button>
     </div>
-    <div class="row"><button class="btn sm" id="exSegA" disabled>Сегментация «до» (ZIP)</button><button class="btn sm" id="exSegB" disabled>Сегментация «после» (ZIP)</button></div>
+    <div class="row precOnly"><button class="btn sm" id="exSegA" disabled>Сегментация «до» (ZIP)</button><button class="btn sm" id="exSegB" disabled>Сегментация «после» (ZIP)</button></div>
     <label class="ck"><input type="checkbox" id="segAligned" checked> STL «после» — уже совмещённые с «до»</label>
   </div>
 
@@ -954,7 +965,8 @@ async function loadCT(slot, src) {
     else { let ent = src.dicom; if (src.zip) ent = await unzipEntries(src.zip, n => !junk(n), f => busy(true, 'Распаковываю ZIP…', f)); V = await readDicom(ent, f => busy(true, `Читаю срезы КЛКТ «${nm}»…`, f)); }
     if (S[slot]) freeSlot(slot);
     const X = S[slot] = { name: src.name, V, seg: null, segSrc: '', mesh: {} };
-    if (S.segFile[slot]) { X.seg = S.segFile[slot]; X.segSrc = 'приложенный файл'; }
+    if (S.mode === 'fast') { X.fast = true; busy(true, `«${nm}»: ищу кость по плотности…`, 0.5); await sleep(); X.seg = thresholdSeg(V); X.segSrc = 'быстрый режим, без сегментации'; }
+    else if (S.segFile[slot]) { X.seg = S.segFile[slot]; X.segSrc = 'приложенный файл'; }
     else { const mode = $('#segMode').value;
       if (mode !== 'thr') { try { const Nf = await aiSegmentCT(V, { scale: mode === 'precise' ? 1 : 1.5, step: mode === 'precise' ? 0.75 : 1 }, (t, f) => busy(true, `«${nm}»: ` + t, f)); X.seg = Nf; X.segSrc = `нейросеть (${AI.ep === 'webgpu' ? 'видеокарта' + (AI.gpu ? ' ' + AI.gpu : '') : 'процессор'}), ${Math.round(Nf.secs)} с, ${fmt(Nf.secs / Math.max(1, Nf.ran), 1)} с на участок`;
           if (AI.ep !== 'webgpu' || AI.gpuWeak) toast(AI.ep !== 'webgpu' ? 'Нейросеть считала на процессоре — видеокарта браузеру недоступна. Откройте программу в Chrome или Edge.' : 'Нейросеть считала на встроенной видеокарте (' + AI.gpu + '). Назначьте браузеру мощную видеокарту: Параметры Windows → Система → Дисплей → Графика → Chrome → «Высокая производительность».', 12000); }
@@ -964,11 +976,16 @@ async function loadCT(slot, src) {
   } catch (e) { console.error(e); toast(`КЛКТ «${nm}»: ` + e.message); }
   busy(false);
 }
-function freeSlot(slot) { const X = S[slot]; if (!X) return; for (const k in X.mesh) freeMesh(X.mesh[k]); for (const t of X.teeth || []) freeMesh(t.m); S[slot] = null; S.reg = null; S.T = M4.ident(); S.Ti = M4.ident(); }
-function thresholdSeg(V) { // without the network: one "bone" label
-  const N = V.nx * V.ny * V.nz; const h = new Float64Array(64); for (let i = 0; i < N; i += 7) { const v = V.vol[i]; if (v > -300) h[Math.min(63, Math.max(0, Math.floor((v + 300) / 100)))]++; }
-  const thr = 450; const lab = new Uint8Array(N); for (let i = 0; i < N; i++) if (V.vol[i] > thr) lab[i] = 1;
-  return { lab, nx: V.nx, ny: V.ny, nz: V.nz, A: volAffine(V), thr: true };
+function freeSlot(slot) { const X = S[slot]; if (!X) return; if (X.vt) gl.deleteTexture(X.vt.tex); for (const k in X.mesh) freeMesh(X.mesh[k]); for (const t of X.teeth || []) freeMesh(t.m); S[slot] = null; S.reg = null; S.T = M4.ident(); S.Ti = M4.ident(); }
+function thresholdSeg(V) { // without the network: "bone" by density (Otsu between soft tissue and bone), height of the teeth from the densest voxels (enamel)
+  const N = V.nx * V.ny * V.nz; const vals = []; for (let i = 0; i < N; i += 17) { const v = V.vol[i]; if (v > -500) vals.push(v); }
+  const lo = percentile(vals, 0.01), hi = percentile(vals, 0.995); const H = new Float64Array(128); for (const v of vals) H[Math.max(0, Math.min(127, Math.floor((v - lo) / (hi - lo) * 128)))]++;
+  let tot = 0, sum = 0; for (let i = 0; i < 128; i++) { tot += H[i]; sum += i * H[i]; } let wB = 0, sB = 0, best = 0, bi = 64; for (let i = 0; i < 128; i++) { wB += H[i]; if (!wB || wB === tot) continue; sB += i * H[i]; const mB = sB / wB, mF = (sum - sB) / (tot - wB); const b = wB * (tot - wB) * (mB - mF) ** 2; if (b > best) { best = b; bi = i; } }
+  const otsu = lo + (bi + 1) / 128 * (hi - lo); const thr = otsu + 0.15 * (hi - otsu); const lab = new Uint8Array(N); for (let i = 0; i < N; i++) if (V.vol[i] > thr) lab[i] = 1;
+  // enamel: the densest 0.25 % → median height of the crowns; the upper root apices lie ≈ 21 mm above the occlusal level
+  const top = percentile(vals, 0.9975); const zs = []; const A = volAffine(V);
+  for (let k = 0; k < V.nz; k++) for (let j = 0; j < V.ny; j += 2) for (let i = 0; i < V.nx; i += 2) if (V.vol[(k * V.ny + j) * V.nx + i] > top) zs.push(A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]);
+  return { lab, nx: V.nx, ny: V.ny, nz: V.nz, A, thr: true, zTfix: zs.length > 200 ? percentile(zs, 0.5) + 21 : undefined };
 }
 async function afterSeg(slot) {
   const X = S[slot]; const nm = slot === 'A' ? 'до' : 'после'; const Nf = X.seg; Nf.Ainv = inv3x4(Nf.A);
@@ -976,7 +993,8 @@ async function afterSeg(slot) {
   const zs = { 1: [], 3: [], 4: [] }, p1 = []; const st = Math.max(1, Math.floor(Nf.lab.length / 3e6)); const A = Nf.A;
   for (let k = 0; k < Nf.nz; k++) for (let j = 0; j < Nf.ny; j++) { const row = (k * Nf.ny + j) * Nf.nx; for (let i = (j + k) % st; i < Nf.nx; i += st) { const L = Nf.lab[row + i]; if (L === 1 || L === 3 || L === 4) { const z = A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]; zs[L].push(z);
       if (L === 1) p1.push(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], z); } } }
-  if (zs[3].length > 50) X.zT = percentile(zs[3], 0.97);
+  if (Nf.zTfix !== undefined) X.zT = Nf.zTfix;
+  else if (zs[3].length > 50) X.zT = percentile(zs[3], 0.97);
   else if (zs[4].length > 50) X.zT = percentile(zs[4], 0.99) + 22;
   else { const lo = percentile(zs[1], 0.02), hi = percentile(zs[1], 0.98); X.zT = lo + 0.4 * (hi - lo); X.noTeeth = true; }
   // midline and the front of the skull at the nasion height (≈ 55 mm above the upper root apices) → anterior cranial base box
@@ -989,7 +1007,8 @@ async function afterSeg(slot) {
       const x = Math.round(K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3]), y = Math.round(K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3]), z = Math.round(K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]); if (x < 0 || y < 0 || z < 0 || x >= Vv.nx || y >= Vv.ny || z >= Vv.nz) continue;
       const v = Vv.vol[(z * Vv.ny + y) * Vv.nx + x]; if (l === 1 || l === 2) hb.push(v); else if (l === 0 && v > -500) hs.push(v); }
     const mB = percentile(hb, 0.5), mS = percentile(hs, 0.4); Vv.nrm = mB - mS > 50 ? [1000 / (mB - mS), -mS * 1000 / (mB - mS)] : [1, 0]; X.grey = [mS, mB]; }
-  // surfaces
+  // surfaces (not in the quick mode: there the volumes themselves are shown)
+  if (!X.fast) {
   const B = labelBoxes(Nf); const sp = [0, 1, 2].map(c => Math.hypot(Nf.A[0][c], Nf.A[1][c], Nf.A[2][c])); const sb = sp[0] < 0.45 ? 2 : 1;
   for (const k in X.mesh) freeMesh(X.mesh[k]); X.mesh = {};
   const jobs = PARTS.filter(([, L]) => B[L]); let bl = null;
@@ -1007,6 +1026,7 @@ async function afterSeg(slot) {
   X.teeth.sort((a, b) => a.fdi - b.fdi);
   try { busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95); const stp = Math.max(1, Math.round(1 / X.V.sx)); let g = await surfaceNets(X.V, -350, stp, f => busy(true, `«${nm}»: строю мягкие ткани лица…`, 0.95 + 0.05 * f));
     g = bigComponents(g, 40000); if (g.idx.length) { taubin(g, 6); X.mesh.skin = makeMesh(g); } } catch (e) { console.warn('skin', e); }
+  }
   $('#info' + slot).textContent = `${X.name} · ${X.V.nx}×${X.V.ny}×${X.V.nz}, ${fmt(X.V.sx, 2)} мм · ${X.segSrc}`; $('#slot' + slot).classList.add('ok');
   if (X.noTeeth) toast(`«${nm}»: зубы не найдены — нижнюю границу зоны поставьте на срезах вручную`);
   S.reg = null; updT(); $('#hint').classList.add('hidden');
@@ -1149,7 +1169,7 @@ async function register(fine) {
     const res = nccCost(NB, jit, avN, paramT(p, c, t0, useSc ? sc : 1), wt);
     S.reg = { c, t0, p, pAuto: p.slice(), sc, useSc, ncc: -res.c, cal: res.cal || [1, 0], lim, mode: roiModeV(), secs: (performance.now() - t00) / 1000, nPts: jit.length / 3 };
     updT(); busy(true, 'Считаю карту расстояний…', 0.93); await sleep(); computeMaps(); renderRegInfo(); renderNudge();
-    if (!S.opSet) { S.opSet = true; S.opA = 0.4; $('#opA').value = 0.4; }
+    if (!S.opSet && S.mode !== 'fast') { S.opSet = true; S.opA = 0.4; $('#opA').value = 0.4; }
     $('#regFine').disabled = false; $('#exPly').disabled = $('#exMat').disabled = $('#exRep').disabled = false;
   } catch (e) { console.error(e); toast('Совмещение: ' + e.message); }
   busy(false); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
@@ -1174,10 +1194,10 @@ function renderRegInfo() {
   const q = r.q; const cls = q === undefined ? '' : q <= 0.4 ? 'ok' : q <= 0.7 ? 'warn' : 'bad';
   const mv = rotM(r.p[0], r.p[1], r.p[2]); const ang = Math.acos(Math.max(-1, Math.min(1, (mv[0] + mv[4] + mv[8] - 1) / 2))) * 180 / Math.PI;
   const tr = M4.pt(S.T, r.c).map((v, i) => v - r.c[i]); const sh = Math.hypot(...tr);
-  el.innerHTML = `<div>Совпадение костей в зоне: <b class="${cls}">${q === undefined ? '—' : fmt(q, 2) + ' мм'}</b> <span class="sub">(медиана расхождения поверхностей; хорошо — до 0,4 мм, это точность построения поверхностей)</span></div>
-    <div class="sub">Корреляция плотности ${fmt(r.ncc, 3)} · ${r.nPts.toLocaleString('ru')} точек · ${r.mode === 'acb' ? 'передний отдел основания черепа' + (S.A.cribAuto ? '' : ' (уровень решётчатой пластинки не найден — проверьте зону на срезах)') + (r.lim ? ', сдвиг ' + fmt(r.lim, 0) + ' мм' : '') : 'череп выше нёба, от ' + fmt(r.lim, 0) + ' мм над корнями'} · ${fmt(r.secs, 0)} с</div>
+  el.innerHTML = (r.byPoints && !r.nPts ? `<div>Совмещено <b>по ${S.pts.length} точкам</b>. «Уточнить» доведёт по плотности основания черепа.</div>` : '') + (q === undefined ? '' : `<div>Совпадение костей в зоне: <b class="${cls}">${fmt(q, 2) + ' мм'}</b> <span class="sub">(медиана расхождения поверхностей; хорошо — до 0,4 мм, это точность построения поверхностей)</span></div>`) + (isNaN(r.ncc) ? '' : `
+<div class="sub">Корреляция плотности ${fmt(r.ncc, 3)} · ${r.nPts.toLocaleString('ru')} точек · ${r.mode === 'acb' ? 'передний отдел основания черепа' + (S.A.cribAuto ? '' : ' (уровень решётчатой пластинки не найден — проверьте зону на срезах)') + (r.lim ? ', сдвиг ' + fmt(r.lim, 0) + ' мм' : '') : 'череп выше нёба, от ' + fmt(r.lim, 0) + ' мм над корнями'} · ${fmt(r.secs, 0)} с</div>
     <div class="sub">Масштаб второго снимка ${Math.abs(r.sc - 1) < 0.004 ? 'совпадает с первым' : (r.sc > 1 ? 'больше' : 'меньше') + ' на ' + fmt(Math.abs(r.sc - 1) * 100, 1) + ' %' + (r.useSc ? ' — учтено' : ' (разные томографы? можно учесть галочкой выше)')}.</div>
-    <div class="sub">Голова на втором снимке была повёрнута на ${fmt(ang, 1)}° и сдвинута на ${fmt(sh, 1)} мм — это убрано.</div>`;
+    <div class="sub">Голова на втором снимке была повёрнута на ${fmt(ang, 1)}° и сдвинута на ${fmt(sh, 1)} мм — это убрано.</div>`);
 }
 
 /* ---------------- manual adjustment ---------------- */
@@ -1272,7 +1292,7 @@ const COL_A = [0.79, 0.77, 0.92], COL_B = [0.93, 0.45, 0.6]; const COL_T = [0.97
 let VM, PM;
 function draw() {
   needDraw = false; resize(); gl.viewport(0, 0, canvas.width, canvas.height); if (S.snapBg) gl.clearColor(0.957, 0.965, 0.98, 1); else gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.useProgram(prog);
-  VM = viewM(); PM = projM(); const I = M4.ident(); prepCut();
+  VM = viewM(); PM = projM(); const I = M4.ident(); prepCut(); if (typeof drawVolume === 'function') drawVolume();
   const showB = S.B && S.show.B, showA = S.A && S.show.A; const bA = S.boneAlpha; const isT = k => k === 'tu' || k === 'tl'; const isBone = k => k === 'skull' || k === 'mand';
   const colA = k => S.reg && showB ? (k === 'skin' ? [0.86, 0.84, 0.83] : [0.84, 0.84, 0.86]) : isT(k) ? COL_T : k === 'skin' ? [0.93, 0.84, 0.78] : k === 'mand' ? [0.70, 0.80, 0.97] : [0.95, 0.95, 0.97];
   const colB = (k, map) => map ? COL_B : isT(k) ? [0.98, 0.80, 0.85] : k === 'mand' ? [0.93, 0.52, 0.66] : COL_B;
@@ -1288,6 +1308,7 @@ function draw() {
   // measurements
   gl.disable(gl.DEPTH_TEST); const lp = [], pa = [], pb = [];
   for (const m of S.meas) { lp.push(...m.a, ...m.b); pa.push(...m.a); pb.push(...m.b); } if (S.measA) pa.push(...S.measA);
+  if (S.pts) { for (const q of S.pts) { if (S.show.A) pa.push(...q.a); if (S.show.B) pb.push(...M4.pt(S.Ti, q.b)); } if (S.ptA) pa.push(...S.ptA); }
   drawPrims(lp, gl.LINES, [0.21, 0.14, 0.58]); drawPrims(pa, gl.POINTS, [0.21, 0.14, 0.58], 10 * Math.min(2, devicePixelRatio || 1)); drawPrims(pb, gl.POINTS, [0.9, 0.08, 0.35], 10 * Math.min(2, devicePixelRatio || 1));
   gl.enable(gl.DEPTH_TEST);
 }
@@ -1423,7 +1444,8 @@ function drawSlices() {
       if (LA) a = sampleL(LA, KA[0][0] * w[0] + KA[0][1] * w[1] + KA[0][2] * w[2] + KA[0][3], KA[1][0] * w[0] + KA[1][1] * w[1] + KA[1][2] * w[2] + KA[1][3], KA[2][0] * w[0] + KA[2][1] * w[1] + KA[2][2] * w[2] + KA[2][3]);
       if (LB) { const q = M4.pt(T, w); b = sampleL(LB, KB[0][0] * q[0] + KB[0][1] * q[1] + KB[0][2] * q[2] + KB[0][3], KB[1][0] * q[0] + KB[1][1] * q[1] + KB[1][2] * q[2] + KB[1][3], KB[2][0] * q[0] + KB[2][1] * q[1] + KB[2][2] * q[2] + KB[2][3]); if (b === b) b = (b - cal[1]) / cal[0]; }
       const ga = g(a), gb = g(b); const o = (y * W + x) * 4; let r, gg, bb;
-      if (S.slMode === 'fuse') { r = ga; gg = gb; bb = ga; }
+      if (S.ptMode === 1) { r = gg = bb = ga; } else if (S.ptMode === 2) { r = gg = bb = gb; }
+      else if (S.slMode === 'fuse') { r = ga; gg = gb; bb = ga; }
       else if (S.slMode === 'blend') { const m = ga * (1 - S.blend) + gb * S.blend; r = gg = bb = m; }
       else { const ch = ((x >> 5) + (y >> 5)) & 1; r = gg = bb = ch ? gb : ga; }
       if (showZ && S.showZone && zf(w[0], w[1], w[2]) && labelAt(S.A.seg, w) === 1) { r = r * 0.45 + 140; gg *= 0.45; bb *= 0.45; } /* the zone used for the superimposition — red */
@@ -1442,6 +1464,7 @@ let slDrag = null;
 for (const [cv, R, D, ax] of SLV) { const can = $(cv);
   const toW = e => { const r = can.getBoundingClientRect(); const u = (e.clientX - r.left) / r.width - 0.5, v = (e.clientY - r.top) / r.height - 0.5; const F = slField(), c = volCenter(S.A || S.B); const w = [0, 1, 2].map(i => c[i] + R[i] * u * F + D[i] * v * F); w[ax] = S.P[ax]; return w; };
   can.addEventListener('pointerdown', e => { if (!S.A && !S.B) return; const w = toW(e); const r = can.getBoundingClientRect();
+    if (S.ptMode) { ptPlace(S.ptMode === 1 ? 'A' : 'B', w, M4.pt(S.T, w)); return; }
     if (S.A && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zoneFn(S.A).box.z0])[1] / can.width * r.height; if (Math.abs(e.clientY - r.top - yy) < 7) { slDrag = { cv, toW }; can.setPointerCapture(e.pointerId); return; } }
     S.P = w; drawSlices(); });
   can.addEventListener('pointermove', e => { if (!slDrag || slDrag.cv !== cv) return; const w = toW(e); $('#roiLim').value = roiModeV() === 'acb' ? Math.round(w[2] + 5 - S.A.zC) : Math.round(w[2] - S.A.zT); drawSlices(); });
@@ -1588,6 +1611,150 @@ $('#exSegA').onclick = () => exportSeg('A'); $('#exSegB').onclick = () => export
 
 renderLegend(); renderRegInfo(); requestDraw();
 window.__S = S;
+
+/* ============================================================
+   Quick mode (no segmentation): volume rendering of both scans, superimposition by points and/or by density.
+   ============================================================ */
+S.mode = 'precise';
+S.vol = { on: false, thr: 450, texA: null, texB: null };
+S.pts = []; S.ptMode = 0; S.ptA = null;
+
+/* ---------- 3D textures ---------- */
+function volTexture(X) {
+  const V = X.V, ns = V.nrm ? V.nrm[0] : 1, no = V.nrm ? V.nrm[1] : 0; const f = Math.max(1, Math.ceil(Math.max(V.nx, V.ny, V.nz) / 320));
+  const nx = Math.floor(V.nx / f), ny = Math.floor(V.ny / f), nz = Math.floor(V.nz / f); const d = new Uint8Array(nx * ny * nz); const w = 1 / (f * f * f);
+  for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { let s = 0;
+    for (let c = 0; c < f; c++) for (let b = 0; b < f; b++) { const row = ((k * f + c) * V.ny + j * f + b) * V.nx + i * f; for (let a = 0; a < f; a++) s += V.vol[row + a]; }
+    const v = (s * w) * ns + no; d[(k * ny + j) * nx + i] = Math.max(0, Math.min(255, Math.round((v + 400) / 3000 * 255))); }
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_3D, tex); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  gl.texImage3D(gl.TEXTURE_3D, 0, gl.R8, nx, ny, nz, 0, gl.RED, gl.UNSIGNED_BYTE, d);
+  for (const [p, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_3D, p, v);
+  // world → texture coordinates
+  const o = [0, 1, 2].map(r => V.origin[r] + V.ex[r] * V.sx * (f - 1) / 2 + V.ey[r] * V.sy * (f - 1) / 2 + V.ez[r] * V.sz * (f - 1) / 2);
+  const L = { nx, ny, nz, sx: V.sx * f, sy: V.sy * f, sz: V.sz * f, origin: o, ex: V.ex, ey: V.ey, ez: V.ez }; const K = idxAffine(L); const n = [nx, ny, nz];
+  const rows = [0, 1, 2].map(r => [K[r][0] / n[r], K[r][1] / n[r], K[r][2] / n[r], (K[r][3] + 0.5) / n[r]]);
+  const M = new Float32Array([rows[0][0], rows[1][0], rows[2][0], 0, rows[0][1], rows[1][1], rows[2][1], 0, rows[0][2], rows[1][2], rows[2][2], 0, rows[0][3], rows[1][3], rows[2][3], 1]);
+  // world box of the volume
+  const cs = []; for (const a of [0, V.nx - 1]) for (const b of [0, V.ny - 1]) for (const c of [0, V.nz - 1]) cs.push([0, 1, 2].map(r => V.origin[r] + V.ex[r] * V.sx * a + V.ey[r] * V.sy * b + V.ez[r] * V.sz * c));
+  return { tex, M, corners: cs };
+}
+function ensureVolTex() { for (const sl of ['A', 'B']) { const X = S[sl]; if (X && !X.vt) X.vt = volTexture(X); } }
+
+const RVS = `#version 300 es
+in vec2 aP; out vec2 vNDC; void main(){ vNDC = aP; gl_Position = vec4(aP, 0.0, 1.0); }`;
+const RFS = `#version 300 es
+precision highp float; precision highp sampler3D;
+uniform sampler3D uA, uB; uniform mat4 uMA, uMB, uInvVP; uniform int uHasA, uHasB; uniform vec3 uLo, uHi, uDir; uniform float uStep, uThr; uniform vec2 uOp; uniform vec3 uColA, uColB; uniform vec4 uClip; uniform int uClipOn;
+in vec2 vNDC; out vec4 o;
+float sA(vec3 p){ vec3 t = (uMA * vec4(p, 1.0)).xyz; if (any(lessThan(t, vec3(0.0))) || any(greaterThan(t, vec3(1.0)))) return 0.0; return texture(uA, t).r; }
+float sB(vec3 p){ vec3 t = (uMB * vec4(p, 1.0)).xyz; if (any(lessThan(t, vec3(0.0))) || any(greaterThan(t, vec3(1.0)))) return 0.0; return texture(uB, t).r; }
+void main(){
+  vec4 n = uInvVP * vec4(vNDC, -1.0, 1.0); vec3 ro = n.xyz / n.w; vec3 rd = normalize(uDir);
+  vec3 t0 = (uLo - ro) / rd, t1 = (uHi - ro) / rd; vec3 a3 = min(t0, t1), b3 = max(t0, t1); float ta = max(max(a3.x, a3.y), a3.z), tb = min(min(b3.x, b3.y), b3.z); if (tb <= max(ta, 0.0)) discard;
+  vec4 acc = vec4(0.0); float e = uStep; float t = max(ta, 0.0) + uStep * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453); /* jittered start: no banding */
+  for (int i = 0; i < 2000; i++) { if (t > tb || acc.a > 0.97) break; vec3 p = ro + rd * t; t += uStep;
+    if (uClipOn == 1 && dot(uClip.xyz, p) > uClip.w) continue;
+    float va = uHasA == 1 ? sA(p) : 0.0, vb = uHasB == 1 ? sB(p) : 0.0;
+    float aa = smoothstep(uThr, uThr + 0.05, va) * uOp.x, ab = smoothstep(uThr, uThr + 0.05, vb) * uOp.y; float s = aa + ab; if (s < 0.002) continue;
+    vec3 g = aa >= ab ? vec3(sA(p + vec3(e,0,0)) - sA(p - vec3(e,0,0)), sA(p + vec3(0,e,0)) - sA(p - vec3(0,e,0)), sA(p + vec3(0,0,e)) - sA(p - vec3(0,0,e)))
+                      : vec3(sB(p + vec3(e,0,0)) - sB(p - vec3(e,0,0)), sB(p + vec3(0,e,0)) - sB(p - vec3(0,e,0)), sB(p + vec3(0,0,e)) - sB(p - vec3(0,0,e)));
+    float l = 0.3 + 0.7 * abs(dot(normalize(g + 1e-6), rd)); vec3 c = (uColA * aa + uColB * ab) / s * l; float al = clamp(s, 0.0, 1.0) * 0.75;
+    acc.rgb += (1.0 - acc.a) * al * c; acc.a += (1.0 - acc.a) * al; }
+  if (acc.a < 0.01) discard; o = acc; }`;
+const rprog = (() => { const sh = (t, src) => { const x = gl.createShader(t); gl.shaderSource(x, src); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(x)); return x; };
+  const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, RVS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, RFS)); gl.bindAttribLocation(p, 0, 'aP'); gl.linkProgram(p); return p; })();
+const RU = {}; for (const n of ['uA', 'uB', 'uMA', 'uMB', 'uInvVP', 'uHasA', 'uHasB', 'uLo', 'uHi', 'uDir', 'uStep', 'uThr', 'uOp', 'uColA', 'uColB', 'uClip', 'uClipOn']) RU[n] = gl.getUniformLocation(rprog, n);
+const fsTri = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, fsTri); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+function inv4g(m) { const a = m, inv = new Float32Array(16); // general 4×4 inverse (column-major)
+  inv[0] = a[5] * a[10] * a[15] - a[5] * a[11] * a[14] - a[9] * a[6] * a[15] + a[9] * a[7] * a[14] + a[13] * a[6] * a[11] - a[13] * a[7] * a[10];
+  inv[4] = -a[4] * a[10] * a[15] + a[4] * a[11] * a[14] + a[8] * a[6] * a[15] - a[8] * a[7] * a[14] - a[12] * a[6] * a[11] + a[12] * a[7] * a[10];
+  inv[8] = a[4] * a[9] * a[15] - a[4] * a[11] * a[13] - a[8] * a[5] * a[15] + a[8] * a[7] * a[13] + a[12] * a[5] * a[11] - a[12] * a[7] * a[9];
+  inv[12] = -a[4] * a[9] * a[14] + a[4] * a[10] * a[13] + a[8] * a[5] * a[14] - a[8] * a[6] * a[13] - a[12] * a[5] * a[10] + a[12] * a[6] * a[9];
+  inv[1] = -a[1] * a[10] * a[15] + a[1] * a[11] * a[14] + a[9] * a[2] * a[15] - a[9] * a[3] * a[14] - a[13] * a[2] * a[11] + a[13] * a[3] * a[10];
+  inv[5] = a[0] * a[10] * a[15] - a[0] * a[11] * a[14] - a[8] * a[2] * a[15] + a[8] * a[3] * a[14] + a[12] * a[2] * a[11] - a[12] * a[3] * a[10];
+  inv[9] = -a[0] * a[9] * a[15] + a[0] * a[11] * a[13] + a[8] * a[1] * a[15] - a[8] * a[3] * a[13] - a[12] * a[1] * a[11] + a[12] * a[3] * a[9];
+  inv[13] = a[0] * a[9] * a[14] - a[0] * a[10] * a[13] - a[8] * a[1] * a[14] + a[8] * a[2] * a[13] + a[12] * a[1] * a[10] - a[12] * a[2] * a[9];
+  inv[2] = a[1] * a[6] * a[15] - a[1] * a[7] * a[14] - a[5] * a[2] * a[15] + a[5] * a[3] * a[14] + a[13] * a[2] * a[7] - a[13] * a[3] * a[6];
+  inv[6] = -a[0] * a[6] * a[15] + a[0] * a[7] * a[14] + a[4] * a[2] * a[15] - a[4] * a[3] * a[14] - a[12] * a[2] * a[7] + a[12] * a[3] * a[6];
+  inv[10] = a[0] * a[5] * a[15] - a[0] * a[7] * a[13] - a[4] * a[1] * a[15] + a[4] * a[3] * a[13] + a[12] * a[1] * a[7] - a[12] * a[3] * a[5];
+  inv[14] = -a[0] * a[5] * a[14] + a[0] * a[6] * a[13] + a[4] * a[1] * a[14] - a[4] * a[2] * a[13] - a[12] * a[1] * a[6] + a[12] * a[2] * a[5];
+  inv[3] = -a[1] * a[6] * a[11] + a[1] * a[7] * a[10] + a[5] * a[2] * a[11] - a[5] * a[3] * a[10] - a[9] * a[2] * a[7] + a[9] * a[3] * a[6];
+  inv[7] = a[0] * a[6] * a[11] - a[0] * a[7] * a[10] - a[4] * a[2] * a[11] + a[4] * a[3] * a[10] + a[8] * a[2] * a[7] - a[8] * a[3] * a[6];
+  inv[11] = -a[0] * a[5] * a[11] + a[0] * a[7] * a[9] + a[4] * a[1] * a[11] - a[4] * a[3] * a[9] - a[8] * a[1] * a[7] + a[8] * a[3] * a[5];
+  inv[15] = a[0] * a[5] * a[10] - a[0] * a[6] * a[9] - a[4] * a[1] * a[10] + a[4] * a[2] * a[9] + a[8] * a[1] * a[6] - a[8] * a[2] * a[5];
+  let det = a[0] * inv[0] + a[1] * inv[4] + a[2] * inv[8] + a[3] * inv[12]; det = 1 / det; for (let i = 0; i < 16; i++) inv[i] *= det; return inv; }
+function volBox() { const cs = []; if (S.A && S.A.vt) cs.push(...S.A.vt.corners); if (S.B && S.B.vt) for (const c of S.B.vt.corners) cs.push(M4.pt(S.Ti, c));
+  return [[0, 1, 2].map(r => Math.min(...cs.map(c => c[r]))), [0, 1, 2].map(r => Math.max(...cs.map(c => c[r])))]; }
+function drawVolume() {
+  if (!S.vol.on || (!S.A && !S.B)) return; ensureVolTex(); const hasA = !!(S.A && S.show.A), hasB = !!(S.B && S.show.B); if (!hasA && !hasB) return;
+  gl.useProgram(rprog); gl.disable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.bindBuffer(gl.ARRAY_BUFFER, fsTri); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); for (const a of [1, 2, 3]) gl.disableVertexAttribArray(a);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, S.A && S.A.vt ? S.A.vt.tex : null); gl.uniform1i(RU.uA, 1);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_3D, S.B && S.B.vt ? S.B.vt.tex : null); gl.uniform1i(RU.uB, 2); gl.activeTexture(gl.TEXTURE0);
+  if (S.A && S.A.vt) gl.uniformMatrix4fv(RU.uMA, false, S.A.vt.M); if (S.B && S.B.vt) gl.uniformMatrix4fv(RU.uMB, false, M4.mul(S.B.vt.M, S.T));
+  gl.uniform1i(RU.uHasA, hasA ? 1 : 0); gl.uniform1i(RU.uHasB, hasB ? 1 : 0); gl.uniformMatrix4fv(RU.uInvVP, false, inv4g(M4.mul(PM, VM)));
+  const [lo, hi] = volBox(); gl.uniform3fv(RU.uLo, lo); gl.uniform3fv(RU.uHi, hi); gl.uniform3fv(RU.uDir, eyeDir().map(v => -v));
+  const diag = Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]); gl.uniform1f(RU.uStep, Math.max(0.3, diag / 900)); gl.uniform1f(RU.uThr, (S.vol.thr + 400) / 3000);
+  const reg = !!(S.reg && hasA && hasB); gl.uniform2f(RU.uOp, hasA ? S.opA : 0, hasB ? S.opB : 0);
+  gl.uniform3fv(RU.uColA, [0.96, 0.93, 0.86]); gl.uniform3fv(RU.uColB, reg || !hasA ? [0.2, 0.82, 0.82] : [0.2, 0.82, 0.82]);
+  const C = S.cut; if (C.on && C.clip && C.pl) { const p = C.pl, sg = (dot(p.n, eyeDir()) >= 0 ? 1 : -1) * (C.flip ? -1 : 1); gl.uniform1i(RU.uClipOn, 1); gl.uniform4f(RU.uClip, p.n[0] * sg, p.n[1] * sg, p.n[2] * sg, sg * dot(p.n, p.c)); } else gl.uniform1i(RU.uClipOn, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.useProgram(prog); }
+
+/* ---------- picking on the volume: first voxel denser than the threshold along the ray ---------- */
+function volPick(e, slot) { const X = S[slot]; if (!X) return null; const r = canvas.getBoundingClientRect(); const nx = (e.clientX - r.left) / r.width * 2 - 1, ny = 1 - (e.clientY - r.top) / r.height * 2;
+  const IV = inv4g(M4.mul(PM || projM(), VM || viewM())); const q = [IV[0] * nx + IV[4] * ny - IV[8] + IV[12], IV[1] * nx + IV[5] * ny - IV[9] + IV[13], IV[2] * nx + IV[6] * ny - IV[10] + IV[14], IV[3] * nx + IV[7] * ny - IV[11] + IV[15]];
+  const ro = [q[0] / q[3], q[1] / q[3], q[2] / q[3]], rd = eyeDir().map(v => -v); const [lo, hi] = volBox();
+  let ta = -Infinity, tb = Infinity; for (let i = 0; i < 3; i++) { const a = (lo[i] - ro[i]) / rd[i], b = (hi[i] - ro[i]) / rd[i]; ta = Math.max(ta, Math.min(a, b)); tb = Math.min(tb, Math.max(a, b)); } if (tb <= ta) return null;
+  const L = nativeLevel(X.V), K = idxAffine(L); const thr = S.vol.thr; const C = S.cut;
+  for (let t = Math.max(ta, 0); t < tb; t += 0.25) { let p = ro.map((v, i) => v + rd[i] * t); if (C.on && C.clip && C.pl) { const sg = (dot(C.pl.n, eyeDir()) >= 0 ? 1 : -1) * (C.flip ? -1 : 1); if (sg * (dot(C.pl.n, p) - dot(C.pl.n, C.pl.c)) > 0) continue; }
+    const w = slot === 'B' ? M4.pt(S.T, p) : p; const v = sampleL(L, K[0][0] * w[0] + K[0][1] * w[1] + K[0][2] * w[2] + K[0][3], K[1][0] * w[0] + K[1][1] * w[1] + K[1][2] * w[2] + K[1][3], K[2][0] * w[0] + K[2][1] * w[1] + K[2][2] * w[2] + K[2][3]);
+    if (v === v && v > thr) return { p, w }; }
+  return null; }
+
+/* ---------- superimposition by points (Kabsch / Horn) ---------- */
+function rigidFromPairs(A, B) { const n = A.length; const ca = [0, 1, 2].map(k => A.reduce((s, p) => s + p[k], 0) / n), cb = [0, 1, 2].map(k => B.reduce((s, p) => s + p[k], 0) / n);
+  const Sx = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; for (let i = 0; i < n; i++) for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) Sx[r][c] += (A[i][r] - ca[r]) * (B[i][c] - cb[c]);
+  const [xx, xy, xz] = Sx[0], [yx, yy, yz] = Sx[1], [zx, zy, zz] = Sx[2];
+  const N = [[xx + yy + zz, yz - zy, zx - xz, xy - yx], [yz - zy, xx - yy - zz, xy + yx, zx + xz], [zx - xz, xy + yx, -xx + yy - zz, yz + zy], [xy - yx, zx + xz, yz + zy, -xx - yy + zz]];
+  const sh = 1 + Math.abs(xx) + Math.abs(yy) + Math.abs(zz) + Math.abs(xy) + Math.abs(xz) + Math.abs(yx) + Math.abs(yz) + Math.abs(zx) + Math.abs(zy); let q = [1, 0.01, 0.02, 0.03];
+  for (let it = 0; it < 500; it++) { const z = [0, 1, 2, 3].map(r => N[r].reduce((s, v, c) => s + v * q[c], 0) + sh * q[r]); const l = Math.hypot(...z); q = z.map(v => v / l); }
+  const [w, x, y, zq] = q; const R = [w * w + x * x - y * y - zq * zq, 2 * (x * y - w * zq), 2 * (x * zq + w * y), 2 * (x * y + w * zq), w * w - x * x + y * y - zq * zq, 2 * (y * zq - w * x), 2 * (x * zq - w * y), 2 * (y * zq + w * x), w * w - x * x - y * y + zq * zq];
+  return { R, ca, cb }; }
+function anglesOf(R) { const ry = -Math.asin(Math.max(-1, Math.min(1, R[6]))); return [Math.atan2(R[7], R[8]) * 180 / Math.PI, ry * 180 / Math.PI, Math.atan2(R[3], R[0]) * 180 / Math.PI]; }
+function regByPoints() { if (S.pts.length < 3) { toast('Нужно хотя бы 3 пары точек (лучше 5–7, разнесённых по черепу)'); return; }
+  const { R, ca, cb } = rigidFromPairs(S.pts.map(p => p.a), S.pts.map(p => p.b)); const p = [...anglesOf(R), 0, 0, 0];
+  S.reg = { c: ca, t0: [0, 1, 2].map(i => cb[i] - ca[i]), p, pAuto: p.slice(), sc: 1, useSc: false, ncc: NaN, cal: [1, 0], lim: roiLimit(), mode: roiModeV(), secs: 0, nPts: 0, byPoints: true };
+  updT(); renderPts(); renderRegInfo(); renderNudge(); if (!S.opSet) { S.opSet = true; } $('#regFine').disabled = false; $('#exMat').disabled = $('#exRep').disabled = false; if (S.A.mesh && S.B.mesh) { computeMaps(); renderRegInfo(); }
+  requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); }
+function renderPts() { const el = $('#ptList'); if (!S.pts.length && !S.ptA) { el.innerHTML = ''; return; }
+  const T = S.reg && S.reg.byPoints ? S.T : null;
+  el.innerHTML = `<table class="ms"><tr><th>№</th><th>до</th><th>после</th><th>ошибка</th><th></th></tr>` + S.pts.map((p, i) => { const e = T ? Math.hypot(...M4.pt(T, p.a).map((v, k) => v - p.b[k])) : null; return `<tr><td>${i + 1}</td><td>✓</td><td>✓</td><td>${e === null ? '—' : fmt(e, 1) + ' мм'}</td><td><button data-pdel="${i}">✕</button></td></tr>`; }).join('') +
+    (S.ptA ? `<tr><td>${S.pts.length + 1}</td><td>✓</td><td>…</td><td></td><td></td></tr>` : '') + '</table>';
+  el.querySelectorAll('[data-pdel]').forEach(b => b.onclick = () => { S.pts.splice(+b.dataset.pdel, 1); renderPts(); requestDraw(); }); }
+function ptStatus() { const b = $('#ptGo'); b.classList.toggle('on', !!S.ptMode); b.textContent = !S.ptMode ? '📍 Ставить точки' : S.ptMode === 1 ? 'Точка на «до»…' : 'Та же точка на «после»…'; }
+function ptPlace(slot, wA, wB) { // wA: point in the «before» frame; wB: point in the «after» scan's own frame
+  if (S.ptMode === 1 && slot === 'A') { S.ptA = wA; S.ptMode = 2; S.show.A = false; S.show.B = true; $('#shA').checked = false; $('#shB').checked = true; }
+  else if (S.ptMode === 2 && slot === 'B') { S.pts.push({ a: S.ptA, b: wB }); S.ptA = null; S.ptMode = 1; S.show.A = true; S.show.B = false; $('#shA').checked = true; $('#shB').checked = false; if (S.pts.length >= 3) regByPoints(); }
+  ptStatus(); renderPts(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); }
+$('#ptGo').onclick = () => { if (!S.A || !S.B) { toast('Сначала загрузите оба снимка'); return; } S.ptMode = S.ptMode ? 0 : 1; S.ptA = null;
+  S.show.A = S.ptMode !== 2; S.show.B = !S.ptMode; $('#shA').checked = S.show.A; $('#shB').checked = S.show.B; if (!S.ptMode) { S.show.A = S.show.B = true; $('#shA').checked = $('#shB').checked = true; }
+  ptStatus(); renderPts(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); };
+$('#ptFit').onclick = regByPoints;
+$('#ptClear').onclick = () => { S.pts = []; S.ptA = null; renderPts(); requestDraw(); };
+canvas.addEventListener('pointerdown', e => { if (!S.ptMode || e.button !== 0 || e.altKey) return; const slot = S.ptMode === 1 ? 'A' : 'B';
+  let h = null; if (S.vol.on) { const v = volPick(e, slot); if (v) h = { a: v.p, b: v.w }; } if (!h) { const m = pickAt(e, slot); if (m) h = { a: m.p, b: slot === 'B' ? M4.pt(S.T, m.p) : m.p }; }
+  if (!h) { toast('Не попали в кость — щёлкните по поверхности'); return; } e.stopImmediatePropagation(); ptPlace(slot, h.a, h.b); }, true);
+
+/* ---------- mode switch ---------- */
+function applyMode() { const fast = S.mode === 'fast'; document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === S.mode));
+  document.querySelectorAll('.precOnly').forEach(el => el.classList.toggle('hidden', fast)); $('#modeHelp').textContent = fast
+    ? 'Быстро: без нейросети, снимки показываются объёмом (как в Invivo). Совмещение — автоматически по плотности или по точкам. Секунды вместо минут.'
+    : 'Точно: нейросеть размечает кость и каждый зуб, есть карта расстояний, разрез моделей, выгрузка сегментации. Совмещение — по основанию черепа (Cevidanes).';
+  S.vol.on = fast || $('#volOn').checked; $('#volOn').checked = S.vol.on; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); }
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (S.mode === b.dataset.mode) return; if ((S.A || S.B) && !confirm('Режим меняется для новых снимков. Уже загруженные останутся как есть. Продолжить?')) return; S.mode = b.dataset.mode; applyMode(); });
+$('#volOn').onchange = () => { S.vol.on = $('#volOn').checked; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); };
+$('#volThr').oninput = () => { S.vol.thr = +$('#volThr').value; $('#volThrV').textContent = S.vol.thr; requestDraw(); };
+applyMode();
 </script>
 </body>
 </html>
