@@ -98,6 +98,22 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 #busy .pb i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--pink))}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;z-index:60;display:none;max-width:70vw}
 .hidden{display:none!important}
+
+#tb3d{position:absolute;top:12px;right:12px;z-index:6;display:flex;gap:4px;align-items:center;background:#fff;border-radius:14px;padding:4px;box-shadow:var(--shadow)}
+#tb3d .btn{border:0}
+.tg{display:flex;align-items:center;cursor:pointer;margin:0}.tg input{display:none}
+.tg span{padding:7px 12px;border-radius:10px;font-weight:700;font-size:13px;color:var(--muted);border:1.5px dashed #d9d4ea}
+.tg.a input:checked+span{background:#efedf8;color:#4b3f8f;border:1.5px solid #C9C4E6}
+.tg.b input:checked+span{background:#fde7ef;color:#E5155A;border:1.5px solid #f3a5c0}
+.flp{position:absolute;top:64px;right:12px;z-index:6;width:300px;max-height:calc(100% - 140px);overflow:auto;background:#fff;border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.flp .fh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.flp .x{border:0;background:none;cursor:pointer;font-size:15px;color:var(--muted)}
+.choice2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0 8px}
+.choice{display:flex;flex-direction:column;gap:3px;text-align:left;padding:9px 10px;border-radius:12px;border:1.5px solid #e4e0f0;background:#fff;cursor:pointer;font:inherit}
+.choice b{font-size:13px;color:#2b2350}.choice small{font-size:11px;color:var(--muted);line-height:1.25}
+.choice.on{border-color:#E5155A;background:#fff3f7}.choice.on b{color:#E5155A}
+.btn.wide{width:100%;justify-content:center;padding:11px}
+.btn.ghost{background:none;border-style:dashed}
+.flp input[type=range]{accent-color:#E5155A;width:46%}.flp .fld{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:7px 0;font-size:12.5px}
 </style>
 </head>
 <body>
@@ -105,7 +121,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.2</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.3</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -119,10 +135,11 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="slot" id="slotA"><span class="dot" style="background:#C9C4E6"></span><span class="k">До</span><span class="f" id="infoA">не загружено</span></div>
     <div class="row">
       <button class="btn sm" data-open="A" data-kind="dir">📁 Папка DICOM</button>
-      <button class="btn sm" data-open="A" data-kind="files">Файлы</button>
+      <button class="btn sm ghost" data-more>другие форматы ▾</button>
+      <span class="more hidden"><button class="btn sm" data-open="A" data-kind="files">Файлы</button>
       <button class="btn sm" data-open="A" data-kind="zip">ZIP</button>
       <button class="btn sm" data-open="A" data-kind="nii">NIfTI</button>
-      <button class="btn sm" data-open="A" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
+      <button class="btn sm precOnly" data-open="A" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button></span>
     </div>
   </div>
 
@@ -132,10 +149,11 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="slot" id="slotB"><span class="dot" style="background:#E5155A"></span><span class="k">После</span><span class="f" id="infoB">не загружено</span></div>
     <div class="row">
       <button class="btn sm" data-open="B" data-kind="dir">📁 Папка DICOM</button>
-      <button class="btn sm" data-open="B" data-kind="files">Файлы</button>
+      <button class="btn sm ghost" data-more>другие форматы ▾</button>
+      <span class="more hidden"><button class="btn sm" data-open="B" data-kind="files">Файлы</button>
       <button class="btn sm" data-open="B" data-kind="zip">ZIP</button>
       <button class="btn sm" data-open="B" data-kind="nii">NIfTI</button>
-      <button class="btn sm" data-open="B" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button>
+      <button class="btn sm precOnly" data-open="B" data-kind="seg" title="Готовая сегментация DentalSegmentator (NIfTI) для этого снимка">сегментация</button></span>
     </div>
     <select class="s precOnly" id="segMode" title="Как искать кость и зубы">
       <option value="precise" selected>Нейросеть · точно</option>
@@ -147,18 +165,27 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 
   <div class="sec" id="secR">
     <h3><span class="n">3</span>Наложение<button class="q" data-h="hR">?</button></h3>
-    <div class="help" id="hR">Снимок «после» совмещается со снимком «до» по костям, которые не меняются при лечении. По умолчанию — передний отдел основания черепа изнутри, как в методе Cevidanes: решётчатая пластинка, крыши орбит, площадка клиновидной кости, передние наклонённые отростки и турецкое седло. Лобная пазуха, носовые кости и клетки решётчатого лабиринта в зону не входят — они растут и у подростков. Уровень решётчатой пластинки программа находит сама по верху клеток решётчатого лабиринта. Совмещение по вокселям (плотности): программа поворачивает и сдвигает второй снимок, пока картины костей в зоне не совпадут лучше всего. Зона показана красным на срезах, её нижнюю границу (розовая линия) можно перетащить мышью. «Весь череп выше нёба» берёт больше кости — точнее у взрослых, но у растущих пациентов туда попадает растущая верхняя челюсть.</div>
-    <select class="s" id="roiMode">
+    <div class="help" id="hR"><b>По основанию черепа</b> (Cevidanes) — совмещение по переднему отделу основания черепа изнутри, который почти не меняется после 7–8 лет. Видно всё сразу: рост, смещение верхней и нижней челюсти, перемещение всех зубов.<br><b>По нижней челюсти</b> — совмещение по телу и симфизу нижней челюсти ниже верхушек корней (стабильные структуры по Бьорку), без альвеолярного отростка и мыщелков. Видно, как сместились нижние зубы внутри челюсти; поворот челюсти при этом не мешает. Подбородок должен быть в поле обоих снимков.<br>В «Дополнительно» — сдвиг зоны (розовую линию можно тянуть на срезах), подгонка масштаба для разных томографов и совмещение по точкам, как в Invivo.</div>
+    <div class="choice2">
+      <button class="choice on" data-roi="acb"><b>По основанию черепа</b><small>рост, положение челюстей и всех зубов</small></button>
+      <button class="choice" data-roi="mand"><b>По нижней челюсти</b><small>как сместились нижние зубы внутри челюсти</small></button>
+    </div>
+    <button class="btn primary wide" id="regGo" disabled>Совместить</button>
+    <div class="res" id="regInfo"></div>
+    <details id="advR"><summary>Дополнительно: зона, масштаб, по точкам</summary>
+    <div class="fld"><span>Зона</span><select class="s" id="roiMode" style="margin:0">
       <option value="acb" selected>Передний отдел основания черепа (Cevidanes)</option>
+      <option value="mand">Нижняя челюсть (тело и симфиз, по Бьорку)</option>
       <option value="skull">Весь череп выше нёба (больше кости, только взрослые)</option>
-    </select>
+    </select></div>
     <div class="fld"><span id="roiLimLbl">Сдвиг зоны вверх(+)/вниз(−), мм</span><input id="roiLim" type="number" step="1" value="0"></div>
     <label class="ck" title="Разные томографы бывают откалиброваны по-разному (до 1–2 % по размеру). Галочка подгоняет масштаб второго снимка по зоне основания черепа. У растущих пациентов включайте только если снимки сделаны на разных аппаратах."><input type="checkbox" id="useScale"> снимки с разных томографов — подогнать масштаб</label>
-    <div class="row"><button class="btn primary" id="regGo" disabled>Совместить автоматически</button><button class="btn" id="regFine" disabled title="Уточнить по плотности на полном разрешении (после точек — тоже)">Уточнить</button></div>
     <div class="sub" style="margin-top:8px"><b>По точкам</b> — как в Invivo: щёлкните точку на «до», затем ту же анатомическую точку на «после» (в 3D или на срезах). С 3 пар снимки совмещаются сразу; 5–7 пар, разнесённых по черепу (назион, крыши орбит, скуловые дуги, затылок), дают лучший результат. Потом «Уточнить» доведёт по плотности.</div>
     <div class="row"><button class="btn sm" id="ptGo">📍 Ставить точки</button><button class="btn sm" id="ptFit">Совместить по точкам</button><button class="btn sm" id="ptClear">Очистить</button></div>
     <div id="ptList"></div>
-    <div class="res" id="regInfo"></div>
+
+    <div class="row"><button class="btn" id="regFine" disabled title="Уточнить по плотности на полном разрешении (после точек — тоже)">Уточнить</button></div>
+    </details>
     <details id="nudBox"><summary>Ручная доводка</summary>
       <div class="sub" style="margin-top:4px">Сдвиги и повороты снимка «после» относительно «до». После правки нажмите «Пересчитать карту».</div>
       <div class="nud" id="nud"></div>
@@ -170,34 +197,14 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <h3><span class="n">4</span>Результат<button class="q" data-h="hV">?</button></h3>
     <div class="help" id="hV">Сиреневым — «до» (полупрозрачно), «после» окрашен картой расстояний до положения «до»: зелёный — без изменений, жёлтый/красный — кость или зуб сместились наружу (вперёд, вниз, в сторону от исходной поверхности), голубой/синий — внутрь. Наведите мышь на «после», чтобы увидеть число в мм. «Измерить сдвиг»: щёлкните точку на «до», затем ту же точку на «после» — программа покажет сдвиг по осям: вправо/влево, вперёд/назад, вверх/вниз.</div>
     <div class="row">
-      <label class="ck" style="margin:0"><input type="checkbox" id="shA" checked> до</label>
-      <label class="ck" style="margin:0"><input type="checkbox" id="shB" checked> после</label>
       <label class="ck precOnly" style="margin:0"><input type="checkbox" id="shMap" checked> карта расстояний</label>
     </div>
-    <div class="row">
+    <div class="row precOnly">
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skull" checked> череп/ВЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="mand" checked> НЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="tu" checked> зубы ВЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="tl" checked> зубы НЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skin"> лицо</label>
-    </div>
-    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
-    <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
-      <div class="fld"><span>Яркость</span><input id="volBri" type="range" min="-0.4" max="0.4" step="0.02" value="0"></div>
-      <div class="fld"><span>Контраст</span><input id="volCon" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
-      <div class="fld"><span>Объём (тени)</span><input id="volShade" type="range" min="0" max="1" step="0.05" value="0.75"></div>
-      <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
-    <div class="fld"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
-    <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
-    <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
-    <label class="ck"><input type="checkbox" id="cutOn"> Срез модели плоскостью</label>
-    <div id="cutBox" class="hidden">
-      <select class="s" id="cutPre"><option value="sag">Сагиттальный</option><option value="cor">Корональный</option><option value="ax">Аксиальный</option></select>
-      <div class="fld"><span>Положение <span class="sub" id="cutOffV">0 мм</span></span><input id="cutOff" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="fld"><span>Наклон 1 <span class="sub" id="cutA1V">0°</span></span><input id="cutA1" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="fld"><span>Наклон 2 <span class="sub" id="cutA2V">0°</span></span><input id="cutA2" type="range" min="-90" max="90" step="1" value="0"></div>
-      <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip" checked> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutImg"> снимок на срезе</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
-      <div class="sub" style="margin-top:4px">Модели разрезаются плоскостью, контуры среза: тёмный — «до», цветной — «после» (цвет карты). Alt + мышь — вращать срез, Alt + колесо — двигать. «Снимок на срезе» добавляет сам КЛКТ в плоскости: «до» сиреневым, «после» зелёным.</div>
     </div>
     <div class="fld precOnly"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
     <div class="legend precOnly" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
@@ -251,6 +258,34 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <canvas id="gl"></canvas>
     <div id="hint"><div><b>Загрузите два КЛКТ</b>слева: до лечения и после, затем «Совместить»</div></div>
     <div id="probe"></div>
+    <div id="tb3d">
+      <label class="tg a"><input type="checkbox" id="shA" checked><span>До</span></label>
+      <label class="tg b"><input type="checkbox" id="shB" checked><span>После</span></label>
+      <button class="btn" data-fl="flImg">🎚 Изображение</button>
+      <button class="btn" data-fl="flCut">✂ Разрез</button>
+    </div>
+    <div class="flp hidden" id="flImg"><div class="fh"><b>Изображение</b><button class="x">✕</button></div>
+    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
+    <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
+      <div class="fld"><span>Яркость</span><input id="volBri" type="range" min="-0.4" max="0.4" step="0.02" value="0"></div>
+      <div class="fld"><span>Контраст</span><input id="volCon" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
+      <div class="fld"><span>Объём (тени)</span><input id="volShade" type="range" min="0" max="1" step="0.05" value="0.75"></div>
+      <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
+    <div class="fld precOnly"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
+    <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
+    <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
+    </div>
+    <div class="flp hidden" id="flCut"><div class="fh"><b>Разрез плоскостью</b><button class="x">✕</button></div>
+    <label class="ck"><input type="checkbox" id="cutOn"> Срез модели плоскостью</label>
+    <div id="cutBox" class="hidden">
+      <select class="s" id="cutPre"><option value="sag">Сагиттальный</option><option value="cor">Корональный</option><option value="ax">Аксиальный</option></select>
+      <div class="fld"><span>Положение <span class="sub" id="cutOffV">0 мм</span></span><input id="cutOff" type="range" min="-90" max="90" step="1" value="0"></div>
+      <div class="fld"><span>Наклон 1 <span class="sub" id="cutA1V">0°</span></span><input id="cutA1" type="range" min="-90" max="90" step="1" value="0"></div>
+      <div class="fld"><span>Наклон 2 <span class="sub" id="cutA2V">0°</span></span><input id="cutA2" type="range" min="-90" max="90" step="1" value="0"></div>
+      <div class="row"><label class="ck" style="margin:0"><input type="checkbox" id="cutClip" checked> отсечь модель по срезу</label><label class="ck" style="margin:0"><input type="checkbox" id="cutImg"> снимок на срезе</label><label class="ck" style="margin:0"><input type="checkbox" id="cutFlip"> оставить ближнюю половину</label></div>
+      <div class="sub" style="margin-top:4px">Модели разрезаются плоскостью, контуры среза: тёмный — «до», цветной — «после» (цвет карты). Alt + мышь — вращать срез, Alt + колесо — двигать. «Снимок на срезе» добавляет сам КЛКТ в плоскости: «до» сиреневым, «после» зелёным.</div>
+    </div>
+    </div>
     <div id="views">
       <button class="btn" data-v="front">Спереди</button><button class="btn" data-v="right">Справа</button><button class="btn" data-v="left">Слева</button><button class="btn" data-v="top">Сверху</button><button class="btn" data-v="bottom">Снизу</button>
     </div>
@@ -998,9 +1033,15 @@ function thresholdSeg(V) { // without the network: "bone" by density (Otsu betwe
   let tot = 0, sum = 0; for (let i = 0; i < 128; i++) { tot += H[i]; sum += i * H[i]; } let wB = 0, sB = 0, best = 0, bi = 64; for (let i = 0; i < 128; i++) { wB += H[i]; if (!wB || wB === tot) continue; sB += i * H[i]; const mB = sB / wB, mF = (sum - sB) / (tot - wB); const b = wB * (tot - wB) * (mB - mF) ** 2; if (b > best) { best = b; bi = i; } }
   const otsu = lo + (bi + 1) / 128 * (hi - lo); const thr = otsu + 0.15 * (hi - otsu); const lab = new Uint8Array(N); for (let i = 0; i < N; i++) if (V.vol[i] > thr) lab[i] = 1;
   // enamel: the densest 0.25 % → median height of the crowns; the upper root apices lie ≈ 21 mm above the occlusal level
-  const top = percentile(vals, 0.9975); const zs = []; const A = volAffine(V);
-  for (let k = 0; k < V.nz; k++) for (let j = 0; j < V.ny; j += 2) for (let i = 0; i < V.nx; i += 2) if (V.vol[(k * V.ny + j) * V.nx + i] > top) zs.push(A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]);
-  return { lab, nx: V.nx, ny: V.ny, nz: V.nz, A, thr: true, zTfix: zs.length > 200 ? percentile(zs, 0.5) + 21 : undefined };
+  const top = percentile(vals, 0.9975); const zs = [], xs = []; const A = volAffine(V);
+  for (let k = 0; k < V.nz; k++) for (let j = 0; j < V.ny; j += 2) for (let i = 0; i < V.nx; i += 2) if (V.vol[(k * V.ny + j) * V.nx + i] > top) { zs.push(A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]); xs.push(A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3]); }
+  // the densest voxels form several clusters by height: crowns (narrow — the dental arch, ≤ 5–6 cm wide), and wide ones — the cone-beam edge of the field, headrest, ear rods.
+  // The occlusal level = the biggest narrow cluster.
+  let zOcc; if (zs.length > 200) { const z0 = Math.min(...zs), nb = Math.ceil((Math.max(...zs) - z0) / 12) + 1, c = new Float64Array(nb), sx = new Float64Array(nb), sxx = new Float64Array(nb);
+    zs.forEach((z, q) => { const b = Math.floor((z - z0) / 12); c[b]++; sx[b] += xs[q]; sxx[b] += xs[q] * xs[q]; });
+    let best = -1; for (let b = 0; b < nb; b++) { if (c[b] < zs.length * 0.02) continue; const sd = Math.sqrt(Math.max(0, sxx[b] / c[b] - (sx[b] / c[b]) ** 2)); if (sd <= 28 && (best < 0 || c[b] > c[best])) best = b; }
+    if (best < 0) best = c.indexOf(Math.max(...c)); const lo = z0 + (best - 1) * 12, hi = z0 + (best + 2) * 12; zOcc = percentile(zs.filter(z => z >= lo && z < hi), 0.5); }
+  return { lab, nx: V.nx, ny: V.ny, nz: V.nz, A, thr: true, zTfix: zOcc === undefined ? undefined : zOcc + 21 };
 }
 async function afterSeg(slot) {
   const X = S[slot]; const nm = slot === 'A' ? 'до' : 'после'; const Nf = X.seg; Nf.Ainv = inv3x4(Nf.A);
@@ -1084,13 +1125,54 @@ function zoneFn(X, lim, mode) { lim = lim === undefined ? roiLimit() : lim; mode
     const zc = X.zC + lim, x0 = X.xMid - 38, x1 = X.xMid + 38, yA = X.yN + 16, yM = X.yN + 45, yP = X.yN + 82;
     const f = (x, y, z) => { if (x < x0 || x > x1 || y < yA || y > yP) return false; return y < yM ? z >= zc - 5 && z <= zc + 18 : z >= zc - 17 && z <= zc + 14; };
     f.box = { z0: zc - 5 }; f.boxes = [{ x0, x1, y0: yA, y1: yM, z0: zc - 5, z1: zc + 18 }, { x0, x1, y0: yM, y1: yP, z0: zc - 17, z1: zc + 14 }]; return f; }
+  if (mode === 'mand') return mandZone(X, lim);
   const z0 = X.zT + lim; const f = (x, y, z) => z >= z0; f.box = { z0 }; f.boxes = []; return f; }
+// lower-jaw zone (Björk-type stable structures): mandibular body and symphysis below the apices of the lower teeth —
+// without the alveolar process (moves with the teeth), the condyles/rami (grow) and the hyoid or spine.
+// With the network: the mandible label. By density: the bone piece connected to the chin, on a 2-voxel grid.
+function mandZone(X, lim) { const Nf = X.seg, zo = X.zT - 21, zTop = zo - 20 + lim, zBot = zo - 85, x0 = X.xMid - 62, x1 = X.xMid + 62, key = lim + '|' + X.zT;
+  if (!X.mz || X.mz.key !== key) X.mz = Nf.thr ? mandComp(X, zo, zTop, zBot, x0, x1) : { key, bb: mandBB(X, zTop, zBot) }; X.mz.key = key; const C = X.mz;
+  let f; if (!Nf.thr) f = (x, y, z) => z <= zTop && z >= zBot;
+  else { const B = Nf.Ainv, s = 2; f = (x, y, z) => { if (z > zTop || z < zBot || x < x0 || x > x1) return false; const i = Math.round(B[0][0] * x + B[0][1] * y + B[0][2] * z + B[0][3]) - C.i0, j = Math.round(B[1][0] * x + B[1][1] * y + B[1][2] * z + B[1][3]) - C.j0, k = Math.round(B[2][0] * x + B[2][1] * y + B[2][2] * z + B[2][3]) - C.k0;
+      if (i < 0 || j < 0 || k < 0) return false; const a = i >> 1, b = j >> 1, c = k >> 1; if (a >= C.ni || b >= C.nj || c >= C.nk) return false; return C.m[(c * C.nj + b) * C.ni + a] === 2; }; }
+  f.lab = Nf.thr ? 1 : 2; f.part = 'mand'; f.box = { z0: zTop }; const b = C.bb; f.boxes = b ? [{ x0: b[0], x1: b[1], y0: b[2], y1: b[3], z0: zBot > b[4] ? zBot : b[4], z1: zTop }] : []; return f; }
+function mandBB(X, zTop, zBot) { const Nf = X.seg, A = Nf.A, bb = [1e9, -1e9, 1e9, -1e9, 1e9, -1e9]; const st = Math.max(1, Math.round(Math.cbrt(Nf.lab.length / 4e6)));
+  for (let k = 0; k < Nf.nz; k += st) for (let j = 0; j < Nf.ny; j += st) for (let i = 0; i < Nf.nx; i += st) { if (Nf.lab[(k * Nf.ny + j) * Nf.nx + i] !== 2) continue; const w = [0, 1, 2].map(r => A[r][0] * i + A[r][1] * j + A[r][2] * k + A[r][3]); if (w[2] > zTop || w[2] < zBot) continue;
+    for (let r = 0; r < 3; r++) { bb[r * 2] = Math.min(bb[r * 2], w[r]); bb[r * 2 + 1] = Math.max(bb[r * 2 + 1], w[r]); } }
+  return bb[0] < 1e8 ? bb : null; }
+function mandComp(X, zo, zTop, zBot, x0, x1) { const Nf = X.seg, A = Nf.A, B = Nf.Ainv;
+  // index box of the world box (all of y)
+  const yLo = -1e4, yHi = 1e4; let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  for (const x of [x0, x1]) for (const z of [zBot, zTop]) for (const y of [yLo, yHi]) for (let r = 0; r < 3; r++) { const v = B[r][0] * x + B[r][1] * y + B[r][2] * z + B[r][3]; lo[r] = Math.min(lo[r], v); hi[r] = Math.max(hi[r], v); }
+  const dims = [Nf.nx, Nf.ny, Nf.nz]; const i0 = [0, 1, 2].map(r => Math.max(0, Math.floor(lo[r]))), i1 = [0, 1, 2].map(r => Math.min(dims[r] - 1, Math.ceil(hi[r])));
+  const ni = ((i1[0] - i0[0]) >> 1) + 1, nj = ((i1[1] - i0[1]) >> 1) + 1, nk = ((i1[2] - i0[2]) >> 1) + 1; const m = new Uint8Array(ni * nj * nk);
+  const wz = (i, j, k) => A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3], wx = (i, j, k) => A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], wy = (i, j, k) => A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3];
+  for (let k = i0[2]; k <= i1[2]; k++) for (let j = i0[1]; j <= i1[1]; j++) { const row = (k * Nf.ny + j) * Nf.nx; for (let i = i0[0]; i <= i1[0]; i++) { if (Nf.lab[row + i] !== 1) continue; const z = wz(i, j, k), x = wx(i, j, k); if (z > zTop || z < zBot || x < x0 || x > x1) continue; m[(((k - i0[2]) >> 1) * nj + ((j - i0[1]) >> 1)) * ni + ((i - i0[0]) >> 1)] = 1; } }
+  // connected pieces of bone (6-neighbours); the mandible = the most anterior big piece at the midline 22–42 mm below the occlusal plane
+  // (LPS: smaller y = anterior). Hyoid and spine lie behind it, edge artefacts and the chin rest are small or lower.
+  const P = ni * nj, cid = new Int32Array(m.length), Q = new Int32Array(m.length); const comps = [];
+  for (let s0 = 0; s0 < m.length; s0++) { if (m[s0] !== 1 || cid[s0]) continue; const id = comps.length + 1; let h = 0, t = 0; Q[t++] = s0; cid[s0] = id; let minY = 1e9, z0c = 1e9, z1c = -1e9;
+    while (h < t) { const q = Q[h++]; const a = q % ni, b = ((q / ni) | 0) % nj, c = (q / P) | 0;
+      const i = i0[0] + a * 2, j = i0[1] + b * 2, k = i0[2] + c * 2; const z = wz(i, j, k); if (z < z0c) z0c = z; if (z > z1c) z1c = z; if (z <= zo - 22 && z >= zo - 42 && Math.abs(wx(i, j, k) - X.xMid) <= 10) { const y = wy(i, j, k); if (y < minY) minY = y; }
+      const nb = [a > 0 ? q - 1 : -1, a < ni - 1 ? q + 1 : -1, b > 0 ? q - ni : -1, b < nj - 1 ? q + ni : -1, c > 0 ? q - P : -1, c < nk - 1 ? q + P : -1];
+      for (const r of nb) if (r >= 0 && m[r] === 1 && !cid[r]) { cid[r] = id; Q[t++] = r; } }
+    comps.push({ id, n: t, minY, h: z1c - z0c, top: z1c }); }
+  const big = comps.filter(c => c.n >= 1500 && c.minY < 1e8 && c.h >= 10 && c.top >= zTop - 5).sort((a, b) => a.minY - b.minY); const by = big.length ? big[0].minY : 1e9;
+  if (!big.length) throw new Error('не нашла нижнюю челюсть на снимке «' + X.name + '» — проверьте, что подбородок в поле снимка, или используйте точный режим');
+  const id = big[0].id; let n = 0; const bb = [1e9, -1e9, 1e9, -1e9, 1e9, -1e9];
+  for (let q = 0; q < m.length; q++) { if (cid[q] !== id) continue; m[q] = 2; n++; if (n % 7) continue; const a = q % ni, b = ((q / ni) | 0) % nj, c = (q / P) | 0; const i = i0[0] + a * 2, j = i0[1] + b * 2, k = i0[2] + c * 2; const w = [wx(i, j, k), wy(i, j, k), wz(i, j, k)]; for (let r = 0; r < 3; r++) { bb[r * 2] = Math.min(bb[r * 2], w[r]); bb[r * 2 + 1] = Math.max(bb[r * 2 + 1], w[r]); } }
+  X.mzDbg = { n, seedY: by, bb, zo, zTop, zBot };
+  if (n < 1500) throw new Error('нижняя челюсть на снимке «' + X.name + '» найдена плохо — попробуйте точный режим');
+  return { m, i0: i0[0], j0: i0[1], k0: i0[2], ni, nj, nk, n, bb }; }
+function zoneName(r, long) { return r.mode === 'acb' ? (long ? 'переднему отделу основания черепа изнутри (решётчатая пластинка, крыши орбит, площадка клиновидной кости, турецкое седло)' : 'передний отдел основания черепа')
+  : r.mode === 'mand' ? (long ? 'нижней челюсти — телу и симфизу ниже верхушек корней (структуры, стабильные по Бьорку); видно перемещение нижних зубов внутри челюсти' : 'нижняя челюсть (тело и симфиз)')
+  : (long ? 'стабильным костям черепа выше нёба' : 'череп выше нёба'); }
 function labelAt(Nf, w) { const B = Nf.Ainv; const i = Math.round(B[0][0] * w[0] + B[0][1] * w[1] + B[0][2] * w[2] + B[0][3]), j = Math.round(B[1][0] * w[0] + B[1][1] * w[1] + B[1][2] * w[2] + B[1][3]), k = Math.round(B[2][0] * w[0] + B[2][1] * w[1] + B[2][2] * w[2] + B[2][3]);
   if (i < 0 || j < 0 || k < 0 || i >= Nf.nx || j >= Nf.ny || k >= Nf.nz) return 0; return Nf.lab[(k * Nf.ny + j) * Nf.nx + i]; }
 // zone mask on a level grid: bone of the skull label above the limit (max-pooled from the label grid), dilated by one voxel
 function roiMask(X, L, zf) {
-  const Nf = X.seg, M = new Uint8Array(L.nx * L.ny * L.nz), K = idxAffine(L), A = Nf.A;
-  for (let k = 0; k < Nf.nz; k++) for (let j = 0; j < Nf.ny; j++) { const row = (k * Nf.ny + j) * Nf.nx; for (let i = 0; i < Nf.nx; i++) { if (Nf.lab[row + i] !== 1) continue;
+  const want = zf.lab || 1, Nf = X.seg, M = new Uint8Array(L.nx * L.ny * L.nz), K = idxAffine(L), A = Nf.A;
+  for (let k = 0; k < Nf.nz; k++) for (let j = 0; j < Nf.ny; j++) { const row = (k * Nf.ny + j) * Nf.nx; for (let i = 0; i < Nf.nx; i++) { if (Nf.lab[row + i] !== want) continue;
     const w0 = A[0][0] * i + A[0][1] * j + A[0][2] * k + A[0][3], w1 = A[1][0] * i + A[1][1] * j + A[1][2] * k + A[1][3], w2 = A[2][0] * i + A[2][1] * j + A[2][2] * k + A[2][3]; if (!zf(w0, w1, w2)) continue;
     const x = Math.round(K[0][0] * w0 + K[0][1] * w1 + K[0][2] * w2 + K[0][3]), y = Math.round(K[1][0] * w0 + K[1][1] * w1 + K[1][2] * w2 + K[1][3]), z = Math.round(K[2][0] * w0 + K[2][1] * w1 + K[2][2] * w2 + K[2][3]);
     if (x >= 0 && y >= 0 && z >= 0 && x < L.nx && y < L.ny && z < L.nz) M[(z * L.ny + y) * L.nx + x] = 1; } }
@@ -1140,7 +1222,7 @@ async function register(fine) {
     const zA = zoneFn(A, lim), zB = zoneFn(B, lim);
     const lev = [4, 2, 1].map(s => ({ s, A: mkLevel(A.V, s), B: mkLevel(B.V, s) }));
     const NA = nativeLevel(A.V), NB = nativeLevel(B.V);
-    busy(true, 'Ищу зону основания черепа…', 0.08); await sleep();
+    busy(true, roiModeV() === 'mand' ? 'Ищу нижнюю челюсть…' : 'Ищу зону основания черепа…', 0.08); await sleep();
     for (const l of lev) { l.mA = roiMask(A, l.A, zA); await sleep(); }
     const mB = roiMask(B, lev[1].B, zB);
     const ptsOf = (l, maxN) => { const r = roiPoints(l.A, l.mA, maxN); return { pts: r.pts, av: aValues(l.A, r.pts) }; };
@@ -1201,16 +1283,21 @@ async function nelderMead(f, x0, step, maxEval) { const n = x0.length; let S0 = 
   let b = 0; for (let i = 1; i <= n; i++) if (F[i] < F[b]) b = i; return S0[b]; }
 function updT() { S.T = S.reg ? paramT(S.reg.p, S.reg.c, S.reg.t0, S.reg.useSc ? S.reg.sc : 1) : M4.ident(); S.Ti = inv4(S.T); if (S.cut) S.cut.dirty = true; }
 $('#regGo').onclick = () => register(false);
+document.querySelectorAll('[data-roi]').forEach(b => b.onclick = () => { $('#roiMode').value = b.dataset.roi; $('#roiMode').onchange(); });
+document.querySelectorAll('[data-more]').forEach(b => b.onclick = () => { const m = b.parentNode.querySelector('.more'); m.classList.toggle('hidden'); b.textContent = m.classList.contains('hidden') ? 'другие форматы ▾' : 'скрыть ▴'; });
+// floating panels over the 3D view (image settings, cut)
+document.querySelectorAll('[data-fl]').forEach(b => b.onclick = () => { const id = b.dataset.fl, el = $('#' + id), open = el.classList.contains('hidden'); document.querySelectorAll('.flp').forEach(p => p.classList.add('hidden')); document.querySelectorAll('[data-fl]').forEach(x => x.classList.remove('on')); if (open) { el.classList.remove('hidden'); b.classList.add('on'); } });
+document.querySelectorAll('.flp .x').forEach(x => x.onclick = () => { x.closest('.flp').classList.add('hidden'); document.querySelectorAll('[data-fl]').forEach(b => b.classList.remove('on')); });
 $('#regFine').onclick = () => register(true);
-$('#roiMode').onchange = () => { $('#roiLim').value = $('#roiMode').value === 'acb' ? 0 : 20; $('#roiLimLbl').textContent = $('#roiMode').value === 'acb' ? 'Сдвиг зоны вверх(+)/вниз(−), мм' : 'Нижняя граница зоны, мм над верхушками корней'; if ($('#viewSl').style.display === 'block') drawSlices(); };
+$('#roiMode').onchange = () => { const m = $('#roiMode').value; document.querySelectorAll('[data-roi]').forEach(b => b.classList.toggle('on', b.dataset.roi === m)); $('#roiLim').value = m === 'skull' ? 20 : 0; $('#roiLimLbl').textContent = m === 'acb' ? 'Сдвиг зоны вверх(+)/вниз(−), мм' : m === 'mand' ? 'Верхняя граница зоны: выше(+)/ниже(−), мм' : 'Нижняя граница зоны, мм над верхушками корней'; $('#regGo').textContent = S.reg && S.reg.mode !== m ? 'Совместить заново' : 'Совместить'; if ($('#viewSl').style.display === 'block') drawSlices(); };
 $('#roiLim').onchange = () => { if ($('#viewSl').style.display === 'block') drawSlices(); };
 function renderRegInfo() {
   const r = S.reg, el = $('#regInfo'); if (!r) { el.innerHTML = S.A && S.B ? '<div class="sub">Оба снимка загружены — нажмите «Совместить» (1–3 минуты).</div>' : ''; return; }
   const q = r.q; const cls = q === undefined ? '' : q <= 0.4 ? 'ok' : q <= 0.7 ? 'warn' : 'bad';
   const mv = rotM(r.p[0], r.p[1], r.p[2]); const ang = Math.acos(Math.max(-1, Math.min(1, (mv[0] + mv[4] + mv[8] - 1) / 2))) * 180 / Math.PI;
   const tr = M4.pt(S.T, r.c).map((v, i) => v - r.c[i]); const sh = Math.hypot(...tr);
-  el.innerHTML = (r.byPoints && !r.nPts ? `<div>Совмещено <b>по ${S.pts.length} точкам</b>. «Уточнить» доведёт по плотности основания черепа.</div>` : '') + (q === undefined ? '' : `<div>Совпадение костей в зоне: <b class="${cls}">${fmt(q, 2) + ' мм'}</b> <span class="sub">(медиана расхождения поверхностей; хорошо — до 0,4 мм, это точность построения поверхностей)</span></div>`) + (isNaN(r.ncc) ? '' : `
-<div class="sub">Корреляция плотности ${fmt(r.ncc, 3)} · ${r.nPts.toLocaleString('ru')} точек · ${r.mode === 'acb' ? 'передний отдел основания черепа' + (S.A.cribAuto ? '' : ' (уровень решётчатой пластинки не найден — проверьте зону на срезах)') + (r.lim ? ', сдвиг ' + fmt(r.lim, 0) + ' мм' : '') : 'череп выше нёба, от ' + fmt(r.lim, 0) + ' мм над корнями'} · ${fmt(r.secs, 0)} с</div>
+  el.innerHTML = (r.byPoints && !r.nPts ? `<div>Совмещено <b>по ${S.pts.length} точкам</b>. «Уточнить» доведёт по плотности кости в зоне.</div>` : '') + (q === undefined ? '' : `<div>Совпадение костей в зоне: <b class="${cls}">${fmt(q, 2) + ' мм'}</b> <span class="sub">(медиана расхождения поверхностей; хорошо — до 0,4 мм, это точность построения поверхностей)</span></div>`) + (isNaN(r.ncc) ? '' : `
+<div class="sub">Корреляция плотности ${fmt(r.ncc, 3)} · ${r.nPts.toLocaleString('ru')} точек · ${zoneName(r) + (r.mode === 'acb' && !S.A.cribAuto ? ' (уровень решётчатой пластинки не найден — проверьте зону на срезах)' : '') + (r.mode !== 'skull' && r.lim ? ', сдвиг зоны ' + fmt(r.lim, 0) + ' мм' : r.mode === 'skull' ? ', от ' + fmt(r.lim, 0) + ' мм над корнями' : '')} · ${fmt(r.secs, 0)} с</div>
     <div class="sub">Масштаб второго снимка ${Math.abs(r.sc - 1) < 0.004 ? 'совпадает с первым' : (r.sc > 1 ? 'больше' : 'меньше') + ' на ' + fmt(Math.abs(r.sc - 1) * 100, 1) + ' %' + (r.useSc ? ' — учтено' : ' (разные томографы? можно учесть галочкой выше)')}.</div>
     <div class="sub">Голова на втором снимке была повёрнута на ${fmt(ang, 1)}° и сдвинута на ${fmt(sh, 1)} мм — это убрано.</div>`);
 }
@@ -1247,7 +1334,7 @@ function computeMaps() {
     for (let v = 0; v < n; v++) { const p = M4.pt(T, [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]); if (!inFieldA(p)) { D[v] = NaN; continue; } const w = nearest(ma.hash, ma.g.pos, cell, p, maxR);
       if (w < 0) { D[v] = NaN; continue; } const ex = p[0] - ma.g.pos[w * 3], ey = p[1] - ma.g.pos[w * 3 + 1], ez = p[2] - ma.g.pos[w * 3 + 2]; const d = Math.hypot(ex, ey, ez);
       const s = ex * ma.g.nrm[w * 3] + ey * ma.g.nrm[w * 3 + 1] + ez * ma.g.nrm[w * 3 + 2]; D[v] = s < 0 ? -d : d;
-      if (key === 'skull' && (v % 3 === 0) && zf(p[0], p[1], p[2])) qd.push(d); }
+      if (key === (zf.part || 'skull') && (v % 3 === 0) && zf(p[0], p[1], p[2])) qd.push(d); }
     mb.dist = D; colorize(mb); }
   if (S.cut) S.cut.lines = null;
   if (S.reg) S.reg.q = qd.length > 200 ? percentile(qd, 0.5) : undefined;
@@ -1491,7 +1578,7 @@ for (const [cv, R, D, ax] of SLV) { const can = $(cv);
     if (S.ptMode) { ptPlace(S.ptMode === 1 ? 'A' : 'B', w, M4.pt(S.T, w)); return; }
     if (S.A && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zoneFn(S.A).box.z0])[1] / can.width * r.height; if (Math.abs(e.clientY - r.top - yy) < 7) { slDrag = { cv, toW }; can.setPointerCapture(e.pointerId); return; } }
     S.P = w; drawSlices(); });
-  can.addEventListener('pointermove', e => { if (!slDrag || slDrag.cv !== cv) return; const w = toW(e); $('#roiLim').value = roiModeV() === 'acb' ? Math.round(w[2] + 5 - S.A.zC) : Math.round(w[2] - S.A.zT); drawSlices(); });
+  can.addEventListener('pointermove', e => { if (!slDrag || slDrag.cv !== cv) return; const w = toW(e); $('#roiLim').value = roiModeV() === 'acb' ? Math.round(w[2] + 5 - S.A.zC) : roiModeV() === 'mand' ? Math.round(w[2] - (S.A.zT - 41)) : Math.round(w[2] - S.A.zT); drawSlices(); });
   can.addEventListener('pointerup', () => { slDrag = null; });
   can.addEventListener('wheel', e => { e.preventDefault(); if (!S.P) return; const n = [0, 0, 0]; n[ax] = 1; const st = (S.A || S.B).V.sx * (e.shiftKey ? 5 : 1); S.P[ax] += Math.sign(e.deltaY) * st * (ax === 2 ? -1 : 1); drawSlices(); }, { passive: false });
 }
@@ -1540,7 +1627,7 @@ $('#exRep').onclick = () => { if (!S.reg) return; const imgs = snapViews(); cons
   const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Наложение КЛКТ — ${baseName()}</title><style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#231B4B;margin:24px;max-width:1000px}h1{font-size:22px;margin:0 0 4px;color:#362395}h2{font-size:15px;color:#362395;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.05em}.sub{color:#736C93;font-size:13px}.g{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g figure{margin:0;border:1px solid #DCDAE7;border-radius:12px;overflow:hidden;background:#F4F6FA}.g img{width:100%;display:block}.g figcaption{font-size:12px;font-weight:700;padding:4px 8px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid #DCDAE7;padding:5px;text-align:left}.bar{height:12px;border-radius:6px;background:${leg}}.lab{display:flex;justify-content:space-between;font-size:11px;color:#736C93}.foot{margin-top:24px;font-size:12px;color:#736C93}@media print{button{display:none}body{margin:10mm}}</style></head><body>
 <button onclick="print()" style="float:right;padding:8px 14px;border-radius:10px;border:0;background:#E5155A;color:#fff;font-weight:700">Печать / PDF</button>
 <h1>Наложение КЛКТ до и после лечения</h1><div class="sub">${S.A.name} → ${S.B.name} · ${date}</div>
-<h2>Совмещение</h2><div>По ${r.mode === 'acb' ? 'переднему отделу основания черепа изнутри (решётчатая пластинка, крыши орбит, площадка клиновидной кости, турецкое седло)' : 'стабильным костям черепа выше нёба'} ${r.mode === 'acb' ? '' : '(зона от ' + fmt(r.lim, 0) + ' мм над верхушками корней)'}, по плотности вокселей. Совпадение костей в зоне — <b>${r.q === undefined ? '—' : fmt(r.q, 2) + ' мм'}</b> (медиана), корреляция ${fmt(r.ncc, 3)}.</div>
+<h2>Совмещение</h2><div>По ${zoneName(r, true)} ${r.mode === 'skull' ? '(зона от ' + fmt(r.lim, 0) + ' мм над верхушками корней)' : ''}, по плотности вокселей. Совпадение костей в зоне — <b>${r.q === undefined ? '—' : fmt(r.q, 2) + ' мм'}</b> (медиана), корреляция ${fmt(r.ncc, 3)}.</div>
 <h2>Карта расстояний «после» относительно «до»</h2><div style="max-width:420px"><div class="bar"></div><div class="lab"><span>−${fmt(S.range, 1)} мм (внутрь)</span><span>0</span><span>+${fmt(S.range, 1)} мм (наружу)</span></div></div>
 <div class="g" style="margin-top:10px">${imgs.map(([n, u]) => `<figure><img src="${u}"><figcaption>${n}</figcaption></figure>`).join('')}</div>
 ${meas}<div class="foot">Сиреневым — до лечения, цветом — после. Направления — по осям снимка «до».<br>© Екатерина Скоробогатько · @katya_skorobogatko · orthoskorobogatko.ru</div></body></html>`;
@@ -1777,8 +1864,8 @@ canvas.addEventListener('pointerdown', e => { if (!S.ptMode || e.button !== 0 ||
 /* ---------- mode switch ---------- */
 function applyMode() { const fast = S.mode === 'fast'; document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === S.mode));
   document.querySelectorAll('.precOnly').forEach(el => el.classList.toggle('hidden', fast)); $('#modeHelp').textContent = fast
-    ? 'Быстро: без нейросети, снимки показываются объёмом (как в Invivo). Совмещение — автоматически по плотности или по точкам. Секунды вместо минут.'
-    : 'Точно: нейросеть размечает кость и каждый зуб, есть карта расстояний, разрез моделей, выгрузка сегментации. Совмещение — по основанию черепа (Cevidanes).';
+    ? 'Быстро: без нейросети, снимки показываются объёмом (как в Invivo). Загрузите «до» и «после», выберите, по чему совмещать, и нажмите «Совместить».'
+    : 'Точно: нейросеть размечает кость и каждый зуб, есть карта расстояний, разрез моделей, выгрузка сегментации. Совмещение — по основанию черепа (Cevidanes) или по нижней челюсти.';
   S.vol.on = fast || $('#volOn').checked; $('#volOn').checked = S.vol.on; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); }
 document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (S.mode === b.dataset.mode) return; if ((S.A || S.B) && !confirm('Режим меняется для новых снимков. Уже загруженные останутся как есть. Продолжить?')) return; S.mode = b.dataset.mode; applyMode(); });
 $('#volOn').onchange = () => { S.vol.on = $('#volOn').checked; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); };
