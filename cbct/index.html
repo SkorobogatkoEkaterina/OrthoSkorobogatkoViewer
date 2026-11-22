@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="author" content="Екатерина Скоробогатько, Instagram @katya_skorobogatko">
-<title>Наложение КЛКТ · 2.0</title>
+<title>Наложение КЛКТ · 2.1</title>
 <style>
 :root{
   --bg:#F4F6FA; --card:#FFFFFF; --soft:#F1F0F5; --ink:#231B4B; --muted:#736C93; --line:#DCDAE7;
@@ -105,7 +105,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.0</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.1</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -198,13 +198,15 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     </div>
     <div class="fld precOnly"><span>Шкала карты, ± мм</span><input id="mapRange" type="number" step="0.5" min="0.5" value="3"></div>
     <div class="legend precOnly" id="legend"><div class="bar" id="legBar"></div><div class="lab"><span id="legLo">−3</span><span>0</span><span id="legHi">+3 мм</span></div></div>
+    <div class="sub" style="margin-top:8px"><b>Ctrl + щелчок</b> по двум точкам — расстояние между ними (в 3D по кости, зубам, объёму или снимку на срезе; на срезах — по снимку). Esc — отменить первую точку.</div>
+    <div id="distList"></div>
     <div class="row"><button class="btn" id="measBtn" disabled>📏 Измерить сдвиг</button></div>
     <div id="measList"></div>
   </div>
 
   <div class="sec precOnly" id="secT">
     <h3><span class="n">5</span>Зубы<button class="q" data-h="hT">?</button></h3>
-    <div class="help" id="hT">Каждый зуб выделяется отдельно и получает номер по FDI (номер можно исправить двойным щелчком по нему). Щёлкните номера, чтобы выбрать зубы, и сохраните их одним STL — например, все зубы верхней челюсти в один файл — или каждый зуб отдельным файлом. «Двигать зуб»: щёлкните зуб на модели и тяните мышью — левая кнопка двигает, правая (или Ctrl) поворачивает вокруг центра зуба; точные шаги — кнопками. Сохранённые STL учитывают перемещения.</div>
+    <div class="help" id="hT">Каждый зуб выделяется отдельно и получает номер по FDI (номер можно исправить двойным щелчком по нему). Щёлкните номера, чтобы выбрать зубы, и сохраните их одним STL — например, все зубы верхней челюсти в один файл — или каждый зуб отдельным файлом. «Двигать зуб»: щёлкните зуб на модели и тяните мышью — левая кнопка двигает, правая (или Shift) поворачивает вокруг центра зуба; точные шаги — кнопками. Сохранённые STL учитывают перемещения.</div>
     <div class="row"><button class="btn sm on" data-ts="A">До</button><button class="btn sm" data-ts="B">После</button><label class="ck" style="margin:0 0 0 6px"><input type="checkbox" id="tCol" checked> цветные зубы</label></div>
     <div id="tList" class="sub" style="margin-top:6px">Зубы появятся после загрузки КЛКТ.</div>
     <div class="row"><button class="btn sm" id="tSelU">Все ВЧ</button><button class="btn sm" id="tSelL">Все НЧ</button><button class="btn sm" id="tSelN">Снять выбор</button></div>
@@ -212,6 +214,14 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
     <div class="row"><button class="btn sm" id="tMove">✋ Двигать зуб</button><button class="btn sm" id="tResetAll">Вернуть все зубы</button></div>
     <div id="tMoveBox" class="hidden"><div class="sub" id="tMoveInfo" style="margin-top:6px">Щёлкните зуб на модели.</div><div class="nud" id="tNud"></div>
       <div class="row"><button class="btn sm" id="tReset">Вернуть этот зуб</button><button class="btn sm" id="tMap">Пересчитать карту</button></div></div>
+  </div>
+
+  <div class="sec precOnly" id="secJ">
+    <h3><span class="n">⊙</span>Суставы<button class="q" data-h="hJ">?</button></h3>
+    <div class="help" id="hJ">После точного режима (есть поверхности черепа и нижней челюсти). Программа находит головки мыщелков и суставные ямки на снимках «до» и «после» и меряет суставную щель по методу Ikeda: от центра головки по лучам 45° (передняя), 90° (верхняя) и 135° (задняя) в сагиттальной плоскости. Головка окрашивается по ширине щели до ямки: красный — кость к кости, жёлтый — узко, зелёный — норма, синий — широко. Кнопками «правый/левый» камера встаёт сбоку к суставу, кость черепа становится полупрозрачной.</div>
+    <div class="row"><button class="btn sm primary" id="jRun">Измерить суставы</button><button class="btn sm" id="jView">Цвет щели</button><button class="btn sm" id="jR">Правый</button><button class="btn sm" id="jL">Левый</button><button class="btn sm hidden" id="jExit">Обычный вид</button></div>
+    <div class="sub">В виде сустава снимки «до» и «после» включаются галочками «до» / «после» в разделе 4.</div>
+    <div id="jRes"></div>
   </div>
 
   <div class="sec" id="secE">
@@ -1277,11 +1287,11 @@ function projM() { const a = canvas.width / Math.max(1, canvas.height), h = cam.
 function fitView() { const X = S.A || S.B; if (!X) return; const V = X.V; cam.target = volCenter(X); cam.halfH = Math.max(V.nx * V.sx, V.nz * V.sz) * 0.55; requestDraw(); }
 function resize() { const r = canvas.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d)); if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; } }
 let needDraw = false; function requestDraw() { if (!needDraw) { needDraw = true; requestAnimationFrame(draw); } }
-function drawMesh(m, M, col, alpha, useVC) {
-  const MV = M4.mul(VM, M), MVP = M4.mul(PM, MV); gl.uniformMatrix4fv(U.uMVP, false, MVP); gl.uniformMatrix4fv(U.uMV, false, MV); gl.uniformMatrix4fv(U.uMw, false, M); setClip(); gl.uniform4f(U.uCol, col[0], col[1], col[2], alpha); gl.uniform1i(U.uVC, useVC && m.cbo ? 1 : 0); gl.uniform1i(U.uFlat, 0);
+function drawMesh(m, M, col, alpha, useVC, cbo) { cbo = cbo || m.cbo;
+  const MV = M4.mul(VM, M), MVP = M4.mul(PM, MV); gl.uniformMatrix4fv(U.uMVP, false, MVP); gl.uniformMatrix4fv(U.uMV, false, MV); gl.uniformMatrix4fv(U.uMw, false, M); setClip(); gl.uniform4f(U.uCol, col[0], col[1], col[2], alpha); gl.uniform1i(U.uVC, useVC && cbo ? 1 : 0); gl.uniform1i(U.uFlat, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, m.vbo); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
   gl.bindBuffer(gl.ARRAY_BUFFER, m.nbo); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-  if (useVC && m.cbo) { gl.bindBuffer(gl.ARRAY_BUFFER, m.cbo); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0); } else { gl.disableVertexAttribArray(2); gl.vertexAttrib3f(2, 1, 1, 1); }
+  if (useVC && cbo) { gl.bindBuffer(gl.ARRAY_BUFFER, cbo); gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0); } else { gl.disableVertexAttribArray(2); gl.vertexAttrib3f(2, 1, 1, 1); }
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.ibo); gl.drawElements(gl.TRIANGLES, m.n, gl.UNSIGNED_INT, 0); }
 const lineBuf = gl.createBuffer();
 function drawPrims(pts, mode, col, size) { if (!pts.length) return; gl.bindBuffer(gl.ARRAY_BUFFER, lineBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pts), gl.DYNAMIC_DRAW);
@@ -1296,12 +1306,12 @@ function draw() {
   const showB = S.B && S.show.B, showA = S.A && S.show.A; const bA = S.boneAlpha; const isT = k => k === 'tu' || k === 'tl'; const isBone = k => k === 'skull' || k === 'mand';
   const colA = k => S.reg && showB ? (k === 'skin' ? [0.86, 0.84, 0.83] : [0.84, 0.84, 0.86]) : isT(k) ? COL_T : k === 'skin' ? [0.93, 0.84, 0.78] : k === 'mand' ? [0.70, 0.80, 0.97] : [0.95, 0.95, 0.97];
   const colB = (k, map) => map ? COL_B : isT(k) ? [0.98, 0.80, 0.85] : k === 'mand' ? [0.93, 0.52, 0.66] : COL_B;
-  const part = k => k === 'skin' ? 0.45 : isBone(k) ? bA : 1; const alB = k => S.opB * part(k), alA = k => (showB && S.reg && isT(k) ? Math.min(S.opA, 0.35) : S.opA) * part(k); /* «before» teeth stay a light ghost over the coloured «after» teeth */
+  const part = k => S.jv ? (k === 'skull' ? 0.28 : k === 'mand' ? 1 : 0) : k === 'skin' ? 0.45 : isBone(k) ? bA : 1; /* joint view: see-through fossa, solid condyle, no teeth */ const alB = k => S.jv ? part(k) : S.opB * part(k), alA = k => S.jv ? part(k) : (showB && S.reg && isT(k) ? Math.min(S.opA, 0.35) : S.opA) * part(k); /* «before» teeth stay a light ghost over the coloured «after» teeth */
   const pass = transp => { // opaque surfaces first, then the see-through ones (no depth writes) so the inner ones stay visible
     if (transp) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); }
-    if (showB) for (const it of items('B')) { const k = it.k, m = it.m; if ((alB(k) < 0.99) !== transp) continue; const map = !!(S.show.map && S.reg && m.dist); drawMesh(m, it.M, it.t && !map && S.toothCol ? toothColor(it.t, 'B') : colB(k, map), alB(k), map); }
+    if (showB) for (const it of items('B')) { const k = it.k, m = it.m; if ((alB(k) < 0.99) !== transp) continue; const jm = S.joint.on && k === 'mand' && m.jcbo; const map = !!(S.show.map && S.reg && m.dist) && !jm; drawMesh(m, it.M, it.t && !map && S.toothCol ? toothColor(it.t, 'B') : colB(k, map), alB(k), map || !!jm, jm || null); }
     if (showA) { if (showB) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(2, 8); } /* where both coincide, "after" wins */
-      for (const it of items('A')) { const k = it.k; if ((alA(k) < 0.99) !== transp) continue; drawMesh(it.m, it.M, it.t && S.toothCol && !showB ? toothColor(it.t, 'A') : colA(k), alA(k), false); }
+      for (const it of items('A')) { const k = it.k; if ((alA(k) < 0.99) !== transp) continue; const jm = S.joint.on && k === 'mand' && it.m.jcbo; drawMesh(it.m, it.M, it.t && S.toothCol && !showB ? toothColor(it.t, 'A') : colA(k), alA(k), !!jm, jm || null); }
       gl.disable(gl.POLYGON_OFFSET_FILL); }
     if (transp) { gl.depthMask(true); gl.disable(gl.BLEND); } };
   pass(false); drawCut(); pass(true);
@@ -1309,8 +1319,10 @@ function draw() {
   gl.disable(gl.DEPTH_TEST); const lp = [], pa = [], pb = [];
   for (const m of S.meas) { lp.push(...m.a, ...m.b); pa.push(...m.a); pb.push(...m.b); } if (S.measA) pa.push(...S.measA);
   if (S.pts) { for (const q of S.pts) { if (S.show.A) pa.push(...q.a); if (S.show.B) pb.push(...M4.pt(S.Ti, q.b)); } if (S.ptA) pa.push(...S.ptA); }
+  if (S.joint && S.joint.on && S.joint.res) for (const sl of ['A', 'B']) { const rr = S.joint.res[sl]; if (!rr || !(sl === 'A' ? S.show.A : S.show.B)) continue; for (const r of rr) { if (!r || (S.jv && S.jSide && r.side !== S.jSide)) continue; for (const k of ['a', 's', 'p']) if (r[k + 'Pts']) { const [p, q] = r[k + 'Pts']; const P2 = sl === 'B' ? [M4.pt(S.Ti, p), M4.pt(S.Ti, q)] : [p, q]; lp.push(...P2[0], ...P2[1]); (sl === 'A' ? pa : pb).push(...P2[0], ...P2[1]); } } }
+  if (S.dist) { for (const d of S.dist) { lp.push(...d.a, ...d.b); pa.push(...d.a, ...d.b); } if (S.distA) pa.push(...S.distA); }
   drawPrims(lp, gl.LINES, [0.21, 0.14, 0.58]); drawPrims(pa, gl.POINTS, [0.21, 0.14, 0.58], 10 * Math.min(2, devicePixelRatio || 1)); drawPrims(pb, gl.POINTS, [0.9, 0.08, 0.35], 10 * Math.min(2, devicePixelRatio || 1));
-  gl.enable(gl.DEPTH_TEST);
+  gl.enable(gl.DEPTH_TEST); if (typeof placeDistLabels === 'function') placeDistLabels();
 }
 // orbit / pan / zoom
 let drag = null;
@@ -1457,6 +1469,7 @@ function drawSlices() {
     if (zf && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zf.box.z0])[1]; ctx.strokeStyle = '#E5155A'; ctx.setLineDash([8, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(W, yy); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = '#E5155A'; ctx.font = 'bold 12px system-ui'; ctx.fillText('зона совмещения ↑', 8, yy - 6);
       for (const b of zf.boxes) { const c1 = worldToPix(cv, [b.x0, b.y0, b.z1]), c2 = worldToPix(cv, [b.x1, b.y1, b.z0]); ctx.strokeStyle = 'rgba(229,21,90,.8)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.strokeRect(Math.min(c1[0], c2[0]), Math.min(c1[1], c2[1]), Math.abs(c2[0] - c1[0]), Math.abs(c2[1] - c1[1])); ctx.setLineDash([]); } }
+    if (typeof distOnSlice === 'function') distOnSlice(cv, ctx, ax);
     ctx.fillStyle = '#bbb'; ctx.font = '11px system-ui'; if (ax === 2) { ctx.fillText('спереди', W / 2 - 22, 14); ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14, W / 2); } else if (ax === 1) { ctx.fillText('П', 6, W / 2); ctx.fillText('Л', W - 14, W / 2); } else { ctx.fillText('спереди →', W - 70, W - 8); }
   }
 }
@@ -1464,6 +1477,7 @@ let slDrag = null;
 for (const [cv, R, D, ax] of SLV) { const can = $(cv);
   const toW = e => { const r = can.getBoundingClientRect(); const u = (e.clientX - r.left) / r.width - 0.5, v = (e.clientY - r.top) / r.height - 0.5; const F = slField(), c = volCenter(S.A || S.B); const w = [0, 1, 2].map(i => c[i] + R[i] * u * F + D[i] * v * F); w[ax] = S.P[ax]; return w; };
   can.addEventListener('pointerdown', e => { if (!S.A && !S.B) return; const w = toW(e); const r = can.getBoundingClientRect();
+    if (e.ctrlKey) { distAdd(w); return; }
     if (S.ptMode) { ptPlace(S.ptMode === 1 ? 'A' : 'B', w, M4.pt(S.T, w)); return; }
     if (S.A && ax !== 2) { const yy = worldToPix(cv, [S.P[0], S.P[1], zoneFn(S.A).box.z0])[1] / can.width * r.height; if (Math.abs(e.clientY - r.top - yy) < 7) { slDrag = { cv, toW }; can.setPointerCapture(e.pointerId); return; } }
     S.P = w; drawSlices(); });
@@ -1577,8 +1591,8 @@ $('#tReset').onclick = () => { if (S.tSel) { S.tSel.M = M4.ident(); renderToothM
 $('#tResetAll').onclick = () => { for (const sl of ['A', 'B']) for (const t of (S[sl] && S[sl].teeth) || []) t.M = M4.ident(); renderToothMove(); requestDraw(); };
 $('#tMap').onclick = () => { if (!S.reg) { toast('Карта появится после совмещения'); return; } busy(true, 'Считаю карту расстояний…', 0.5); setTimeout(() => { computeMaps(); renderRegInfo(); busy(false); requestDraw(); }, 30); };
 let tDrag = null;
-canvas.addEventListener('pointerdown', e => { if (!S.moveMode || e.button === 1) return; const h = pickAt(e, S.tSlot); if (!h || !h.tooth) return;
-  e.stopImmediatePropagation(); S.tSel = h.tooth; tDrag = { x: e.clientX, y: e.clientY, rot: e.button === 2 || e.ctrlKey }; canvas.setPointerCapture(e.pointerId); renderTeeth(); requestDraw(); }, true);
+canvas.addEventListener('pointerdown', e => { if (!S.moveMode || e.button === 1 || e.ctrlKey) return; const h = pickAt(e, S.tSlot); if (!h || !h.tooth) return;
+  e.stopImmediatePropagation(); S.tSel = h.tooth; tDrag = { x: e.clientX, y: e.clientY, rot: e.button === 2 || e.shiftKey }; canvas.setPointerCapture(e.pointerId); renderTeeth(); requestDraw(); }, true);
 canvas.addEventListener('pointermove', e => { if (!tDrag) return; e.stopImmediatePropagation(); const dx = e.clientX - tDrag.x, dy = e.clientY - tDrag.y; tDrag.x = e.clientX; tDrag.y = e.clientY;
   const r = canvas.getBoundingClientRect(); const k = cam.halfH * 2 / r.height; const e3 = eyeDir(), f = e3.map(v => -v); const up = [-Math.sin(cam.ph) * Math.sin(cam.th), Math.sin(cam.ph) * Math.cos(cam.th), Math.cos(cam.ph)]; const s = norm(cross(f, up)), u = cross(s, f);
   if (tDrag.rot) { if (dx) moveTooth(S.tSel, null, u, dx * 0.01); if (dy) moveTooth(S.tSel, null, s, dy * 0.01); }
@@ -1755,6 +1769,89 @@ document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { if (S.
 $('#volOn').onchange = () => { S.vol.on = $('#volOn').checked; $('#volBox').classList.toggle('hidden', !S.vol.on); requestDraw(); };
 $('#volThr').oninput = () => { S.vol.thr = +$('#volThr').value; $('#volThrV').textContent = S.vol.thr; requestDraw(); };
 applyMode();
+
+/* ============================================================
+   Ctrl + click: distance between two points — in 3D (surfaces, volume, the image on the cut) and on the 2D slices
+   ============================================================ */
+S.dist = []; S.distA = null;
+function screenRay(e) { const r = canvas.getBoundingClientRect(); const nx = (e.clientX - r.left) / r.width * 2 - 1, ny = 1 - (e.clientY - r.top) / r.height * 2;
+  const IV = inv4g(M4.mul(PM || projM(), VM || viewM())); const q = [IV[0] * nx + IV[4] * ny - IV[8] + IV[12], IV[1] * nx + IV[5] * ny - IV[9] + IV[13], IV[2] * nx + IV[6] * ny - IV[10] + IV[14], IV[3] * nx + IV[7] * ny - IV[11] + IV[15]];
+  return { ro: [q[0] / q[3], q[1] / q[3], q[2] / q[3]], rd: eyeDir().map(v => -v) }; }
+function pickAny(e) { const { ro, rd } = screenRay(e); const cands = [];
+  // the image shown on the cut plane
+  const C = S.cut; if (C.on && C.img && C.pl) { const den = dot(rd, C.pl.n); if (Math.abs(den) > 1e-6) { const t = dot(sub3(C.pl.c, ro), C.pl.n) / den; const p = ro.map((v, i) => v + rd[i] * t); const d = sub3(p, C.pl.c);
+      if (Math.abs(dot(d, C.pl.u)) < C.pl.F / 2 && Math.abs(dot(d, C.pl.v)) < C.pl.F / 2) cands.push(p); } }
+  // surfaces
+  for (const sl of ['A', 'B']) { if (!S[sl] || !(sl === 'A' ? S.show.A : S.show.B)) continue; const h = pickAt(e, sl); if (h) cands.push(h.p); }
+  // volumes
+  if (S.vol.on) for (const sl of ['A', 'B']) { if (!S[sl] || !(sl === 'A' ? S.show.A : S.show.B)) continue; const h = volPick(e, sl); if (h) cands.push(h.p); }
+  if (!cands.length) return null; cands.sort((a, b) => dot(a, rd) - dot(b, rd)); return cands[0]; }
+function distAdd(p) { if (!S.distA) { S.distA = p; toast('Первая точка поставлена — Ctrl + щелчок по второй', 2500); } else { S.dist.push({ a: S.distA, b: p }); S.distA = null; } renderDist(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); }
+function renderDist() { const el = $('#distList'); if (!el) return; if (!S.dist.length) { el.innerHTML = S.distA ? '<div class="sub">Ждёт вторую точку (Esc — отмена)</div>' : ''; return; }
+  el.innerHTML = `<table class="ms"><tr><th>№</th><th>расстояние</th><th>вправо/влево</th><th>вперёд/назад</th><th>вверх/вниз</th><th></th></tr>` + S.dist.map((d, i) => { const v = sub3(d.b, d.a); return `<tr><td>${i + 1}</td><td><b>${fmt(Math.hypot(...v), 2)} мм</b></td><td>${fmt(Math.abs(v[0]), 1)}</td><td>${fmt(Math.abs(v[1]), 1)}</td><td>${fmt(Math.abs(v[2]), 1)}</td><td><button data-ddel="${i}">✕</button></td></tr>`; }).join('') + '</table>' + (S.distA ? '<div class="sub">Ждёт вторую точку (Esc — отмена)</div>' : '');
+  el.querySelectorAll('[data-ddel]').forEach(b => b.onclick = () => { S.dist.splice(+b.dataset.ddel, 1); renderDist(); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices(); }); }
+canvas.addEventListener('pointerdown', e => { if (!e.ctrlKey || e.button !== 0) return; e.stopImmediatePropagation(); const p = pickAny(e); if (!p) { toast('Здесь нет поверхности — щёлкните по кости, зубу или снимку на срезе'); return; } distAdd(p); }, true);
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && S.distA) { S.distA = null; renderDist(); requestDraw(); } });
+const distLay = document.createElement('div'); distLay.style.cssText = 'position:absolute;inset:0;pointer-events:none'; $('#view3d').appendChild(distLay);
+function placeDistLabels() { const r = canvas.getBoundingClientRect(); const MVP = M4.mul(PM, VM); let html = '';
+  for (const [i, d] of S.dist.entries()) { const m = d.a.map((v, k) => (v + d.b[k]) / 2); const x = MVP[0] * m[0] + MVP[4] * m[1] + MVP[8] * m[2] + MVP[12], y = MVP[1] * m[0] + MVP[5] * m[1] + MVP[9] * m[2] + MVP[13];
+    html += `<div style="position:absolute;left:${(x + 1) / 2 * r.width + 8}px;top:${(1 - y) / 2 * r.height - 22}px;background:rgba(35,27,75,.9);color:#fff;font-size:12px;font-weight:700;padding:2px 7px;border-radius:7px;white-space:nowrap">${i + 1}: ${fmt(Math.hypot(...sub3(d.b, d.a)), 2)} мм</div>`; }
+  distLay.innerHTML = html; }
+function distOnSlice(cv, ctx, ax) { const all = S.dist.slice(); for (const [i, d] of all.entries()) { const mid = d.a.map((v, k) => (v + d.b[k]) / 2); if (Math.abs(mid[ax] - S.P[ax]) > 3) continue;
+    const pa = worldToPix(cv, d.a), pb = worldToPix(cv, d.b); ctx.strokeStyle = '#FFD84A'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(pb[0], pb[1]); ctx.stroke();
+    ctx.fillStyle = '#FFD84A'; for (const p of [pa, pb]) { ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, 7); ctx.fill(); } ctx.font = 'bold 12px system-ui'; ctx.fillText(`${i + 1}: ${fmt(Math.hypot(...sub3(d.b, d.a)), 2)} мм`, (pa[0] + pb[0]) / 2 + 6, (pa[1] + pb[1]) / 2 - 6); }
+  if (S.distA && Math.abs(S.distA[ax] - S.P[ax]) < 3) { const p = worldToPix(cv, S.distA); ctx.fillStyle = '#FFD84A'; ctx.beginPath(); ctx.arc(p[0], p[1], 4, 0, 7); ctx.fill(); } }
+
+/* ============================================================
+   Joints (precise mode): condyle ↔ fossa — joint space anterior / superior / posterior (Ikeda) before and after, colour map of the space
+   ============================================================ */
+const JNORM = { a: [1.3, 0.2], s: [2.5, 0.5], p: [2.1, 0.3] }; // Ikeda & Kawamura 2009, adults; mm
+S.joint = { on: false, res: null };
+function condyleOf(X, side) { // side −1 = right (LPS: smaller x), +1 = left
+  const m = X.mesh.mand; if (!m) return null; const P = m.g.pos, n = P.length / 3; const xm = X.xMid; let zmax = -1e9;
+  for (let v = 0; v < n; v++) if ((P[v * 3] - xm) * side > 15 && P[v * 3 + 2] > zmax) zmax = P[v * 3 + 2];
+  const ys = []; for (let v = 0; v < n; v++) if ((P[v * 3] - xm) * side > 15 && P[v * 3 + 2] > zmax - 22) ys.push(P[v * 3 + 1]); if (!ys.length) return null; const yMid = percentile(ys, 0.5); // the condyle is behind the coronoid
+  let top = null; for (let v = 0; v < n; v++) { if ((P[v * 3] - xm) * side <= 15 || P[v * 3 + 1] < yMid) continue; if (!top || P[v * 3 + 2] > top[2]) top = [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]]; } if (!top) return null;
+  const c = [0, 0, 0]; let k = 0; const head = []; for (let v = 0; v < n; v++) { const d = [P[v * 3] - top[0], P[v * 3 + 1] - top[1], P[v * 3 + 2] - top[2]]; if (Math.hypot(d[0], d[1]) < 14 && d[2] > -14) { head.push(v); if (d[2] > -7) { c[0] += P[v * 3]; c[1] += P[v * 3 + 1]; c[2] += P[v * 3 + 2]; k++; } } }
+  if (!k) return null; const cen = c.map(v => v / k); cen[2] = top[2] - 6; // reference point inside the head, 6 mm below its top
+  return { top, cen, head }; }
+function rayHits(P, ids, o, d, rad, tMin, tMax, far) { let best = null; for (const v of ids) { const w = [P[v * 3] - o[0], P[v * 3 + 1] - o[1], P[v * 3 + 2] - o[2]]; const t = dot(w, d); if (t < tMin || t > tMax) continue; const q = w.map((x, i) => x - d[i] * t); if (Math.hypot(...q) > rad) continue; if (best === null || (far ? t > best : t < best)) best = t; } return best; }
+function jointMeasure(X, side) { const J = condyleOf(X, side); if (!J) return null; const mand = X.mesh.mand.g.pos, sk = X.mesh.skull && X.mesh.skull.g.pos; if (!sk) return null;
+  // fossa vertices near the condyle
+  const fos = []; const n = sk.length / 3; for (let v = 0; v < n; v++) { const d = [sk[v * 3] - J.cen[0], sk[v * 3 + 1] - J.cen[1], sk[v * 3 + 2] - J.cen[2]]; if (Math.hypot(...d) < 22 && d[2] > -6) fos.push(v); }
+  const out = { side, cen: J.cen, top: J.top };
+  for (const [k, ang] of [['a', 45], ['s', 90], ['p', 135]]) { const a = ang * Math.PI / 180; const d = norm([0, -Math.cos(a), Math.sin(a)]); // in the sagittal plane: anterior = −y (LPS)
+    const tc = rayHits(mand, J.head, J.cen, d, 0.8, 0, 16, true); const tf = tc === null ? null : rayHits(sk, fos, J.cen, d, 0.8, tc - 0.2, tc + 12, false);
+    out[k] = tc !== null && tf !== null ? Math.max(0, tf - tc) : NaN; out[k + 'Pts'] = tc !== null && tf !== null ? [J.cen.map((v, i) => v + d[i] * tc), J.cen.map((v, i) => v + d[i] * tf)] : null; }
+  out.conc = out.p + out.a > 0 ? (out.p - out.a) / (out.p + out.a) * 100 : NaN; // Pullinger: ±12 % concentric
+  // colour map on the head of the condyle: shortest distance to the fossa
+  const H = buildHash(sk, 1.5); const col = new Float32Array(mand.length).fill(-1); const dist = new Float32Array(mand.length / 3).fill(NaN);
+  for (const v of J.head) { if (mand[v * 3 + 2] < J.top[2] - 9) continue; const p = [mand[v * 3], mand[v * 3 + 1], mand[v * 3 + 2]]; const w = nearest(H, sk, 1.5, p, 7); if (w < 0) continue; dist[v] = Math.hypot(p[0] - sk[w * 3], p[1] - sk[w * 3 + 1], p[2] - sk[w * 3 + 2]); }
+  out.dist = dist; out.head = J.head; return out; }
+function jointColor(d) { // 0 → red (bone contact), 1.5 → yellow, 2.5 → green (norm), 4+ → blue (wide)
+  const st = [[0, [0.9, 0.08, 0.2]], [1.2, [0.98, 0.6, 0.1]], [1.8, [0.98, 0.9, 0.2]], [2.5, [0.3, 0.82, 0.38]], [3.5, [0.1, 0.72, 0.95]], [5, [0.15, 0.25, 0.85]]];
+  if (d <= 0) return st[0][1]; for (let i = 1; i < st.length; i++) if (d <= st[i][0]) { const [a, ca] = st[i - 1], [b, cb] = st[i]; const u = (d - a) / (b - a); return ca.map((v, k) => v + (cb[k] - v) * u); } return st[st.length - 1][1]; }
+function jointColorize(X, res) { const m = X.mesh.mand; const n = m.g.pos.length / 3; const c = new Float32Array(n * 3); const base = [0.86, 0.87, 0.9];
+  for (let v = 0; v < n; v++) c.set(base, v * 3); for (const r of res) { if (!r) continue; for (const v of r.head) { const d = r.dist[v]; if (d === d) c.set(jointColor(d), v * 3); } }
+  if (!m.jcbo) m.jcbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, m.jcbo); gl.bufferData(gl.ARRAY_BUFFER, c, gl.STATIC_DRAW); }
+function jointRun() { if (!S.A || !S.A.mesh.mand) { toast('Нужен точный режим: нижняя челюсть и череп должны быть построены'); return; }
+  const res = {}; for (const sl of ['A', 'B']) { const X = S[sl]; if (!X || !X.mesh.mand) continue; res[sl] = [jointMeasure(X, -1), jointMeasure(X, 1)]; jointColorize(X, res[sl]); }
+  S.joint.res = res; S.joint.on = true; $('#jView').classList.add('on'); renderJoint(); requestDraw(); }
+function renderJoint() { const R = S.joint.res, el = $('#jRes'); if (!R) { el.innerHTML = ''; return; }
+  const cell = (r, k) => r && r[k] === r[k] ? fmt(r[k], 1) : '—'; const flag = (v, k) => { if (!(v === v)) return ''; const [m, sd] = JNORM[k]; return v < m - 2 * sd ? ' class="bad"' : v > m + 2 * sd ? ' class="warn"' : ' class="ok"'; };
+  let h = `<table class="ms"><tr><th></th><th>перед.</th><th>верх.</th><th>задн.</th><th>концентр.</th></tr>`;
+  for (const [si, sn] of [[0, 'Правый'], [1, 'Левый']]) { for (const [sl, nm] of [['A', 'до'], ['B', 'после']]) { const r = R[sl] && R[sl][si]; if (!R[sl]) continue;
+      h += `<tr><td>${sn} · ${nm}</td>${['a', 's', 'p'].map(k => `<td${flag(r && r[k], k)}>${cell(r, k)}</td>`).join('')}<td>${r && r.conc === r.conc ? fmt(r.conc, 0) + ' %' : '—'}</td></tr>`; }
+    if (R.A && R.B && R.A[si] && R.B[si]) h += `<tr><td class="sub">${sn} · изменение</td>${['a', 's', 'p'].map(k => { const d = R.B[si][k] - R.A[si][k]; return `<td class="sub">${d === d ? (Math.abs(d) < 0.05 ? '0' : (d > 0 ? '+' : '') + fmt(d, 1)) : '—'}</td>`; }).join('')}<td></td></tr>`; }
+  h += `</table><div class="sub" style="margin-top:4px">мм, по лучам 45° / 90° / 135° от центра головки в сагиттальной плоскости. Норма (Ikeda): передняя ${fmt(JNORM.a[0], 1)}±${fmt(JNORM.a[1], 1)}, верхняя ${fmt(JNORM.s[0], 1)}±${fmt(JNORM.s[1], 1)}, задняя ${fmt(JNORM.p[0], 1)}±${fmt(JNORM.p[1], 1)}. Концентричность (Pullinger): от −12 до +12 % — головка в центре, меньше — смещена назад, больше — вперёд.</div>
+    <div class="legend"><div class="bar" style="background:linear-gradient(90deg,rgb(230,20,51),rgb(250,153,25) 24%,rgb(250,230,51) 36%,rgb(77,209,97) 50%,rgb(25,184,242) 70%,rgb(38,64,217))"></div><div class="lab"><span>0</span><span>1,5</span><span>2,5</span><span>3,5</span><span>5 мм</span></div></div>`;
+  el.innerHTML = h; }
+function jointFocus(side) { const X = S.A; if (!X) return; const r = S.joint.res && S.joint.res.A && S.joint.res.A[side < 0 ? 0 : 1]; const c = r ? r.cen : null; if (!c) { toast('Сустав не найден'); return; }
+  cam.target = c.slice(); cam.halfH = 16; cam.th = side < 0 ? -Math.PI / 2 : Math.PI / 2; cam.ph = 0.1; S.jv = true; S.jSide = side; S.joint.on = true; if (S.B && S.A) { S.show.B = false; $('#shB').checked = false; S.show.A = true; $('#shA').checked = true; } $('#jView').classList.add('on'); $('#jExit').classList.remove('hidden'); requestDraw(); }
+$('#jExit').onclick = () => { S.jv = false; S.show.A = S.show.B = true; $('#shA').checked = $('#shB').checked = true; $('#jExit').classList.add('hidden'); fitView(); requestDraw(); };
+$('#jRun').onclick = () => { busy(true, 'Измеряю суставные щели…', 0.5); setTimeout(() => { try { jointRun(); } catch (e) { console.error(e); toast('Суставы: ' + e.message); } busy(false); }, 30); };
+$('#jView').onclick = () => { if (!S.joint.res) { $('#jRun').click(); return; } S.joint.on = !S.joint.on; $('#jView').classList.toggle('on', S.joint.on); requestDraw(); };
+$('#jR').onclick = () => { if (!S.joint.res) jointRun(); jointFocus(-1); }; $('#jL').onclick = () => { if (!S.joint.res) jointRun(); jointFocus(1); };
 </script>
 </body>
 </html>
