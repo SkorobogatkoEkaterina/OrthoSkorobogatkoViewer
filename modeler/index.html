@@ -158,7 +158,7 @@ input.cmd{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;pad
   <aside id="side">
     <div class="brand">
       <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5c-2.2 0-3.5 1.8-3.5 4.3 0 3 1.2 5 1.8 8.2.4 2.3.9 4.5 2.1 4.5 1.4 0 1.5-3.3 2.4-5.2.4-.9 1.1-1.3 2.2-1.3s1.8.4 2.2 1.3c.9 1.9 1 5.2 2.4 5.2 1.2 0 1.7-2.2 2.1-4.5.6-3.2 1.8-5.2 1.8-8.2 0-2.5-1.3-4.3-3.5-4.3-1.9 0-3 1.1-5 1.1S8.9 3.5 7 3.5z"/></svg></div>
-      <div><b>Моделировщик элайнеров</b><small id="verLbl">версия 3.18</small></div>
+      <div><b>Моделировщик элайнеров</b><small id="verLbl">версия 3.19</small></div>
     </div>
 
     <div class="sec" id="secModels">
@@ -2188,6 +2188,19 @@ function parseNifti(u8) {
   if (dt === 2 && sl === 1 && ic === 0) lab.set(u8.subarray(off, off + N)); else for (let i = 0; i < N; i++) lab[i] = Math.max(0, Math.min(255, Math.round(rd(i) * sl + ic)));
   return { lab, nx, ny, nz, A };
 }
+// After the network: the mandible (2 + canal 5) is one piece — other pieces are skull (≥50 mm³) or noise; crumbs of skull < 50 mm³ go.
+function aiCleanLabels(lab, nx, ny, nz, vox) {
+  const P = nx * ny, minN = Math.ceil(50 / vox); const seen = new Uint8Array(lab.length);
+  const comps = (isL) => { let cnt = 0; for (let q = 0; q < lab.length; q++) if (isL(lab[q])) cnt++; const Q = new Int32Array(Math.max(1, cnt)); const out = [];
+    for (let s = 0; s < lab.length; s++) { if (seen[s] || !isL(lab[s])) continue; let h = 0, t = 0; Q[t++] = s; seen[s] = 1; const start = out.length; const mem = [];
+      while (h < t) { const q = Q[h++]; mem.push(q); const i = q % nx, j = ((q / nx) | 0) % ny, k = (q / P) | 0;
+        const nb = [i > 0 ? q - 1 : -1, i < nx - 1 ? q + 1 : -1, j > 0 ? q - nx : -1, j < ny - 1 ? q + nx : -1, k > 0 ? q - P : -1, k < nz - 1 ? q + P : -1];
+        for (const r of nb) if (r >= 0 && !seen[r] && isL(lab[r])) { seen[r] = 1; Q[t++] = r; } }
+      out.push(mem); } return out; };
+  const md = comps(v => v === 2 || v === 5); if (md.length > 1) { let big = 0; md.forEach((m, i) => { if (m.length > md[big].length) big = i; });
+    md.forEach((m, i) => { if (i === big) return; const to = m.length >= minN ? 1 : 0; for (const q of m) lab[q] = to; }); }
+  seen.fill(0); const sk = comps(v => v === 1); for (const m of sk) if (m.length < minN) for (const q of m) lab[q] = 0;
+}
 function labelBoxes(Nf) {
   const { lab, nx, ny, nz } = Nf, B = {};
   for (let k = 0; k < nz; k++) for (let j = 0; j < ny; j++) { const row = (k * ny + j) * nx; for (let i = 0; i < nx; i++) { const L = lab[row + i]; if (!L) continue; let b = B[L]; if (!b) b = B[L] = { lo: [i, j, k], hi: [i, j, k], n: 0 }; b.n++;
@@ -2293,7 +2306,7 @@ async function segFromLabels(Nf, note) {
 
 /* ---------------- нейросеть DentalSegmentator прямо в браузере (onnxruntime-web: видеокарта WebGPU, иначе процессор) ---------------- */
 // files are named .wasm only so the artifact host serves them: ort-wasm.gz.wasm = gzip of the onnxruntime engine, ds0..3.wasm = parts of the ONNX model (fp16 weights)
-const AI = { ver: '1.31.1', parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
+const AI = { ver: '1.31.1', mv: 2, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
 const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
 /* файлы нейросети: рядом с программой, а если программа открыта как файл с компьютера или их нет рядом — с сайта на GitHub */
 async function aiFetch(path) {
@@ -2307,7 +2320,7 @@ async function aiSession(progress) {
   const gz = await aiFetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
   ort.env.wasm.wasmBinary = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   const bufs = []; let tot = 0;
-  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
+  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm?v=${AI.mv}`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
   const model = new Uint8Array(tot); let o = 0; for (const b of bufs) { model.set(b, o); o += b.length; }
   if (navigator.gpu && !AI.forceCPU) { try { /* laptops with two GPUs: ask for the powerful one (NVIDIA/AMD), not the built-in Intel one */
       const ad = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }); if (ad) { ort.env.webgpu.adapter = ad; ort.env.webgpu.powerPreference = 'high-performance';
@@ -2361,6 +2374,7 @@ async function aiSegmentCT(V, mode, progress) {
   // back to the CT axes: index (i = column x, j = row y, k = slice z)
   const out = new Uint8Array(Nc * Na * Nb);
   for (let b = 0; b < Nb; b++) for (let a = 0; a < Na; a++) { const src = ((a + pa) * B + b + pb) * C + pc, dst = (b * Na + a) * Nc; for (let c = 0; c < Nc; c++) out[dst + c] = lab[src + c]; }
+  progress('Убираю обрывки…', 0.97); await sleep(); aiCleanLabels(out, Nc, Na, Nb, sx * sy * sz);
   const Am = [0, 1, 2].map(r => [F.ex[r] * sx, F.ey[r] * sy, F.ez[r] * sz, F.origin[r]]);
   return { lab: out, nx: Nc, ny: Na, nz: Nb, A: Am, windows: wins.length, ran, secs: (performance.now() - t0) / 1000, space: 'LPS' };
 }
