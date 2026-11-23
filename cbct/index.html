@@ -120,7 +120,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.4</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.5</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -430,7 +430,7 @@ async function loadHiRes(V, lo, hi, progress) { // lo/hi: world-box corners
   const origin = [0, 1, 2].map(i => V.origin[i] + V.ex[i] * a[0] * ps[1] + V.ey[i] * a[1] * ps[0] + V.ez[i] * a[2] * V.dz);
   return { vol, nx, ny, nz, sx: ps[1], sy: ps[0], sz: V.dz, origin, ex: V.ex, ey: V.ey, ez: V.ez };
 }
-const AI = { ver: '1.31.1', parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
+const AI = { ver: '1.31.1', mv: 2, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
 const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
 async function aiFetch(path) {
   if (location.protocol !== 'file:') { try { const r = await fetch(path); if (r.ok) return r; } catch (e) { } }
@@ -443,7 +443,7 @@ async function aiSession(progress) {
   const gz = await aiFetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
   ort.env.wasm.wasmBinary = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
   const bufs = []; let tot = 0;
-  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
+  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm?v=${AI.mv}`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
   const model = new Uint8Array(tot); let o = 0; for (const b of bufs) { model.set(b, o); o += b.length; }
   if (navigator.gpu && !AI.forceCPU) { try { /* laptops with two GPUs: ask for the powerful one (NVIDIA/AMD), not the built-in Intel one */
       const ad = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }); if (ad) { ort.env.webgpu.adapter = ad; ort.env.webgpu.powerPreference = 'high-performance';
@@ -493,8 +493,22 @@ async function aiSegmentCT(V, mode, progress) {
   // back to the CT axes: index (i = column x, j = row y, k = slice z)
   const out = new Uint8Array(Nc * Na * Nb);
   for (let b = 0; b < Nb; b++) for (let a = 0; a < Na; a++) { const src = ((a + pa) * B + b + pb) * C + pc, dst = (b * Na + a) * Nc; for (let c = 0; c < Nc; c++) out[dst + c] = lab[src + c]; }
+  progress('Убираю обрывки…', 0.97); await sleep(); aiCleanLabels(out, Nc, Na, Nb, sx * sy * sz);
   const Am = [0, 1, 2].map(r => [F.ex[r] * sx, F.ey[r] * sy, F.ez[r] * sz, F.origin[r]]);
   return { lab: out, nx: Nc, ny: Na, nz: Nb, A: Am, windows: wins.length, ran, secs: (performance.now() - t0) / 1000, space: 'LPS' };
+}
+// After the network: the mandible (2 + canal 5) is one piece — other pieces are skull (≥50 mm³) or noise; crumbs of skull < 50 mm³ go.
+function aiCleanLabels(lab, nx, ny, nz, vox) {
+  const P = nx * ny, minN = Math.ceil(50 / vox); const seen = new Uint8Array(lab.length);
+  const comps = (isL) => { let cnt = 0; for (let q = 0; q < lab.length; q++) if (isL(lab[q])) cnt++; const Q = new Int32Array(Math.max(1, cnt)); const out = [];
+    for (let s = 0; s < lab.length; s++) { if (seen[s] || !isL(lab[s])) continue; let h = 0, t = 0; Q[t++] = s; seen[s] = 1; const start = out.length; const mem = [];
+      while (h < t) { const q = Q[h++]; mem.push(q); const i = q % nx, j = ((q / nx) | 0) % ny, k = (q / P) | 0;
+        const nb = [i > 0 ? q - 1 : -1, i < nx - 1 ? q + 1 : -1, j > 0 ? q - nx : -1, j < ny - 1 ? q + nx : -1, k > 0 ? q - P : -1, k < nz - 1 ? q + P : -1];
+        for (const r of nb) if (r >= 0 && !seen[r] && isL(lab[r])) { seen[r] = 1; Q[t++] = r; } }
+      out.push(mem); } return out; };
+  const md = comps(v => v === 2 || v === 5); if (md.length > 1) { let big = 0; md.forEach((m, i) => { if (m.length > md[big].length) big = i; });
+    md.forEach((m, i) => { if (i === big) return; const to = m.length >= minN ? 1 : 0; for (const q of m) lab[q] = to; }); }
+  seen.fill(0); const sk = comps(v => v === 1); for (const m of sk) if (m.length < minN) for (const q of m) lab[q] = 0;
 }
 function labelBoxes(Nf) {
   const { lab, nx, ny, nz } = Nf, B = {};
