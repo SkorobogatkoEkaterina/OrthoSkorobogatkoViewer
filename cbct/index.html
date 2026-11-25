@@ -124,7 +124,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.7</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.8</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -441,27 +441,29 @@ async function loadHiRes(V, lo, hi, progress) { // lo/hi: world-box corners
   return { vol, nx, ny, nz, sx: ps[1], sy: ps[0], sz: V.dz, origin, ex: V.ex, ey: V.ey, ez: V.ez };
 }
 const AI = { ver: '1.31.1', mv: 3, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
-const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
+const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/cbct/'; // own copy of the network for the superimposition
 async function aiFetch(path) {
   if (location.protocol !== 'file:') { try { const r = await fetch(path); if (r.ok) return r; } catch (e) { } }
   return fetch(AI_REMOTE + path);
 }
-async function aiSession(progress) {
-  if (AI.sess) return AI.sess;
-  const ort = await import(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${AI.ver}/dist/ort.webgpu.bundle.min.mjs`);
-  AI.ort = ort; ort.env.wasm.numThreads = 1;
-  const gz = await aiFetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
-  ort.env.wasm.wasmBinary = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+// dir: 'model_v2' — network fine-tuned on the doctor's segmentations; 'model' — the original DentalSegmentator (backup)
+async function aiSession(progress, dir = 'model') {
+  AI.ss = AI.ss || {}; if (AI.ss[dir]) return AI.sess = AI.ss[dir];
+  let ort = AI.ort; if (!ort) { ort = await import(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${AI.ver}/dist/ort.webgpu.bundle.min.mjs`);
+    ort.env.wasm.numThreads = 1;
+    const gz = await aiFetch('ort/ort-wasm.gz.wasm'); if (!gz.ok) throw new Error('не найден движок нейросети (ort-wasm)');
+    ort.env.wasm.wasmBinary = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); AI.ort = ort; }
+  AI.sess = null;
   const bufs = []; let tot = 0;
-  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`model/ds${i}.wasm?v=${AI.mv}`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
+  for (let i = 0; i < AI.parts; i++) { progress && progress(i / AI.parts); const r = await aiFetch(`${dir}/ds${i}.wasm?v=${AI.mv}`); if (!r.ok) throw new Error('не загрузилась модель (часть ' + (i + 1) + ')'); const b = new Uint8Array(await r.arrayBuffer()); bufs.push(b); tot += b.length; }
   const model = new Uint8Array(tot); let o = 0; for (const b of bufs) { model.set(b, o); o += b.length; }
-  if (navigator.gpu && !AI.forceCPU) { try { /* laptops with two GPUs: ask for the powerful one (NVIDIA/AMD), not the built-in Intel one */
+  if (navigator.gpu && !AI.forceCPU && !AI.adSet) { AI.adSet = true; try { /* laptops with two GPUs: ask for the powerful one (NVIDIA/AMD), not the built-in Intel one */
       const ad = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }); if (ad) { ort.env.webgpu.adapter = ad; ort.env.webgpu.powerPreference = 'high-performance';
         const inf = ad.info || (ad.requestAdapterInfo ? await ad.requestAdapterInfo() : {}); AI.gpu = [inf.vendor, inf.architecture, inf.description].filter(Boolean).join(' ').trim(); AI.gpuWeak = /intel|integrated|uhd|iris|swiftshader|microsoft basic/i.test(AI.gpu) || !!ad.isFallbackAdapter; } } catch (e) { console.warn('GPU adapter', e); } }
   const eps = (navigator.gpu && !AI.forceCPU) ? ['webgpu', 'wasm'] : ['wasm'];
   for (const ep of eps) { try { AI.sess = await ort.InferenceSession.create(model, { executionProviders: [ep], graphOptimizationLevel: 'all' }); AI.ep = ep; break; } catch (e) { console.warn('AI ' + ep, e); } }
   if (!AI.sess) throw new Error('браузер не смог запустить нейросеть');
-  return AI.sess;
+  return AI.ss[dir] = AI.sess;
 }
 const fmtS = v => v.toFixed(1).replace('.', ',');
 async function aiSegmentCT(V, mode, progress) {
@@ -481,7 +483,7 @@ async function aiSegmentCT(V, mode, progress) {
       for (let c = 0; c < Nc; c++) { const v = smp(Math.min(fx - 1, c * sx / F.sx), y, z); X[row + c] = (Math.min(AI.norm.hi, Math.max(AI.norm.lo, v)) - AI.norm.mean) / AI.norm.std; } }
     if (a % 16 === 0) { progress('Готовлю снимок для нейросети…', 0.05 + 0.05 * a / Na); await sleep(); } }
   if (F !== V) F.vol = null;
-  const sess = await aiSession(f => progress('Загружаю нейросеть (62 МБ, один раз)…', 0.1 + 0.05 * f));
+  const sess = await aiSession(f => progress('Загружаю нейросеть (62 МБ, один раз)…', 0.1 + 0.05 * f), mode.dir || 'model');
   // windows
   const st = (n, p) => { if (n <= p) return [0]; const k = Math.ceil((n - p) / (p * (mode.step || 1))) + 1; return [...Array(k)].map((_, i) => Math.round(i * (n - p) / (k - 1))); };
   const SA = st(A, ps[0]), SB = st(B, ps[1]), SC = st(C, ps[2]); const wins = []; for (const a of SA) for (const b of SB) for (const c of SC) wins.push([a, b, c]);
@@ -1027,7 +1029,14 @@ async function loadCT(slot, src) {
     if (S.mode === 'fast') { X.fast = true; busy(true, `«${nm}»: ищу кость по плотности…`, 0.5); await sleep(); X.seg = thresholdSeg(V); X.segSrc = 'быстрый режим, без сегментации'; }
     else if (S.segFile[slot]) { X.seg = S.segFile[slot]; X.segSrc = 'приложенный файл'; }
     else { const mode = $('#segMode').value;
-      if (mode !== 'thr') { try { const Nf = await aiSegmentCT(V, { scale: mode === 'precise' ? 1 : 1.5, step: mode === 'precise' ? 0.75 : 1 }, (t, f) => busy(true, `«${nm}»: ` + t, f)); X.seg = Nf; X.segSrc = `нейросеть (${AI.ep === 'webgpu' ? 'видеокарта' + (AI.gpu ? ' ' + AI.gpu : '') : 'процессор'}), ${Math.round(Nf.secs)} с, ${fmt(Nf.secs / Math.max(1, Nf.ran), 1)} с на участок`;
+      if (mode !== 'thr') { try { const md = { scale: mode === 'precise' ? 1 : 1.5, step: mode === 'precise' ? 0.75 : 1 };
+          let Nf = await aiSegmentCT(V, { ...md, dir: 'model_v2' }, (t, f) => busy(true, `«${nm}»: ` + t, f)); let q = segQuality(Nf);
+          // safety net: the fine-tuned network found no teeth / no mandible → recount with the original network, keep the better result
+          if (!q.ok) { busy(true, `«${nm}»: зубы или нижняя челюсть не найдены — пересчитываю запасной нейросетью…`, 0.1);
+            const N2 = await aiSegmentCT(V, { ...md, dir: 'model' }, (t, f) => busy(true, `«${nm}», запасная нейросеть: ` + t, f)); const q2 = segQuality(N2);
+            if (q2.score > q.score) { Nf = N2; q = q2; toast(`«${nm}»: основная нейросеть не нашла ${q.why0 || 'зубы'} — снимок размечен запасной. Пришлите этот снимок, разберусь.`); Nf.backup = true; }
+            else toast(`«${nm}»: нейросеть нашла мало зубов или кости (зубы ${fmt(q.teeth, 1)} см³, нижняя челюсть ${fmt(q.mand, 1)} см³). Проверьте, что челюсти в поле снимка.`); }
+          X.seg = Nf; X.segSrc = `${Nf.backup ? 'запасная нейросеть' : 'нейросеть (дообученная)'} (${AI.ep === 'webgpu' ? 'видеокарта' + (AI.gpu ? ' ' + AI.gpu : '') : 'процессор'}), ${Math.round(Nf.secs)} с, ${fmt(Nf.secs / Math.max(1, Nf.ran), 1)} с на участок`;
           if (AI.ep !== 'webgpu' || AI.gpuWeak) toast(AI.ep !== 'webgpu' ? 'Нейросеть считала на процессоре — видеокарта браузеру недоступна. Откройте программу в Chrome или Edge.' : 'Нейросеть считала на встроенной видеокарте (' + AI.gpu + '). Назначьте браузеру мощную видеокарту: Параметры Windows → Система → Дисплей → Графика → Chrome → «Высокая производительность».', 12000); }
         catch (e) { console.error(e); toast('Нейросеть: ' + e.message + ' — ищу кость по плотности'); } }
       if (!X.seg) { X.seg = thresholdSeg(V); X.segSrc = 'по плотности'; } }
@@ -1035,6 +1044,10 @@ async function loadCT(slot, src) {
   } catch (e) { console.error(e); toast(`КЛКТ «${nm}»: ` + e.message); }
   busy(false);
 }
+// sanity of a network result: volumes of teeth (3+4) and mandible (2+5) in cm³
+function segQuality(Nf) { const A = Nf.A, vox = [0, 1, 2].reduce((p, c) => p * Math.hypot(A[0][c], A[1][c], A[2][c]), 1) / 1000; const c = new Float64Array(6); const L = Nf.lab; for (let i = 0; i < L.length; i++) c[L[i]]++;
+  const teeth = (c[3] + c[4]) * vox, mand = (c[2] + c[5]) * vox, skull = c[1] * vox; const okT = teeth >= 2, okM = mand >= 6;
+  return { teeth, mand, skull, ok: okT && okM, score: Math.min(teeth, 20) + Math.min(mand, 40) * 0.5, why0: !okT && !okM ? 'зубы и нижнюю челюсть' : !okT ? 'зубы' : 'нижнюю челюсть' }; }
 function freeSlot(slot) { const X = S[slot]; if (!X) return; if (X.vt) gl.deleteTexture(X.vt.tex); for (const k in X.mesh) freeMesh(X.mesh[k]); for (const t of X.teeth || []) freeMesh(t.m); S[slot] = null; S.reg = null; S.T = M4.ident(); S.Ti = M4.ident(); }
 function thresholdSeg(V) { // without the network: "bone" by density (Otsu between soft tissue and bone), height of the teeth from the densest voxels (enamel)
   const N = V.nx * V.ny * V.nz; const vals = []; for (let i = 0; i < N; i += 17) { const v = V.vol[i]; if (v > -500) vals.push(v); }
