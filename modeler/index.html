@@ -158,7 +158,7 @@ input.cmd{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;pad
   <aside id="side">
     <div class="brand">
       <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5c-2.2 0-3.5 1.8-3.5 4.3 0 3 1.2 5 1.8 8.2.4 2.3.9 4.5 2.1 4.5 1.4 0 1.5-3.3 2.4-5.2.4-.9 1.1-1.3 2.2-1.3s1.8.4 2.2 1.3c.9 1.9 1 5.2 2.4 5.2 1.2 0 1.7-2.2 2.1-4.5.6-3.2 1.8-5.2 1.8-8.2 0-2.5-1.3-4.3-3.5-4.3-1.9 0-3 1.1-5 1.1S8.9 3.5 7 3.5z"/></svg></div>
-      <div><b>Моделировщик элайнеров</b><small id="verLbl">версия 3.19</small></div>
+      <div><b>Моделировщик элайнеров</b><small id="verLbl">версия 3.20</small></div>
     </div>
 
     <div class="sec" id="secModels">
@@ -2306,7 +2306,7 @@ async function segFromLabels(Nf, note) {
 
 /* ---------------- нейросеть DentalSegmentator прямо в браузере (onnxruntime-web: видеокарта WebGPU, иначе процессор) ---------------- */
 // files are named .wasm only so the artifact host serves them: ort-wasm.gz.wasm = gzip of the onnxruntime engine, ds0..3.wasm = parts of the ONNX model (fp16 weights)
-const AI = { ver: '1.31.1', mv: 2, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
+const AI = { ver: '1.31.1', mv: 3, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
 const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
 /* файлы нейросети: рядом с программой, а если программа открыта как файл с компьютера или их нет рядом — с сайта на GitHub */
 async function aiFetch(path) {
