@@ -124,7 +124,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.6</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.7</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -440,7 +440,7 @@ async function loadHiRes(V, lo, hi, progress) { // lo/hi: world-box corners
   const origin = [0, 1, 2].map(i => V.origin[i] + V.ex[i] * a[0] * ps[1] + V.ey[i] * a[1] * ps[0] + V.ez[i] * a[2] * V.dz);
   return { vol, nx, ny, nz, sx: ps[1], sy: ps[0], sz: V.dz, origin, ex: V.ex, ey: V.ey, ez: V.ez };
 }
-const AI = { ver: '1.31.1', mv: 2, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
+const AI = { ver: '1.31.1', mv: 3, parts: 4, patch: [128, 160, 112], sp: [0.43164101, 0.312, 0.43164101], norm: { lo: -208, hi: 3070, mean: 1178.2615, std: 611.7099 }, sess: null, ep: null };
 const AI_REMOTE = 'https://skorobogatkoekaterina.github.io/OrthoSkorobogatkoViewer/modeler/';
 async function aiFetch(path) {
   if (location.protocol !== 'file:') { try { const r = await fetch(path); if (r.ok) return r; } catch (e) { } }
