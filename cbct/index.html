@@ -113,6 +113,10 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 .btn.wide{width:100%;justify-content:center;padding:11px}
 .btn.ghost{background:none;border-style:dashed}
 .flp input[type=range]{accent-color:#E5155A;width:46%}.flp .fld{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:7px 0;font-size:12.5px}
+.opMain{margin:10px 0 6px;padding:10px 12px;border-radius:12px;background:#fff3f7;border:1.5px solid #f3a5c0}
+.opHead{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;color:#2b2350}.opHead span{font-weight:700;color:#E5155A}
+#opM{width:100%;accent-color:#E5155A;margin:6px 0 0}.opEnds{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.opMore summary{cursor:pointer;font-size:12.5px;color:var(--muted);margin:2px 0 4px}
 </style>
 </head>
 <body>
@@ -120,7 +124,7 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
 <aside id="side">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-4.5 0-7.5 3-7.5 7 0 2.6 1.2 4.4 2.7 5.6V19a2 2 0 0 0 2 2h5.6a2 2 0 0 0 2-2v-3.4c1.5-1.2 2.7-3 2.7-5.6 0-4-3-7-7.5-7z"/><path d="M9 14h.01M15 14h.01" stroke-width="2.6"/></svg></div>
-    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.5</small></div>
+    <div><b>Наложение КЛКТ</b><small id="verLbl">до и после лечения · версия 2.6</small></div>
   </div>
 
   <div class="sec" style="padding:8px 10px">
@@ -201,15 +205,21 @@ details summary{font-size:12.5px;font-weight:700;color:var(--purple);cursor:poin
       <label class="ck" style="margin:0"><input type="checkbox" data-part="tl" checked> зубы НЧ</label>
       <label class="ck" style="margin:0"><input type="checkbox" data-part="skin"> лицо</label>
     </div>
-    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков (как в Invivo)</label>
+    <label class="ck precOnly"><input type="checkbox" id="volOn"> Объёмный показ снимков</label>
     <div id="volBox" class="hidden"><div class="fld"><span>Порог плотности <span class="sub" id="volThrV">450</span></span><input id="volThr" type="range" min="-200" max="1600" step="10" value="450"></div>
       <div class="fld"><span>Яркость</span><input id="volBri" type="range" min="-0.4" max="0.4" step="0.02" value="0"></div>
       <div class="fld"><span>Контраст</span><input id="volCon" type="range" min="0.5" max="2.2" step="0.05" value="1"></div>
       <div class="fld"><span>Объём (тени)</span><input id="volShade" type="range" min="0" max="1" step="0.05" value="0.75"></div>
       <div class="sub">«До» — светлым, «после» — бирюзовым. Ниже порог — видно мягкие ткани, выше — только плотная кость и зубы.</div></div>
-    <div class="fld"><span>Кость (прозрачность)</span><input id="boneA" type="range" min="0.1" max="1" step="0.05" value="1"></div>
-    <div class="fld"><span>«До» — непрозрачность</span><input id="opA" type="range" min="0.05" max="1" step="0.05" value="1"></div>
-    <div class="fld"><span>«После» — непрозрачность</span><input id="opB" type="range" min="0.05" max="1" step="0.05" value="1"></div>
+    <div class="opMain"><div class="opHead"><b>Прозрачность КТ</b><span id="opMV">0%</span></div>
+      <input id="opM" type="range" min="0" max="95" step="1" value="0">
+      <div class="opEnds"><span>плотно</span><span>прозрачно</span></div></div>
+    <details class="opMore"><summary>Отдельно: «до», «после», кость</summary>
+    <div class="fld"><span>«До» <span class="sub" id="opAV">0%</span></span><input id="opA" type="range" min="0" max="95" step="1" value="0"></div>
+    <div class="fld"><span>«После» <span class="sub" id="opBV">0%</span></span><input id="opB" type="range" min="0" max="95" step="1" value="0"></div>
+    <div class="fld precOnly"><span>Только кость <span class="sub" id="boneAV">0%</span></span><input id="boneA" type="range" min="0" max="90" step="1" value="0"></div>
+    <div class="sub">Общий бегунок действует на всё сразу, эти — добавляют прозрачность отдельно. Вправо — прозрачнее. Двойной щелчок по бегунку — сбросить.</div>
+    </details>
     <label class="ck"><input type="checkbox" id="cutOn"> Срез модели плоскостью</label>
     <div id="cutBox" class="hidden">
       <select class="s" id="cutPre"><option value="sag">Сагиттальный</option><option value="cor">Корональный</option><option value="ax">Аксиальный</option></select>
@@ -1265,7 +1275,7 @@ async function register(fine) {
     const res = nccCost(NB, jit, avN, paramT(p, c, t0, useSc ? sc : 1), wt);
     S.reg = { c, t0, p, pAuto: p.slice(), sc, useSc, ncc: -res.c, cal: res.cal || [1, 0], lim, mode: roiModeV(), secs: (performance.now() - t00) / 1000, nPts: jit.length / 3 };
     updT(); busy(true, 'Считаю карту расстояний…', 0.93); await sleep(); computeMaps(); renderRegInfo(); renderNudge();
-    if (!S.opSet && S.mode !== 'fast') { S.opSet = true; S.opA = 0.4; $('#opA').value = Math.pow(0.4, 1 / 1.3).toFixed(2); }
+    if (!S.opSet && S.mode !== 'fast') { S.opSet = true; $('#opA').value = 50; document.querySelector('.opMore').open = true; syncOp(); }
     $('#regFine').disabled = false; $('#exPly').disabled = $('#exMat').disabled = $('#exRep').disabled = false;
   } catch (e) { console.error(e); toast('Совмещение: ' + e.message); }
   busy(false); requestDraw(); if ($('#viewSl').style.display === 'block') drawSlices();
@@ -1361,7 +1371,7 @@ void main(){ if (uClipOn==1 && dot(uClip.xyz, vW) > uClip.w) discard; vec3 c = u
   vec3 n = normalize(vN); if(!gl_FrontFacing) n = -n; float l = 0.32 + 0.62*max(n.z,0.0) + 0.12*max(dot(n,normalize(vec3(-0.4,0.6,0.7))),0.0);
   float s = pow(max(n.z,0.0), 40.0)*0.12; float a = uCol.a;
   if (a < 0.99 && uCull == 1 && !gl_FrontFacing) discard; /* see-through surfaces: only the side facing the viewer, no glow */
-  if (a < 0.99) c *= mix(0.78, 1.0, a); /* a little darker the more transparent — the shape stays readable on the light background */
+  if (a < 0.99) c *= mix(0.8, 1.0, a); /* a little darker the more transparent — the shape stays readable on the light background */
   o = vec4(c*l + s, a); }`;
 function mkProg() { const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
   const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS)); gl.bindAttribLocation(p, 0, 'aPos'); gl.bindAttribLocation(p, 1, 'aNrm'); gl.bindAttribLocation(p, 2, 'aCol'); gl.linkProgram(p); return p; }
@@ -1400,7 +1410,7 @@ function draw() {
   const colB = (k, map) => map ? COL_B : isT(k) ? [0.98, 0.80, 0.85] : k === 'mand' ? [0.93, 0.52, 0.66] : COL_B;
   const part = k => S.jv ? (k === 'skull' ? 0.28 : k === 'mand' ? 1 : 0) : k === 'skin' ? 0.45 : isBone(k) ? bA : 1; /* joint view: see-through fossa, solid condyle, no teeth */ const alB = k => S.jv ? part(k) : S.opB * part(k), alA = k => S.jv ? part(k) : (showB && S.reg && isT(k) ? Math.min(S.opA, 0.35) : S.opA) * part(k); /* «before» teeth stay a light ghost over the coloured «after» teeth */
   const pass = transp => { // opaque surfaces first, then the see-through ones (no depth writes) so the inner ones stay visible
-    if (transp) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); } gl.uniform1i(U.uCull, transp && !S.cut.on ? 1 : 0);
+    if (transp) { gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); } gl.uniform1i(U.uCull, transp && !S.cut.on ? 1 : 0);
     if (showB) for (const it of items('B')) { const k = it.k, m = it.m; if ((alB(k) < 0.99) !== transp) continue; const jm = S.joint.on && k === 'mand' && m.jcbo; const map = !!(S.show.map && S.reg && m.dist) && !jm; drawMesh(m, it.M, it.t && !map && S.toothCol ? toothColor(it.t, 'B') : colB(k, map), alB(k), map || !!jm, jm || null); }
     if (showA) { if (showB) { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(2, 8); } /* where both coincide, "after" wins */
       for (const it of items('A')) { const k = it.k; if ((alA(k) < 0.99) !== transp) continue; const jm = S.joint.on && k === 'mand' && it.m.jcbo; drawMesh(it.m, it.M, it.t && S.toothCol && !showB ? toothColor(it.t, 'A') : colA(k), alA(k), !!jm, jm || null); }
@@ -1527,9 +1537,11 @@ $('#shA').onchange = () => { S.show.A = $('#shA').checked; S.cut.lines = null; r
 $('#shB').onchange = () => { S.show.B = $('#shB').checked; S.cut.lines = null; requestDraw(); };
 $('#shMap').onchange = () => { S.show.map = $('#shMap').checked; S.cut.lines = null; requestDraw(); };
 document.querySelectorAll('[data-part]').forEach(c => c.onchange = () => { S.show.parts[c.dataset.part] = c.checked; S.cut.lines = null; requestDraw(); });
-$('#opA').oninput = () => { S.opA = Math.pow(+$('#opA').value, 1.3); requestDraw(); };
-$('#opB').oninput = () => { S.opB = Math.pow(+$('#opB').value, 1.3); requestDraw(); };
-$('#boneA').oninput = () => { S.boneAlpha = Math.pow(+$('#boneA').value, 1.3); requestDraw(); };
+// transparency: one main slider for the whole CT + optional extra per «before»/«after»/bone. All sliders: % transparency, right = more see-through.
+const opOf = t => 1 - 0.9 * t / 100; // linear: 50% on the slider looks half see-through; never fully invisible
+function syncOp() { const m = opOf(+$('#opM').value); S.opA = m * opOf(+$('#opA').value); S.opB = m * opOf(+$('#opB').value); S.boneAlpha = opOf(+$('#boneA').value);
+  for (const id of ['opM', 'opA', 'opB', 'boneA']) $('#' + id + 'V').textContent = $('#' + id).value + '%'; requestDraw(); }
+for (const id of ['opM', 'opA', 'opB', 'boneA']) { $('#' + id).oninput = syncOp; $('#' + id).ondblclick = () => { $('#' + id).value = 0; syncOp(); }; }
 
 /* ============================================================
    Slices: before (magenta) and after (green) through the same point
